@@ -3,35 +3,18 @@ import { useAuth } from '../context/AuthContext'
 import { roleRoute } from '../lib/roleRoute'
 import toast from 'react-hot-toast'
 
-const pages = {
-  features: ['Features', 'Everything your school needs in one clear workspace.', ['Academic operations', 'Attendance and people', 'Finance and billing', 'Announcements and communication']],
-  portals: ['Portals', 'A focused experience for every person in your school.', ['School Admin', 'Teacher', 'Student', 'Parent']],
-  pricing: ['Pricing', 'Choose a plan that grows with your school.', ['Starter', 'Professional', 'Enterprise']],
-  about: ['About SmartSchool', 'A calmer digital home for the work behind great learning.', ['One shared school picture', 'Secure role-based access', 'Simple tools for every team']],
-  contact: ['Contact', 'We are ready to help your school get started.', ['Register your school', 'Ask about setup', 'Get product guidance']],
-}
+const links = [['Features', '/features'], ['Portals', '/portals'], ['Pricing', '/pricing'], ['About', '/about'], ['Contact', '/contact']]
 
-const links = [['Home', '/'], ['Features', '/features'], ['Portals', '/portals'], ['Pricing', '/pricing'], ['About', '/about'], ['Contact', '/contact']]
+const pages = {
+  features: ['Unified Features', 'Everything you need to move forward.', [['Academic operations', 'Plan classes, publish assignments, manage assessments.'], ['People and attendance', 'See who is present, support learners early.'], ['Finance and billing', 'Track fee structures, payments, and receipts.'], ['Communication', 'Bring announcements and school updates into one rhythm.']]],
+  portals: ['Dedicated Portals', 'A focused experience for each person.', [['School Admin', 'The command centre for your school.'], ['Teacher', 'A calmer place to teach and assess.'], ['Student', 'Everything your learning needs.'], ['Parent', 'A clear window into progress.']]],
+  pricing: ['Flexible Plans', 'Choose the right school rhythm.', [['Starter', 'For schools getting organised.'], ['Professional', 'For connected school teams.'], ['Enterprise', 'For growing school groups.']]],
+  about: ['Our Vision', 'Good schools run on good connections.', [['Global Intelligence', 'AI-powered tools for every role.'], ['Reliable Foundations', 'Permissions and data kept carefully in place.'], ['Institutional Growth', 'Built to scale with your institution.']]],
+  contact: ['Get in Touch', 'Ready to make school life flow?', [['Email Support', 'support@smartschool.com'], ['Phone', '+1 (555) 000-0000'], ['Office', '123 Educational Blvd, Global City']]]
+}
 
 export default function PublicPage({ page }) {
   const [title, intro, items] = pages[page]
-  const { login } = useAuth();
-  const navigate = useNavigate();
-
-  const enterDemo = async (role) => {
-    const emailMap = {
-      'School Admin': 'school@demo.com',
-      'Teacher': 'teacher@demo.com',
-      'Student': 'student@demo.com',
-      'Parent': 'parent@demo.com'
-    };
-    try {
-      const result = await login(emailMap[role], 'password');
-      navigate(roleRoute(result.profile.role));
-    } catch (e) {
-      toast.error('Could not enter demo portal');
-    }
-  };
 
   return <div className="public-page">
     <header className="nav blue-nav sticky-nav">
@@ -43,12 +26,25 @@ export default function PublicPage({ page }) {
       </nav>
     </header>
 
-    <main className="public-page-main">
-      <p className="eyebrow blue-eyebrow">SMARTSCHOOL 3.0</p>
-      <h1>{title}</h1>
-      <p className="public-page-intro">{intro}</p>
-      <div className="public-page-grid">{items.map((item, index) => <article key={item}><span>0{index+1}</span><h2>{item}</h2><p>Designed to keep your school connected, informed and moving forward.</p></article>)}</div>
-      <Link className="button blue-button" to="/register">Register your school <b>→</b></Link>
+    <main className="public-content">
+      <section className="sky-hero screenshot-hero" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center' }}>
+        <div className="hero-copy">
+          <p className="eyebrow blue-eyebrow">SMARTSCHOOL 6.0</p>
+          <h1>{title}</h1>
+          <p>{intro}</p>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="service-grid">
+          {items.map(([label, text]) => (
+            <article className="service glass-card" key={label}>
+              <h3>{label}</h3>
+              <p>{text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
     </main>
 
     <footer className="site-footer">
@@ -66,16 +62,16 @@ export default function PublicPage({ page }) {
         </div>
         <div className="footer-column">
           <h4>Legal</h4>
-          <a href="#">Privacy</a>
-          <a href="#">Terms</a>
-          <a href="#">Security</a>
+          <Link to="/">Privacy</Link>
+          <Link to="/">Terms</Link>
+          <Link to="/">Security</Link>
         </div>
         <div className="footer-column">
-          <h4>Portals</h4>
-          <button onClick={() => enterDemo('School Admin')}>Admin Portal</button>
-          <button onClick={() => enterDemo('Teacher')}>Teacher Portal</button>
-          <button onClick={() => enterDemo('Student')}>Student Portal</button>
-          <button onClick={() => enterDemo('Parent')}>Parent Portal</button>
+          <h4>Institutional</h4>
+          <Link to="/login">Admin Portal</Link>
+          <Link to="/login">Staff Access</Link>
+          <Link to="/login">Student Area</Link>
+          <Link to="/login">Parent Login</Link>
         </div>
       </div>
       <div className="footer-bottom">

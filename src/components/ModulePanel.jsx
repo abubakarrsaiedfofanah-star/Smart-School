@@ -9,7 +9,6 @@ import ConfirmShield from './ConfirmShield'
 import { Link } from 'react-router-dom'
 
 const labels={schools:'Schools',profiles:'People',students:'Students',classes:'Classes',subjects:'Subjects',attendance:'Attendance',assignments:'Assignments',exams:'Exams',results:'Results',fees:'Fees',payments:'Payments',announcements:'Announcements',events:'Events',messages:'Messages',subscriptions:'Subscriptions'}
-const demo={schools:[{name:'Green Valley Academy',status:'pending',subscription_plan:'Starter'},{name:'Bright Future School',status:'active',subscription_plan:'Professional'}],students:[{admission_number:'ST-001',full_name:'Amina Hassan'},{admission_number:'ST-002',full_name:'David Kimani'}],profiles:[{full_name:'Grace Wanjiku',role:'teacher'},{full_name:'Mark Otieno',role:'teacher'}],classes:[{name:'Grade 7A',grade:'7'},{name:'Grade 7B',grade:'7'}],subjects:[{name:'Mathematics',code:'MAT-07'},{name:'English',code:'ENG-07'}],attendance:[{attendance_date:'Today',status:'present',student:'Amina Hassan'},{attendance_date:'Today',status:'late',student:'David Kimani'}],assignments:[{title:'Algebra practice',due_date:'2026-08-28',status:'Published'}],exams:[{name:'Term 2 Mathematics',exam_date:'2026-09-10'}],results:[{student:'Amina Hassan',score:'87',remarks:'Excellent'}],fees:[{name:'Term 2 tuition',amount:'25,000',due_date:'2026-09-01'}],payments:[{reference:'PAY-001',amount:'25,000',status:'paid'}],announcements:[{title:'Parents meeting',created_at:'Today'}],events:[{title:'Sports day',event_date:'2026-09-18'}],messages:[{body:'Thank you for the update.',created_at:'Today'}],subscriptions:[{plan:'Professional',status:'active'}]}
 const fields={schools:['name','status','subscription_plan'],profiles:['full_name','role'],students:['admission_number','full_name'],classes:['name','grade'],subjects:['name','code'],attendance:['student','attendance_date','status'],assignments:['title','due_date','status'],exams:['name','exam_date'],results:['student','score','remarks'],fees:['name','amount','due_date'],payments:['reference','amount','status'],announcements:['title','created_at'],events:['title','event_date'],messages:['body','created_at'],subscriptions:['plan','status']}
 
 export default function ModulePanel({table,profile,canCreate=false,superAdmin=false,studentId=null}){
@@ -52,11 +51,7 @@ export default function ModulePanel({table,profile,canCreate=false,superAdmin=fa
   const showReportBtn = (table === 'results' || table === 'students') && (studentId || (table === 'results' && rows.length > 0));
 
   const handlePaymentSuccess = async () => {
-    if (!supabase) {
-      setRows(prev => prev.map(r => r.id === payingRow.id ? { ...r, status: 'paid' } : r));
-      toast.success('Payment simulated successfully!');
-      return;
-    }
+    if (!supabase) return;
     try {
       const { error } = await supabase.from('payments').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', payingRow.id);
       if (error) throw error;
@@ -67,14 +62,14 @@ export default function ModulePanel({table,profile,canCreate=false,superAdmin=fa
     }
   };
 
-  const load=async()=>{setBusy(true);setMessage('');try{if(!supabase){setRows(demo[table]||[]);return}let query=supabase.from(table).select('*').limit(30);if(profile?.school_id&&table!=='schools')query=query.eq('school_id',profile.school_id);if(table==='schools'&&!superAdmin&&profile?.school_id)query=query.eq('id',profile.school_id);const {data,error}=await query;if(error)throw error;setRows(data||[])}catch(error){setMessage(error.message||'Could not load this module.')}finally{setBusy(false)}}
+  const load=async()=>{setBusy(true);setMessage('');try{if(!supabase)return;let query=supabase.from(table).select('*').limit(50);if(profile?.school_id&&table!=='schools')query=query.eq('school_id',profile.school_id);if(table==='schools'&&!superAdmin&&profile?.school_id)query=query.eq('id',profile.school_id);const {data,error}=await query;if(error)throw error;setRows(data||[])}catch(error){setMessage(error.message||'Could not load this module.')}finally{setBusy(false)}}
   useEffect(()=>{load()},[table,profile?.school_id])
   const placeholders=useMemo(()=>cols.filter(field=>!['status','created_at'].includes(field)).slice(0,3),[table])
   async function create(event){event.preventDefault();setMessage('');const values=Object.fromEntries(new FormData(event.currentTarget));try{
     if (table === 'attendance' && values.status?.toLowerCase() === 'absent') {
       sendAttendanceAlert(values.student || 'A student');
     }
-    if(!supabase){setRows(current=>[...current,{...values,id:Date.now()}]);setForm(false);return}const payload={...values};if(profile?.school_id&&table!=='schools')payload.school_id=profile.school_id;const {error}=await supabase.from(table).insert(payload);if(error)throw error;setForm(false);load()}catch(error){setMessage(error.message||'Could not save this record.')}}
+    if(!supabase)return;const payload={...values};if(profile?.school_id&&table!=='schools')payload.school_id=profile.school_id;const {error}=await supabase.from(table).insert(payload);if(error)throw error;setForm(false);load()}catch(error){setMessage(error.message||'Could not save this record.')}}
   async function review(id,status){try{const {error}=await supabase.rpc('review_school',{target_school:id,new_status:status});if(error)throw error;load()}catch(error){setMessage(error.message||'Could not update the school.')}}
   return <section className="panel module glass-card page-transition">
     <div className="panel-title">
@@ -91,26 +86,26 @@ export default function ModulePanel({table,profile,canCreate=false,superAdmin=fa
           style={{padding: '8px 15px', borderRadius: '8px', border: '1px solid var(--line)', marginRight: '10px'}}
         />
         {['super_admin', 'school_admin'].includes(profile?.role) && (
-          <button className="outline" onClick={exportCSV} style={{marginRight: '10px'}}>Export CSV 📥</button>
+          <button className="outline tactile-btn" onClick={exportCSV} style={{marginRight: '10px'}}>Export CSV 📥</button>
         )}
         {showReportBtn && (
           <Link
             to={`/report-card/${studentId || rows[0]?.student_id || rows[0]?.id}`}
-            className="button small blue-button"
+            className="button small blue-button tactile-btn"
             style={{marginRight: '10px'}}
           >
             View Report Card 📊
           </Link>
         )}
-        {canCreate&&<button className="button small" onClick={()=>setForm(!form)}>Add {title.replace(/s$/,'')} +</button>}
-        <button className="outline" onClick={load} disabled={busy}>Refresh</button>
+        {canCreate&&<button className="button small tactile-btn" onClick={()=>setForm(!form)}>Add {title.replace(/s$/,'')} +</button>}
+        <button className="outline tactile-btn" onClick={load} disabled={busy}>Refresh</button>
       </div>
     </div>
 
     {message&&<p className="error">{message}</p>}
     {form&&<form className="quick-form glass-card" onSubmit={create}>
       {placeholders.map(field=><label key={field}>{field.replaceAll('_',' ')}<input required name={field}/></label>)}
-      <button className="button small">Save</button>
+      <button className="button small tactile-btn">Save</button>
     </form>}
 
     {busy ? (
@@ -130,11 +125,10 @@ export default function ModulePanel({table,profile,canCreate=false,superAdmin=fa
       <div className="empty-state-visual">
         <div className="empty-icon">📂</div>
         <b>No {title.toLowerCase()} yet</b>
-        <p>Add the first record to see it here.</p>
+        <p>Your institutional records will appear here.</p>
       </div>
     ) : rows.length > 0 && (
       <div className="data-wrap">
-        {/* Desktop Table View */}
         <table className="desktop-table">
           <thead>
             <tr>
@@ -162,13 +156,12 @@ export default function ModulePanel({table,profile,canCreate=false,superAdmin=fa
                 {row.status==='pending'&&<button className="button small" onClick={()=>setPayingRow(row)}>Pay Now</button>}
               </td>}
               <td>
-                <button className="mini reject" onClick={() => { setRowToDelete(row); setConfirmOpen(true); }}>Delete</button>
+                <button className="mini reject tactile-btn" onClick={() => { setRowToDelete(row); setConfirmOpen(true); }}>Delete</button>
               </td>
             </tr>)}
           </tbody>
         </table>
 
-        {/* Mobile Card List View */}
         <div className="mobile-card-list">
           {filteredRows.map((row, index) => (
             <div key={row.id || index} className="data-card glass-card neumorph-flat tactile-btn">
@@ -192,7 +185,7 @@ export default function ModulePanel({table,profile,canCreate=false,superAdmin=fa
                   <Link to={`/invoice/${row.id}`} className="button small full" style={{marginBottom: '5px', backgroundColor: '#3b82f6'}}>View Invoice</Link>
                   {row.status==='pending'&&<button className="button small full" onClick={()=>setPayingRow(row)}>Pay Now</button>}
                 </>}
-                <button className="button small full reject" style={{ marginTop: '5px' }} onClick={() => { setRowToDelete(row); setConfirmOpen(true); }}>Delete Record</button>
+                <button className="button small full reject tactile-btn" style={{ marginTop: '5px' }} onClick={() => { setRowToDelete(row); setConfirmOpen(true); }}>Delete Record</button>
               </div>
             </div>
           ))}

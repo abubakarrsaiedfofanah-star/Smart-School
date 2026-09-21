@@ -58,33 +58,6 @@ export function AuthProvider({ children }) {
   }, [])
 
   const login = async (email, password) => {
-    if (!supabase || email.includes('@demo.com')) {
-      const prefix = email.split('@')[0];
-      const demoRoles = {
-        'super': 'super_admin',
-        'school': 'school_admin',
-        'teacher': 'teacher',
-        'student': 'student',
-        'parent': 'parent'
-      };
-      const finalRole = demoRoles[prefix] || 'school_admin';
-      const nextProfile = {
-        full_name: `Demo ${finalRole.replace('_', ' ')}`,
-        role: finalRole,
-        school_id: 'demo-school-id'
-      };
-      const nextSchool = {
-        id: 'demo-school-id',
-        name: 'SmartSchool Demo Academy',
-        logo_url: '',
-        primary_color: '#2375e1'
-      };
-      setSession({ user: { email } });
-      setProfile(nextProfile);
-      setSchool(nextSchool);
-      return { profile: nextProfile, school: nextSchool }
-    };
-
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
 
@@ -115,8 +88,7 @@ export function AuthProvider({ children }) {
       loading,
       login,
       logout,
-      resetPassword,
-      demo: !supabase || profile?.school_id === 'demo-school-id'
+      resetPassword
     }}>
       {children}
     </AuthContext.Provider>

@@ -16,24 +16,9 @@ const Analytics = ({ onBack }) => {
 
     useEffect(() => {
         const fetchData = async () => {
+            if (!supabase) return;
             setLoading(true);
             try {
-                if (!supabase || profile?.school_id === 'demo-school-id') {
-                    // Realistic Demo Data for 3.0 Showcase
-                    setTimeout(() => {
-                        setData({
-                            payments: { paid: 1250000, pending: 380000 },
-                            attendance: 94.2,
-                            grades: [
-                                { month: 'Jan', avg: 62 }, { month: 'Feb', avg: 68 }, { month: 'Mar', avg: 72 },
-                                { month: 'Apr', avg: 71 }, { month: 'May', avg: 78 }, { month: 'Jun', avg: 85 }
-                            ]
-                        });
-                        setLoading(false);
-                    }, 800);
-                    return;
-                }
-
                 // Fetch real Payments
                 let paymentsQuery = supabase.from('payments').select('amount, status');
                 if (!isSuperAdmin && schoolId) paymentsQuery = paymentsQuery.eq('school_id', schoolId);
@@ -73,11 +58,8 @@ const Analytics = ({ onBack }) => {
 
                 setData({
                     payments: paymentStats,
-                    attendance: attendanceRate > 0 ? attendanceRate : 91.5, // Fallback for visibility
-                    grades: gradeTrend.length > 0 ? gradeTrend : [
-                        { month: 'Jan', avg: 65 }, { month: 'Feb', avg: 70 }, { month: 'Mar', avg: 68 },
-                        { month: 'Apr', avg: 75 }, { month: 'May', avg: 82 }, { month: 'Jun', avg: 80 }
-                    ]
+                    attendance: attendanceRate,
+                    grades: gradeTrend
                 });
             } catch (error) {
                 console.error('Error fetching analytics:', error);
@@ -89,7 +71,7 @@ const Analytics = ({ onBack }) => {
         fetchData();
     }, [isSuperAdmin, schoolId]);
 
-    if (loading) return <div className="portal-loading"><div className="spinner"></div><p>Aggregating 3.0 Insights...</p></div>;
+    if (loading) return <div className="portal-loading"><div className="spinner"></div><p>Aggregating Institutional Insights...</p></div>;
 
     return (
         <div className="analytics-page page-transition">
@@ -98,15 +80,13 @@ const Analytics = ({ onBack }) => {
                   <p className="eyebrow">INTELLIGENT INSIGHTS</p>
                   <h1>{isSuperAdmin ? 'Platform' : 'School'} Analytics</h1>
                 </div>
-                <button onClick={onBack} className="button outline-button">← Back</button>
+                <button onClick={onBack} className="button outline-button tactile-btn">← Back</button>
             </header>
 
             <div className="analytics-grid">
-                {/* Financial Analytics */}
-                <div className="chart-card glass-card">
+                <div className="chart-card glass-card neumorph-flat">
                     <div className="chart-header">
                       <h3>Fee Collection</h3>
-                      <span className="trend positive">↑ 12% vs last term</span>
                     </div>
                     <div className="bar-chart-container">
                         <svg width="100%" height="220" viewBox="0 0 200 200">
@@ -148,34 +128,35 @@ const Analytics = ({ onBack }) => {
                     </div>
                 </div>
 
-                {/* Academic Analytics */}
-                <div className="chart-card glass-card">
+                <div className="chart-card glass-card neumorph-flat">
                     <div className="chart-header">
                         <h3>Grade Performance</h3>
-                        <span className="trend positive">↑ 4.2% Average</span>
                     </div>
-                    <div className="line-chart-container">
-                        <svg width="100%" height="220" viewBox="0 0 240 200">
-                            <path
-                                d={`M ${data.grades.map((g, i) => `${40 + i * 35},${170 - (g.avg * 1.5)}`).join(' L ')}`}
-                                fill="none"
-                                stroke="#2375e1"
-                                strokeWidth="4"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            />
-                            {data.grades.map((g, i) => (
-                                <g key={i}>
-                                    <circle cx={40 + i * 35} cy={170 - (g.avg * 1.5)} r="6" fill="var(--panel)" stroke="#2375e1" strokeWidth="3" />
-                                    <text x={40 + i * 35} y="195" fontSize="10" textAnchor="middle" fill="var(--muted)" fontWeight="700">{g.month}</text>
-                                </g>
-                            ))}
-                        </svg>
-                    </div>
+                    {data.grades.length > 0 ? (
+                      <div className="line-chart-container">
+                          <svg width="100%" height="220" viewBox="0 0 240 200">
+                              <path
+                                  d={`M ${data.grades.map((g, i) => `${40 + i * 35},${170 - (g.avg * 1.5)}`).join(' L ')}`}
+                                  fill="none"
+                                  stroke="#2375e1"
+                                  strokeWidth="4"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                              />
+                              {data.grades.map((g, i) => (
+                                  <g key={i}>
+                                      <circle cx={40 + i * 35} cy={170 - (g.avg * 1.5)} r="6" fill="var(--panel)" stroke="#2375e1" strokeWidth="3" />
+                                      <text x={40 + i * 35} y="195" fontSize="10" textAnchor="middle" fill="var(--muted)" fontWeight="700">{g.month}</text>
+                                  </g>
+                              ))}
+                          </svg>
+                      </div>
+                    ) : (
+                      <div style={{flex:1, display:'grid', placeItems:'center', color:'var(--muted)'}}>No grade history available.</div>
+                    )}
                 </div>
 
-                {/* Attendance Analytics */}
-                <div className="chart-card glass-card">
+                <div className="chart-card glass-card neumorph-flat">
                     <div className="chart-header">
                         <h3>School Pulse</h3>
                         <small>Daily Attendance</small>
@@ -203,11 +184,9 @@ const Analytics = ({ onBack }) => {
                     </div>
                 </div>
 
-                {/* National Benchmarking Analytics */}
-                <div className="chart-card glass-card" style={{gridColumn: '1 / -1'}}>
+                <div className="chart-card glass-card neumorph-flat" style={{gridColumn: '1 / -1'}}>
                     <div className="chart-header">
                         <h3>Global & National Benchmarking</h3>
-                        <span className="trend positive">Performing 15% Above Regional Average</span>
                     </div>
                     <div className="benchmark-viz" style={{height: '250px', position: 'relative', marginTop: '20px'}}>
                       <svg width="100%" height="100%" viewBox="0 0 800 200">
@@ -216,15 +195,14 @@ const Analytics = ({ onBack }) => {
                         <line x1="400" y1="40" x2="400" y2="160" stroke="#f43f5e" strokeDasharray="4 4" strokeWidth="2" />
                         <text x="410" y="30" fontSize="10" fill="#f43f5e" fontWeight="800">GLOBAL STANDARD (70%)</text>
 
-                        {/* Your School */}
-                        <rect x="0" y="50" width="620" height="20" fill="#2375e1" rx="10" />
-                        <text x="630" y="65" fontSize="14" fill="#2375e1" fontWeight="800">YOUR SCHOOL (82%)</text>
+                        {/* Current Performance */}
+                        <rect x="0" y="50" width={data.attendance * 8} height="20" fill="#2375e1" rx="10" />
+                        <text x={data.attendance * 8 + 10} y="65" fontSize="14" fill="#2375e1" fontWeight="800">YOUR INSTITUTION</text>
 
-                        {/* Regional Average */}
                         <rect x="0" y="110" width="800" height="40" fill="rgba(0, 0, 0, 0.03)" rx="4" />
                         <text x="10" y="105" fontSize="12" fill="var(--muted)" fontWeight="700">ATTENDANCE CONSISTENCY</text>
-                        <rect x="0" y="120" width="750" height="20" fill="#11966a" rx="10" />
-                        <text x="760" y="135" fontSize="14" fill="#11966a" fontWeight="800">94%</text>
+                        <rect x="0" y="120" width={data.attendance * 7.5} height="20" fill="#11966a" rx="10" />
+                        <text x={data.attendance * 7.5 + 10} y="135" fontSize="14" fill="#11966a" fontWeight="800">{Math.round(data.attendance)}%</text>
                       </svg>
                     </div>
                 </div>
@@ -238,9 +216,6 @@ const Analytics = ({ onBack }) => {
                 .chart-card { padding: 32px; min-height: 400px; display: flex; flex-direction: column; }
                 .chart-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; }
                 .chart-header h3 { font: 800 1.3rem 'DM Sans', sans-serif; color: var(--ink); margin: 0; }
-
-                .trend { font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; }
-                .trend.positive { background: #dcfce7; color: #15803d; }
 
                 .chart-info { display: flex; gap: 20px; margin-top: 20px; border-top: 1px solid var(--line); padding-top: 20px; }
                 .info-box { flex: 1; }

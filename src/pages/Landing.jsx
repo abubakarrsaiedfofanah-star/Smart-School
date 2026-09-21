@@ -1,40 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import AIGuide from '../components/AI_Guide'
-import VideoGuide from '../components/VideoGuide'
-import { useAuth } from '../context/AuthContext'
-import { roleRoute } from '../lib/roleRoute'
-import toast from 'react-hot-toast'
 
 const services=[['01','Academic operations','Plan classes, publish assignments, manage assessments and keep every result ready for review.'],['02','People and attendance','See who is present, support learners early and keep staff workflows simple from any device.'],['03','Finance and billing','Track fee structures, payments, balances and receipts with a clear view for every family.'],['04','Communication','Bring announcements, messages, events and school updates into one dependable rhythm.']]
-const portals=[['School Admin','The command centre for your school','/school-admin','Students · Staff · Finance'],['Teacher','A calmer place to teach and assess','/teacher','Classes · Attendance · Results'],['Student','Everything your learning needs','/student','Assignments · Grades · Fees'],['Parent','A clear window into progress','/parent','Progress · Payments · Events']]
+const portals=[['School Admin','The command centre for your school','/login','Students · Staff · Finance'],['Teacher','A calmer place to teach and assess','/login','Classes · Attendance · Results'],['Student','Everything your learning needs','/login','Assignments · Grades · Fees'],['Parent','A clear window into progress','/login','Progress · Payments · Events']]
 const plans=[['Starter','For schools getting organised','Core admissions, attendance, classes and communication.'],['Professional','For connected school teams','Everything in Starter plus deeper insights, fees and academic workflows.'],['Enterprise','For growing school groups','Multi-school oversight, advanced controls and dedicated support.']]
 
-function DashboardPreview(){return <div className="floating-dashboard glass-card" aria-label="SchoolFlow dashboard preview"><div className="dash-bar"><b>Good morning, Sarah</b><span className="live-indicator">● Live Workspace</span></div><div className="dash-cards"><article><b>1,248</b><small>Total Students</small><i>↑ 8.4%</i></article><article><b>94%</b><small>Attendance</small><i>Stable</i></article><article><b>82%</b><small>Fees Collected</small><i>Term 2</i></article></div><div className="dash-chart"><div><p>Weekly Trend</p><b>94.2%</b></div><div className="blue-bars"><i style={{height:'40%'}}/><i style={{height:'60%'}}/><i style={{height:'45%'}}/><i style={{height:'80%'}}/><i style={{height:'65%'}}/><i style={{height:'95%'}}/><i style={{height:'75%'}}/></div></div><div className="dash-list"><span><i/> 12 Assignments due today</span><span><i/> 8 New parent messages</span></div></div>}
+function DashboardPreview(){return <div className="floating-dashboard glass-card" aria-label="School dashboard preview"><div className="dash-bar"><b>Dashboard View</b><span className="live-indicator">● Active Workspace</span></div><div className="dash-cards"><article><b>1,248</b><small>Total Students</small><i>↑ 8.4%</i></article><article><b>94%</b><small>Attendance</small><i>Stable</i></article><article><b>82%</b><small>Fees Collected</small><i>Term 2</i></article></div><div className="dash-chart"><div><p>Weekly Trend</p><b>94.2%</b></div><div className="blue-bars"><i style={{height:'40%'}}/><i style={{height:'60%'}}/><i style={{height:'45%'}}/><i style={{height:'80%'}}/><i style={{height:'65%'}}/><i style={{height:'95%'}}/><i style={{height:'75%'}}/></div></div><div className="dash-list"><span><i/> Integrated Academic Tracking</span><span><i/> Financial Management</span></div></div>}
 function Reveal({children,className=''}){const ref=useRef(null);useEffect(()=>{const node=ref.current;if(!node)return undefined;const observer=new IntersectionObserver(([entry])=>{if(entry.isIntersecting){node.classList.add('is-visible');observer.disconnect()}},{threshold:.14});observer.observe(node);return()=>observer.disconnect()},[]);return <div ref={ref} className={`scroll-reveal ${className}`}>{children}</div>}
 
 export default function Landing(){
   const [menuOpen,setMenuOpen]=useState(false);
-  const { login } = useAuth();
-  const navigate = useNavigate();
-
-  const enterDemo = async (role) => {
-    const emailMap = {
-      'School Admin': 'school@demo.com',
-      'Teacher': 'teacher@demo.com',
-      'Student': 'student@demo.com',
-      'Parent': 'parent@demo.com',
-      'Super Admin': 'super@demo.com'
-    };
-    const id = toast.loading(`Entering ${role} Portal...`);
-    try {
-      const result = await login(emailMap[role], 'password');
-      toast.success(`Welcome to the ${role} Dashboard`, { id });
-      navigate(roleRoute(result.profile.role));
-    } catch (e) {
-      toast.error('Could not enter demo portal', { id });
-    }
-  };
 
   return <div className="public-site">
     <header className="nav blue-nav sticky-nav">
@@ -60,33 +36,28 @@ export default function Landing(){
         <div className="ambient-ring ring-one"/>
         <div className="ambient-ring ring-two"/>
         <div className="hero-copy">
-          <p className="eyebrow blue-eyebrow">WELCOME TO SMARTSCHOOL 3.0</p>
+          <p className="eyebrow blue-eyebrow">WELCOME TO THE FUTURE OF EDUCATION</p>
           <h1>Intelligence.<br/>Globalization.<br/>Excellence.</h1>
-          <p>The world's most advanced school platform is here. Now with AI Intelligence and Global Localization.</p>
+          <p>The world's most advanced school platform. Now with AI Intelligence and Global Localization.</p>
           <div className="actions">
             <Link className="button blue-button" to="/register">Start free trial <b>→</b></Link>
-            <a className="button outline-hero" href="#guide">Watch 3.0 Tour</a>
+            <Link className="button outline-hero" to="/login">Member Login</Link>
           </div>
         </div>
         <DashboardPreview />
         <div className="new-badge-container">
-          <div className="hero-new-label">NEW IN 3.0: AI ASSISTANT & SWAHILI SUPPORT</div>
+          <div className="hero-new-label">SMARTSCHOOL 6.0: AI-POWERED ECOSYSTEM</div>
         </div>
       </section>
 
       <div className="hero-portals">
-        {[
-          ['School Admin','Manage your school'],
-          ['Teacher','Teach, assess and connect'],
-          ['Student','Learn and submit work'],
-          ['Parent','Follow progress and fees']
-        ].map(([name,text],index)=>(
-          <button className={`hero-portal portal-tone-${index}`} onClick={()=>enterDemo(name)} key={name}>
+        {portals.map(([name,text,path,details],index)=>(
+          <Link className={`hero-portal portal-tone-${index}`} to={path} key={name}>
             <span className="portal-icon">{['⌂','◆','●','♟'][index]}</span>
             <b>{name}</b>
             <small>{text}</small>
-            <span className="portal-link">Enter Portal →</span>
-          </button>
+            <span className="portal-link">Access Portal →</span>
+          </Link>
         ))}
       </div>
 
@@ -97,7 +68,7 @@ export default function Landing(){
             <h2>Good schools run on good connections.</h2>
           </div>
           <div className="about-copy">
-            <p>SchoolFlow gives everyone the right view at the right moment. Leaders get the overview, teachers get time back, families get clarity, and students stay focused on their next step.</p>
+            <p>Our platform gives everyone the right view at the right moment. Leaders get the overview, teachers get time back, families get clarity, and students stay focused on their next step.</p>
             <p>It is a practical digital home for the everyday work that makes a school feel alive, with permissions and data kept carefully in place.</p>
             <Link className="text-link blue-text-link" to="/register">Bring your school together →</Link>
           </div>
@@ -119,7 +90,7 @@ export default function Landing(){
                 <span>{number}</span>
                 <h3>{title}</h3>
                 <p>{text}</p>
-                <a href="#contact">Learn more <b>↗</b></a>
+                <Link to="/contact">Learn more <b>↗</b></Link>
               </article>
             ))}
           </div>
@@ -193,7 +164,7 @@ export default function Landing(){
         </div>
         <div className="actions">
           <Link className="button blue-button" to="/register">Register your school <b>→</b></Link>
-          <Link className="text-link" to="/login">Sign in to SmartSchool</Link>
+          <Link className="text-link" to="/login">Sign in to workspace</Link>
         </div>
       </section>
 
@@ -204,7 +175,7 @@ export default function Landing(){
       <div className="footer-container">
         <div className="footer-brand">
           <Link className="brand" to="/">Smart<span>School</span></Link>
-          <p>Intelligence. Globalization. Excellence. The next generation of school management.</p>
+          <p>Intelligence. Globalization. Excellence. The next generation of institutional management.</p>
           <div className="footer-socials">
             <span>𝕏</span> <span>🌐</span> <span>📸</span> <span>💼</span>
           </div>
@@ -222,16 +193,16 @@ export default function Landing(){
           <h4>Support</h4>
           <Link to="/contact">Contact Us</Link>
           <Link to="/about">About</Link>
-          <a href="#">Privacy Policy</a>
-          <a href="#">Terms of Service</a>
+          <Link to="/">Privacy Policy</Link>
+          <Link to="/">Terms of Service</Link>
         </div>
 
         <div className="footer-column">
-          <h4>Portals</h4>
-          <button onClick={() => enterDemo('School Admin')}>Admin Portal</button>
-          <button onClick={() => enterDemo('Teacher')}>Teacher Portal</button>
-          <button onClick={() => enterDemo('Student')}>Student Portal</button>
-          <button onClick={() => enterDemo('Parent')}>Parent Portal</button>
+          <h4>Logins</h4>
+          <Link to="/login">Admin Login</Link>
+          <Link to="/login">Teacher Login</Link>
+          <Link to="/login">Student Login</Link>
+          <Link to="/login">Parent Login</Link>
         </div>
       </div>
       <div className="footer-bottom">
