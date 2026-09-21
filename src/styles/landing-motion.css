@@ -1,0 +1,49 @@
+/* SmartSchool 2.0 - Landing & Motion System */
+
+.sky-hero { isolation: isolate; position: relative; }
+.hero-product-backdrop { position: absolute; inset: 0; z-index: 0; overflow: hidden; background: linear-gradient(135deg, #eef7ff, #cfeaff 55%, #f4fbff); }
+
+.hero-product-backdrop div { position: absolute; border: 1px solid rgba(35, 117, 225, 0.15); background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(5px); }
+.hero-product-backdrop div:nth-child(1) { width: 55%; height: 45%; right: -7%; top: 10%; transform: rotate(-8deg); animation: product-float 9s ease-in-out infinite; border-radius: 40px; }
+.hero-product-backdrop div:nth-child(2) { width: 38%; height: 27%; right: 18%; bottom: 8%; transform: rotate(5deg); animation: product-float 11s -3s ease-in-out infinite; border-radius: 30px; }
+.hero-product-backdrop div:nth-child(3) { width: 25%; height: 55%; left: 48%; top: -13%; transform: rotate(18deg); animation: product-float 13s -5s ease-in-out infinite; border-radius: 30px; }
+
+@keyframes product-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-25px) rotate(2deg); }
+}
+
+/* Pricing Overhaul */
+.pricing-section { background: var(--bg); }
+.pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+
+.pricing-card {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 40px 32px;
+  border-radius: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.pricing-card:hover { transform: translateY(-12px); border-color: var(--green); box-shadow: var(--shadow); }
+.pricing-card.featured { border: 2.5px solid var(--green); box-shadow: 0 20px 50px rgba(28, 182, 129, 0.15); }
+
+.plan-badge { position: absolute; right: 24px; top: 24px; color: var(--green); font-size: 0.6rem; font-weight: 900; letter-spacing: 1px; padding: 6px 12px; background: var(--cream); border-radius: 20px; }
+.plan-number { color: var(--green); font-size: 0.8rem; font-weight: 900; }
+.pricing-card h3 { font: 800 2.2rem 'DM Sans', sans-serif; letter-spacing: -1px; margin: 20px 0 8px; color: var(--ink); }
+.plan-tagline { font-size: 0.95rem; font-weight: 700; color: var(--muted); }
+.pricing-card p { color: var(--muted); font-size: 0.9rem; line-height: 1.6; margin: 24px 0; }
+.pricing-card .button { margin-top: auto; }
+
+@media (max-width: 1024px) {
+  .pricing-grid { grid-template-columns: 1fr; max-width: 500px; margin: 0 auto; }
+}
+
+@media (max-width: 600px) {
+  .hero-product-backdrop { opacity: 0.5; }
+  .pricing-card { padding: 32px 24px; }
+}

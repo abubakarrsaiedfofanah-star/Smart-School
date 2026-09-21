@@ -1,0 +1,14 @@
+{
+  "appId": "com.smartschool.app",
+  "appName": "SmartSchool",
+  "webDir": "dist",
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 3000,
+      "launchAutoHide": true,
+      "backgroundColor": "#1e3a8a",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false
+    }
+  }
+}

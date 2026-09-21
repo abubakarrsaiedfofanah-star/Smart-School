@@ -1,0 +1,128 @@
+.payment-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 42, 67, 0.4);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.payment-modal {
+  width: min(440px, 100%);
+  background: #fff;
+  border-radius: 20px;
+  padding: 40px;
+  animation: modal-slide 0.3s ease-out;
+}
+
+@keyframes modal-slide {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.payment-step h2 {
+  font: 700 1.5rem 'Playfair Display', serif;
+  margin-bottom: 10px;
+  color: var(--ink);
+}
+
+.payment-summary {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}
+
+.payment-amount {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.method-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.method-btn {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f8fafc;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.method-btn i {
+  display: block;
+  font-style: normal;
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+}
+
+.method-btn.active {
+  border-color: var(--green);
+  background: var(--cream);
+  color: var(--green);
+  box-shadow: 0 0 0 4px rgba(35, 117, 225, 0.1);
+}
+
+.payment-step.processing {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.spinner.large {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 20px;
+}
+
+.payment-step.success {
+  text-align: center;
+}
+
+.success-icon {
+  width: 70px;
+  height: 70px;
+  background: #dcfce7;
+  color: #15803d;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 2rem;
+  margin: 0 auto 20px;
+  font-weight: bold;
+}
+
+.receipt {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0 30px;
+  text-align: left;
+}
+
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--line);
+  font-size: 0.85rem;
+}
+
+.receipt-row:last-child {
+  border-bottom: 0;
+}
+
+.receipt-row span {
+  color: var(--muted);
+}

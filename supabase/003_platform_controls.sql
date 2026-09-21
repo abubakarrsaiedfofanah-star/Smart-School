@@ -1,0 +1,7 @@
+-- Run after schema.sql and 002_extended_modules.sql.
+-- Super Admin workflow: pending schools can be approved, rejected or suspended.
+create or replace function public.is_super_admin() returns boolean language sql stable security definer set search_path=public as $$ select exists(select 1 from public.profiles where id=auth.uid() and role='super_admin'); $$;
+create or replace function public.review_school(target_school uuid,new_status public.school_status) returns public.schools language plpgsql security definer set search_path=public as $$ declare updated_school public.schools; begin if not public.is_super_admin() then raise exception 'Only Super Admins can review schools'; end if; update public.schools set status=new_status where id=target_school returning * into updated_school; if updated_school.id is null then raise exception 'School not found'; end if; return updated_school; end; $$;
+grant execute on function public.review_school(uuid,public.school_status) to authenticated;
+create policy "school members guardians" on public.student_guardians for select using (exists(select 1 from public.students s where s.id=student_id and public.same_school(s.school_id)));
+create policy "school members submissions" on public.submissions for all using (exists(select 1 from public.assignments a where a.id=assignment_id and public.same_school(a.school_id))) with check (exists(select 1 from public.assignments a where a.id=assignment_id and public.same_school(a.school_id)));
