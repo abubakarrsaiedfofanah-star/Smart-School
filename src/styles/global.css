@@ -33,6 +33,14 @@
   box-sizing: border-box;
 }
 
+a {
+  text-decoration: none;
+}
+
+.brand, .brand a, .nav a, .button {
+  text-decoration: none !important;
+}
+
 body {
   margin: 0;
   color: var(--ink);
@@ -455,22 +463,24 @@ input:focus, select:focus, textarea:focus {
 
 /* Navigation Spacing Fix for 3.0 */
 .nav {
-  height: 90px;
+  height: auto;
+  min-height: 90px;
   max-width: 1400px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 60px;
+  padding: 15px 40px;
+  flex-wrap: wrap;
+  gap: 15px;
 }
 
 .nav nav {
   display: flex;
   align-items: center;
-  gap: 35px;
-  flex: 1;
+  gap: 20px;
+  flex-wrap: wrap;
   justify-content: flex-end;
-  margin-right: 40px;
 }
 
 .nav nav a {
