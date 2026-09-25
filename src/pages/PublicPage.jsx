@@ -1,7 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import { roleRoute } from '../lib/roleRoute'
-import toast from 'react-hot-toast'
+import { Link } from 'react-router-dom'
 
 const links = [['Features', '/features'], ['Portals', '/portals'], ['Pricing', '/pricing'], ['About', '/about'], ['Contact', '/contact']]
 
@@ -14,12 +11,13 @@ const pages = {
 }
 
 export default function PublicPage({ page }) {
-  const [title, intro, items] = pages[page]
+  const [title, intro, items] = pages[page] || pages.features
 
-  return <div className="public-page">
+  return <div className="public-page page-transition">
     <header className="nav blue-nav sticky-nav">
       <Link className="brand" to="/">Smart<span>School</span></Link>
       <nav aria-label="Public navigation">
+        <Link to="/">Home</Link>
         {links.map(([label, path]) => <Link className={page===label.toLowerCase()?'active':''} to={path} key={label}>{label}</Link>)}
         <Link to="/login">Login</Link>
         <Link className="button small blue-button" to="/register" style={{marginLeft: '15px'}}>Register school</Link>
@@ -27,20 +25,28 @@ export default function PublicPage({ page }) {
     </header>
 
     <main className="public-content">
-      <section className="sky-hero screenshot-hero" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center' }}>
+      <section className="sky-hero screenshot-hero" style={{ minHeight: '55vh', display: 'flex', alignItems: 'center' }}>
+        <div className="hero-product-backdrop"><div/><div/><div/><div/></div>
+        <div className="video-wash"/>
+        <div className="ambient-grid"/>
         <div className="hero-copy">
-          <p className="eyebrow blue-eyebrow">SMARTSCHOOL 6.0</p>
+          <p className="eyebrow blue-eyebrow">SMARTSCHOOL PLATFORM</p>
           <h1>{title}</h1>
           <p>{intro}</p>
+          <div className="actions" style={{ marginTop: '30px' }}>
+            <Link className="button blue-button" to="/register">Start free trial <b>→</b></Link>
+            <Link className="button outline-hero" to="/login">Member Login</Link>
+          </div>
         </div>
       </section>
 
-      <section className="section">
+      <section className="section" style={{ padding: '80px 40px', maxWidth: '1200px', margin: '0 auto' }}>
         <div className="service-grid">
           {items.map(([label, text]) => (
-            <article className="service glass-card" key={label}>
-              <h3>{label}</h3>
-              <p>{text}</p>
+            <article className="service glass-card interactive-card" key={label} style={{ background: 'var(--panel)', border: '1px solid var(--line)', padding: '40px' }}>
+              <span style={{ color: 'var(--green)', fontWeight: '800', fontSize: '0.8rem', letterSpacing: '1px' }}>MODULE</span>
+              <h3 style={{ fontSize: '1.4rem', margin: '15px 0 10px' }}>{label}</h3>
+              <p style={{ color: 'var(--muted)', lineHeight: '1.6' }}>{text}</p>
             </article>
           ))}
         </div>
@@ -58,6 +64,7 @@ export default function PublicPage({ page }) {
         </div>
         <div className="footer-column">
           <h4>Explore</h4>
+          <Link to="/">Home</Link>
           {links.map(([label,path])=><Link to={path} key={label}>{label}</Link>)}
         </div>
         <div className="footer-column">
@@ -75,7 +82,7 @@ export default function PublicPage({ page }) {
         </div>
       </div>
       <div className="footer-bottom">
-        <span>© 2026 SmartSchool Enterprise.</span>
+        <span>© 2026 SmartSchool Enterprise. All rights reserved.</span>
       </div>
     </footer>
   </div>
