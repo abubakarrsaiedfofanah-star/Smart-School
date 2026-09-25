@@ -25,7 +25,7 @@ const getPasswordStrength = (password) => {
 };
 
 export default function RegisterSchool(){
-  const [step,setStep]=useState(0),[form,setForm]=useState(initial),[saving,setSaving]=useState(false),[showPassword,setShowPassword]=useState(false)
+  const [step,setStep]=useState(0),[form,setForm]=useState(initial),[saving,setSaving]=useState(false),[showPassword,setShowPassword]=useState(false),[showVideoGuide,setShowVideoGuide]=useState(false)
   const update=(key,value)=>setForm(current=>({...current,[key]:value}))
 
   const next=()=>{
@@ -54,7 +54,7 @@ export default function RegisterSchool(){
           bank_name: form.bankName,
           bank_account_name: form.bankAccountName,
           bank_account_number: form.bankAccountNumber,
-          region: 'Nairobi' // Default region
+          region: 'Nairobi'
         }).select().single();
         if(schoolError) throw schoolError;
         const {error:authError}=await supabase.auth.signUp({email:form.adminEmail,password:form.password,options:{data:{full_name:form.adminName,phone:form.adminPhone,role:'school_admin',school_id:school.id}}});
@@ -110,10 +110,15 @@ export default function RegisterSchool(){
     </aside>
     <main className="register-main">
       {step < 6 && <>
-        <VideoGuide />
+        <div className="register-top-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <p className="step-indicator" style={{ margin: 0 }}>STEP {step + 1} OF 6</p>
+          <button type="button" className="button outline-button small" onClick={()=>setShowVideoGuide(!showVideoGuide)}>
+            {showVideoGuide ? 'Hide Video Guide ▴' : '▶ Watch Setup Guide'}
+          </button>
+        </div>
+        {showVideoGuide && <VideoGuide />}
         <div className="progress-bar-wrapper">
           <div className="progress"><span style={{ width: `${(step / 6) * 100}%` }} /></div>
-          <p className="step-indicator">STEP {step + 1} OF 6</p>
         </div>
         {content[step]}
         <div className="form-actions">
