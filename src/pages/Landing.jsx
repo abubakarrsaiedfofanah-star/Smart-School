@@ -13,6 +13,11 @@ export default function Landing(){
   const [menuOpen,setMenuOpen]=useState(false);
 
   return <div className="public-site">
+    <div className="announcement-bar" style={{ background: 'linear-gradient(90deg, #1e3a8a, #2375e1, #a855f7)', color: '#fff', padding: '12px 20px', textAlign: 'center', fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', zIndex: 1100, position: 'relative' }}>
+      <span>🎉 SmartSchool 6.0 is now live with AI Intelligence & Automated M-Pesa/Bank Billing!</span>
+      <Link to="/register" style={{ color: '#fff', textDecoration: 'underline', fontWeight: 800 }}>Start Free Trial →</Link>
+    </div>
+
     <header className="nav blue-nav sticky-nav">
       <Link className="brand" to="/">Smart<span>School</span></Link>
       <button className="public-menu" type="button" onClick={()=>setMenuOpen(!menuOpen)} aria-expanded={menuOpen} aria-label={menuOpen?'Close navigation':'Open navigation'}>{menuOpen?'×':'☰'}</button>
@@ -213,4 +218,5 @@ export default function Landing(){
         </div>
       </div>
     </footer>
-  </div>}
+  </div>
+}
