@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import { formatCurrency } from '../lib/formatters';
 
 const Analytics = ({ onBack }) => {
-    const { profile } = useAuth();
+    const { profile, school } = useAuth();
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState({
         payments: { paid: 0, pending: 0 },
@@ -118,11 +119,11 @@ const Analytics = ({ onBack }) => {
                         <div className="chart-info">
                             <div className="info-box">
                                 <small>Total Paid</small>
-                                <b>KES {data.payments.paid.toLocaleString()}</b>
+                                <b>{formatCurrency(data.payments.paid, school?.currency_code)}</b>
                             </div>
                             <div className="info-box">
                                 <small>Outstanding</small>
-                                <b style={{color: '#f43f5e'}}>KES {data.payments.pending.toLocaleString()}</b>
+                                <b style={{color: '#f43f5e'}}>{formatCurrency(data.payments.pending, school?.currency_code)}</b>
                             </div>
                         </div>
                     </div>

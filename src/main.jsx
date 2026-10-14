@@ -17,4 +17,8 @@ import './styles/screenshot-layout.css'
 import './styles/public-pages.css'
 import './styles/dashboard-theme.css'
 import './styles/super-admin.css'
+import './styles/school-home.css'
+import './styles/portal-layout.css'
+import './styles/tenant-admin.css'
+import './styles/school-accounts.css'
 createRoot(document.getElementById('root')).render(<React.StrictMode><BrowserRouter><AuthProvider><LanguageProvider><App /></LanguageProvider></AuthProvider></BrowserRouter></React.StrictMode>)

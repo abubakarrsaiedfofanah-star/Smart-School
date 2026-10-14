@@ -1,89 +1,46 @@
 import { Link } from 'react-router-dom'
+import PublicHeader from '../components/PublicHeader'
+import PublicFooter from '../components/PublicFooter'
 
-const links = [['Features', '/features'], ['Portals', '/portals'], ['Pricing', '/pricing'], ['About', '/about'], ['Contact', '/contact']]
+const portalPaths = { 'Platform Admin': '/super-admin', 'School Admin': '/school-admin', Teacher: '/teacher', Student: '/student', Parent: '/parent' }
 
 const pages = {
-  features: ['Unified Features', 'Everything you need to move forward.', [['Academic operations', 'Plan classes, publish assignments, manage assessments.'], ['People and attendance', 'See who is present, support learners early.'], ['Finance and billing', 'Track fee structures, payments, and receipts.'], ['Communication', 'Bring announcements and school updates into one rhythm.']]],
-  portals: ['Dedicated Portals', 'A focused experience for each person.', [['School Admin', 'The command centre for your school.'], ['Teacher', 'A calmer place to teach and assess.'], ['Student', 'Everything your learning needs.'], ['Parent', 'A clear window into progress.']]],
-  pricing: ['Flexible Plans', 'Choose the right school rhythm.', [['Starter', 'For schools getting organised.'], ['Professional', 'For connected school teams.'], ['Enterprise', 'For growing school groups.']]],
-  about: ['Our Vision', 'Good schools run on good connections.', [['Global Intelligence', 'AI-powered tools for every role.'], ['Reliable Foundations', 'Permissions and data kept carefully in place.'], ['Institutional Growth', 'Built to scale with your institution.']]],
-  contact: ['Get in Touch', 'Ready to make school life flow?', [['Email Support', 'support@smartschool.com'], ['Phone', '+1 (555) 000-0000'], ['Office', '123 Educational Blvd, Global City']]]
+  features: ['School tools', 'Everyday school work, organised in one place.', [['Academic operations', 'Plan classes, share assignments and manage assessments.'], ['People and attendance', 'Keep student records and daily attendance connected.'], ['Finance and billing', 'Organise fee schedules, payment records and invoices.'], ['Communication', 'Share announcements and school updates with your community.']]],
+  portals: ['Role portals', 'A separate workspace for each person in the school system.', [['Platform Admin', 'Manage school registrations, subscriptions and the platform.'], ['School Admin', 'Oversee school records, people and daily operations.'], ['Teacher', 'Manage classes, attendance, lessons and student work.'], ['Student', 'Keep up with assignments, timetables and results.'], ['Parent', 'Follow school updates and your learner’s progress.']]],
+  pricing: ['Plans for your school', 'Choose a plan as your school workspace grows.', [['Starter', 'Core tools to organise a school’s daily routines.'], ['Professional', 'More tools for connected school teams.'], ['Enterprise', 'Support for larger schools and school groups.']]],
+  about: ['About SmartSchool', 'A shared system for the people who make a school work.', [['Built around schools', 'Bring everyday school operations into a practical workspace.'], ['Clear roles', 'Give school leaders, teachers, students and parents the tools they need.'], ['One school workspace', 'Keep school information organised under each school’s own portal.']]],
+  contact: ['Get started with SmartSchool', 'Create a school workspace or sign in to a portal your school has already set up.', [['Register a school', 'Set up a new school workspace and its administrator account.'], ['Existing school', 'Sign in with the account credentials provided by your school.'], ['Role portals', 'Each role opens a separate workspace with its own access.']]],
 }
 
 export default function PublicPage({ page }) {
   const [title, intro, items] = pages[page] || pages.features
 
-  return <div className="public-page page-transition">
-    <header className="nav blue-nav sticky-nav">
-      <Link className="brand" to="/">Smart<span>School</span></Link>
-      <nav aria-label="Public navigation">
-        <Link to="/">Home</Link>
-        {links.map(([label, path]) => <Link className={page===label.toLowerCase()?'active':''} to={path} key={label}>{label}</Link>)}
-        <Link to="/login">Login</Link>
-        <Link className="button small blue-button" to="/register" style={{marginLeft: '15px'}}>Register school</Link>
-      </nav>
-    </header>
-
-    <main className="public-content">
-      <section className="sky-hero screenshot-hero" style={{ minHeight: '55vh', display: 'flex', alignItems: 'center' }}>
-        <div className="hero-product-backdrop"><div/><div/><div/><div/></div>
-        <div className="video-wash"/>
-        <div className="ambient-grid"/>
-        <div className="hero-copy">
-          <p className="eyebrow blue-eyebrow">SMARTSCHOOL PLATFORM</p>
-          <h1>{title}</h1>
-          <p>{intro}</p>
-          <div className="actions" style={{ marginTop: '30px' }}>
-            <Link className="button blue-button" to="/register">Start free trial <b>→</b></Link>
-            <Link className="button outline-hero" to="/login">Member Login</Link>
-          </div>
+  return <div className="public-site school-home school-public-page page-transition">
+    <PublicHeader />
+    <main className="school-public-content">
+      <section className="school-public-intro">
+        <p className="eyebrow">SMARTSCHOOL · {page.replaceAll('-', ' ').toUpperCase()}</p>
+        <h1>{title}</h1>
+        <p>{intro}</p>
+        <div className="school-public-actions">
+          <Link className="button blue-button" to="/register">Register your school <b aria-hidden="true">→</b></Link>
+          <Link className="button outline-hero" to="/login">Sign in to your portal</Link>
         </div>
       </section>
-
-      <section className="section" style={{ padding: '80px 40px', maxWidth: '1200px', margin: '0 auto' }}>
-        <div className="service-grid">
-          {items.map(([label, text]) => (
-            <article className="service glass-card interactive-card" key={label} style={{ background: 'var(--panel)', border: '1px solid var(--line)', padding: '40px' }}>
-              <span style={{ color: 'var(--green)', fontWeight: '800', fontSize: '0.8rem', letterSpacing: '1px' }}>MODULE</span>
-              <h3 style={{ fontSize: '1.4rem', margin: '15px 0 10px' }}>{label}</h3>
-              <p style={{ color: 'var(--muted)', lineHeight: '1.6' }}>{text}</p>
-            </article>
-          ))}
-        </div>
+      <section className="school-public-grid" aria-label={`${title} information`}>
+        {items.map(([label, text], index) => (
+          <article className="school-public-card" key={label}>
+            <span className="school-public-card-number">0{index + 1}</span>
+            <h2>{label}</h2>
+            <p>{text}</p>
+            {page === 'portals' && <Link to={portalPaths[label]}>Open {label} portal <b aria-hidden="true">→</b></Link>}
+            {page === 'contact' && label === 'Register a school' && <Link to="/register">Start registration <b aria-hidden="true">→</b></Link>}
+            {page === 'contact' && label === 'Existing school' && <Link to="/login">Open sign in <b aria-hidden="true">→</b></Link>}
+            {page === 'contact' && label === 'Role portals' && <Link to="/portals">View portals <b aria-hidden="true">→</b></Link>}
+          </article>
+        ))}
       </section>
     </main>
-
-    <footer className="site-footer">
-      <div className="footer-container">
-        <div className="footer-brand">
-          <Link className="brand" to="/">Smart<span>School</span></Link>
-          <p>The world's most advanced management platform. Now with AI Intelligence and Global Localization.</p>
-          <div className="footer-socials">
-            <span>𝕏</span> <span>🌐</span> <span>📸</span> <span>💼</span>
-          </div>
-        </div>
-        <div className="footer-column">
-          <h4>Explore</h4>
-          <Link to="/">Home</Link>
-          {links.map(([label,path])=><Link to={path} key={label}>{label}</Link>)}
-        </div>
-        <div className="footer-column">
-          <h4>Legal</h4>
-          <Link to="/">Privacy</Link>
-          <Link to="/">Terms</Link>
-          <Link to="/">Security</Link>
-        </div>
-        <div className="footer-column">
-          <h4>Institutional</h4>
-          <Link to="/login">Admin Portal</Link>
-          <Link to="/login">Staff Access</Link>
-          <Link to="/login">Student Area</Link>
-          <Link to="/login">Parent Login</Link>
-        </div>
-      </div>
-      <div className="footer-bottom">
-        <span>© 2026 SmartSchool Enterprise. All rights reserved.</span>
-      </div>
-    </footer>
+    <PublicFooter />
   </div>
 }

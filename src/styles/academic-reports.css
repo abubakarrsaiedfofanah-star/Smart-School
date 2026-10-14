@@ -216,3 +216,79 @@
   margin-bottom: 10px;
   letter-spacing: 1px;
 }
+
+.report-page { --report-accent: var(--school-accent-strong, #174e89); padding: clamp(16px, 4vw, 40px) 16px; color: #18324b; }
+.report-nav { width: min(100%, 850px); gap: 12px; padding: 0 !important; background: transparent !important; }
+.report-nav .back-btn { min-height: 42px; display: inline-flex; align-items: center; color: #526b82; text-decoration: none; font-weight: 650; }
+.report-nav .blue-button { min-height: 42px; padding: 0 16px; background: var(--report-accent); }
+.report-card { border: 1px solid #dce5ed; border-top: 6px solid var(--school-accent); border-radius: 14px; overflow: hidden; }
+.report-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 20px; padding-bottom: 22px; border-bottom-color: color-mix(in srgb, var(--school-accent) 34%, #dce5ed); }
+.school-branding { min-width: 0; text-align: left; }
+.school-branding h1 { color: #18324b; font-size: clamp(1.25rem, 3vw, 1.7rem); line-height: 1.2; overflow-wrap: anywhere; }
+.school-branding .school-type-badge { border-color: var(--school-accent); color: var(--report-accent); }
+.report-logo { max-width: min(110px, 24vw); max-height: 76px; object-fit: contain; object-position: left center; }
+.report-title { text-align: right; }
+.report-title h2 { margin: 0; color: #18324b; font-size: clamp(1.35rem, 3vw, 1.9rem); line-height: 1.18; }
+.report-title p { font-size: .86rem; }
+.verified-badge { border-color: color-mix(in srgb, var(--school-accent) 25%, white); background: color-mix(in srgb, var(--school-accent) 10%, white); color: var(--report-accent); }
+.student-info-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); background: #f7f9fb; }
+.info-item { min-width: 0; }
+.info-item b { display: block; overflow-wrap: anywhere; font-size: .98rem; }
+.report-table-wrap { width: 100%; overflow-x: auto; margin-bottom: 34px; }
+.results-table { min-width: 560px; margin-bottom: 0; }
+.results-table th { background: var(--report-accent); }
+.results-table td { vertical-align: top; }
+.results-table .badge { display: inline-grid; min-width: 29px; min-height: 29px; place-items: center; background: var(--grade-color, #526b82); }
+.report-no-results { margin: 0; padding: 18px; border: 1px dashed #d5e0e9; border-radius: 8px; color: #60778e; text-align: center; }
+.conduct-summary { border-top-color: #e4eaf0; }
+.conduct-summary h3 { color: #18324b; }
+.summary-box { border: 1px solid color-mix(in srgb, var(--school-accent) 45%, #dce5ed); background: color-mix(in srgb, var(--school-accent) 5%, white); }
+.summary-item b { overflow-wrap: anywhere; }
+.sig { min-width: 0; }
+.sig .line { border-color: color-mix(in srgb, var(--school-accent) 50%, #aebbc7); }
+.report-empty { display: grid; min-height: 70vh; place-items: center; padding: 24px; background: #f5f8fb; }
+.report-empty section { width: min(520px, 100%); padding: 32px; border: 1px solid #dce5ed; border-radius: 14px; background: #fff; }
+.report-empty section > span { color: #71869a; font-size: .72rem; font-weight: 800; letter-spacing: .12em; }
+.report-empty h1 { margin: 10px 0; color: #18324b; font-size: 1.6rem; }
+.report-empty p { color: #60778e; line-height: 1.6; }
+.report-empty a { display: inline-flex; margin-top: 8px; color: #174e89; font-weight: 700; }
+@media (max-width: 680px) {
+  .report-page { padding: 14px 10px; }
+  .report-nav { margin-bottom: 14px; }
+  .report-nav .blue-button { min-height: 40px; padding: 0 11px; font-size: .78rem; }
+  .report-card { padding: 22px 16px; border-radius: 10px; }
+  .report-header { grid-template-columns: 1fr; gap: 14px; margin-bottom: 22px !important; }
+  .report-title { text-align: left; }
+  .student-info-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; margin-bottom: 24px; padding: 14px; }
+  .info-item b { font-size: .88rem; }
+  .conduct-grid { gap: 24px; }
+  .summary-box { grid-template-columns: 1fr; gap: 12px; margin-bottom: 30px; padding: 16px; }
+  .summary-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .summary-item span { margin: 0; }
+  .summary-item b { font-size: 1.1rem; text-align: right; }
+  .signature-area { gap: 24px; margin-top: 42px; }
+  .sig span { font-size: .68rem; }
+}
+@media print {
+  .report-page { padding: 0; background: #fff; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .report-card { border: 0; border-top: 5px solid var(--school-accent); border-radius: 0; padding: 20px 26px; }
+  .report-header { grid-template-columns: minmax(0, 1fr) auto; }
+  .student-info-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .report-table-wrap { overflow: visible; }
+  .results-table { min-width: 0; }
+}
+.report-period { display: flex; flex-wrap: wrap; gap: 14px; margin: -20px 0 28px; padding: 16px; border: 1px solid #e1e8ef; border-radius: 10px; background: #f8fafc; }
+.report-period label { display: grid; min-width: min(220px, 100%); gap: 6px; color: #526b82; font-size: .72rem; font-weight: 750; }
+.report-period select { min-height: 40px; padding: 0 34px 0 11px; border: 1px solid #d5e0e9; border-radius: 7px; background: #fff; color: #18324b; font: inherit; }
+@media (max-width: 680px) { .report-period { gap: 10px; margin: -8px 0 18px; padding: 12px; }.report-period label { flex: 1 1 130px; min-width: 0; } }
+
+@media print { .report-period { display: none !important; } }
+.report-progress { margin: 0 0 28px; padding: 18px; border: 1px solid #e1e8ef; border-radius: 10px; background: #fbfcfd; }
+.report-progress h3 { margin: 0 0 5px; color: #18324b; }
+.report-progress > p { margin: 0 0 15px; color: #60778e; font-size: .78rem; }
+.report-progress-list { display: grid; gap: 13px; }
+.report-progress-row > div:first-child { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; color: #18324b; font-size: .8rem; }
+.report-progress-row span { color: #60778e; white-space: nowrap; }
+.report-progress-track { height: 8px; overflow: hidden; border-radius: 99px; background: #e9eff4; }
+.report-progress-track i { display: block; height: 100%; border-radius: inherit; }
+@media print { .report-progress { break-inside: avoid; } }

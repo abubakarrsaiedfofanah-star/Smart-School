@@ -1,120 +1,59 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import '../styles/payment-flow.css';
+import { formatCurrency } from '../lib/formatters';
 
-export default function PaymentFlow({ payment, onClose, onSuccess }) {
-  const [step, setStep] = useState(1); // 1: Select, 2: Processing, 3: Success
+export default function PaymentFlow({ payment, onClose }) {
   const [method, setMethod] = useState('mpesa');
   const [school, setSchool] = useState(null);
 
   useEffect(() => {
-    if (payment?.school_id) {
-      fetchSchoolDetails();
-    }
-  }, [payment]);
-
-  const fetchSchoolDetails = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('schools')
-        .select('*')
-        .eq('id', payment.school_id)
-        .single();
-      if (!error) setSchool(data);
-    } catch (e) {
-      console.error('Error fetching school payment details');
-    }
-  };
-
-  const startPayment = () => {
-    setStep(2);
-    setTimeout(() => {
-      setStep(3);
-    }, 2500);
-  };
-
-  const finish = () => {
-    onSuccess();
-    onClose();
-  };
+    let active = true;
+    const fetchSchool = async () => {
+      if (!payment?.school_id || !supabase) return;
+      const { data } = await supabase.from('schools')
+        .select('name, mpesa_paybill, bank_name, bank_account_name, bank_account_number, currency_code')
+        .eq('id', payment.school_id).maybeSingle();
+      if (active) setSchool(data || null);
+    };
+    fetchSchool();
+    return () => { active = false; };
+  }, [payment?.school_id]);
 
   return (
-    <div className="payment-overlay">
-      <div className="payment-modal glass-card">
-        {step === 1 && (
-          <div className="payment-step">
-            <h2>Complete Payment</h2>
-            <p className="payment-summary">You are paying for: <b>{payment.name || payment.reference}</b></p>
-            <div className="payment-amount">KES {payment.amount?.toLocaleString()}</div>
-
-            <div className="method-selector">
-              <button
-                className={`method-btn ${method === 'mpesa' ? 'active' : ''}`}
-                onClick={() => setMethod('mpesa')}
-              >
-                <i>📱</i> M-Pesa
-              </button>
-              <button
-                className={`method-btn ${method === 'card' ? 'active' : ''}`}
-                onClick={() => setMethod('card')}
-              >
-                <i>💳</i> Card
-              </button>
-            </div>
-
-            <div className="payment-instructions glass-card" style={{marginTop: '20px', padding: '15px', background: 'rgba(255,255,255,0.05)', fontSize: '0.85rem'}}>
-              {method === 'mpesa' ? (
-                <>
-                  <p style={{margin: '0 0 10px 0'}}><b>M-Pesa Instructions:</b></p>
-                  <p style={{margin: '5px 0'}}>Paybill: <b>{school?.mpesa_paybill || '247247'}</b></p>
-                  <p style={{margin: '5px 0'}}>Account: <b>{payment.reference || 'FEES'}</b></p>
-                </>
-              ) : (
-                <>
-                  <p style={{margin: '0 0 10px 0'}}><b>Bank Transfer Instructions:</b></p>
-                  <p style={{margin: '5px 0'}}>Bank: <b>{school?.bank_name || 'Commercial Bank'}</b></p>
-                  <p style={{margin: '5px 0'}}>Account Name: <b>{school?.bank_account_name || school?.name}</b></p>
-                  <p style={{margin: '5px 0'}}>Account No: <b>{school?.bank_account_number || '0000000000'}</b></p>
-                </>
-              )}
-            </div>
-
-            <div className="payment-actions" style={{marginTop: '20px'}}>
-              <button className="button blue-button full" onClick={startPayment}>Pay KES {payment.amount?.toLocaleString()} →</button>
-              <button className="back" style={{width:'100%', marginTop:'10px'}} onClick={onClose}>Cancel</button>
-            </div>
+    <div className="payment-overlay" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
+      <section className="payment-modal glass-card" role="dialog" aria-modal="true" aria-labelledby="payment-title">
+        <div className="payment-step">
+          <h2 id="payment-title">Payment instructions</h2>
+          <p className="payment-summary">For: <b>{payment.name || payment.reference}</b></p>
+          <div className="payment-amount">{formatCurrency(payment.amount, school?.currency_code)}</div>
+          <p>Use the school’s official payment channel, then share the transaction reference with the school office. The school administrator will confirm the payment in the portal.</p>
+          <div className="method-selector" role="group" aria-label="Payment method">
+            <button type="button" className={`method-btn ${method === 'mpesa' ? 'active' : ''}`} aria-pressed={method === 'mpesa'} onClick={() => setMethod('mpesa')}>M-Pesa</button>
+            <button type="button" className={`method-btn ${method === 'bank' ? 'active' : ''}`} aria-pressed={method === 'bank'} onClick={() => setMethod('bank')}>Bank transfer</button>
           </div>
-        )}
-
-        {step === 2 && (
-          <div className="payment-step processing">
-            <div className="spinner large"></div>
-            <h3>Processing Payment...</h3>
-            <p>Please wait while we confirm your transaction with {method.toUpperCase()}.</p>
+          <div className="payment-instructions glass-card" style={{ marginTop: 20, padding: 15, background: 'rgba(255,255,255,0.05)', fontSize: '0.9rem' }}>
+            {method === 'mpesa' ? (
+              <>
+                <p><b>{school?.name || 'School'} M-Pesa details</b></p>
+                <p>Paybill: <b>{school?.mpesa_paybill || 'Contact the school office'}</b></p>
+                <p>Account/reference: <b>{payment.reference || 'Ask the school office'}</b></p>
+              </>
+            ) : (
+              <>
+                <p><b>{school?.name || 'School'} bank details</b></p>
+                <p>Bank: <b>{school?.bank_name || 'Contact the school office'}</b></p>
+                <p>Account name: <b>{school?.bank_account_name || school?.name || 'Contact the school office'}</b></p>
+                <p>Account number: <b>{school?.bank_account_number || 'Contact the school office'}</b></p>
+              </>
+            )}
           </div>
-        )}
-
-        {step === 3 && (
-          <div className="payment-step success">
-            <div className="success-icon">✓</div>
-            <h3>Payment Successful!</h3>
-            <p>Your payment has been recorded. Here is your digital receipt summary:</p>
-
-            <div className="receipt">
-              <div className="receipt-row"><span>Reference</span><b>{payment.reference || 'REF-'+Math.random().toString(36).substr(2, 9).toUpperCase()}</b></div>
-              <div className="receipt-row"><span>Amount Paid</span><b>KES {payment.amount?.toLocaleString()}</b></div>
-              <div className="receipt-row"><span>Date</span><b>{new Date().toLocaleDateString()}</b></div>
-            </div>
-
-            <Link to={`/invoice/${payment.id}`} className="button small full" style={{marginBottom: '10px', backgroundColor: '#3b82f6', color: '#fff', textAlign:'center', display:'block'}}>
-              Download Official Receipt 🧾
-            </Link>
-
-            <button className="button blue-button full" onClick={finish}>Done</button>
+          <p role="status" style={{ marginTop: 16 }}>Online checkout is not connected yet. This screen cannot confirm payment or issue an official receipt.</p>
+          <div className="payment-actions" style={{ marginTop: 20 }}>
+            <button type="button" className="button blue-button full" onClick={onClose}>Close</button>
           </div>
-        )}
-      </div>
+        </div>
+      </section>
     </div>
   );
 }

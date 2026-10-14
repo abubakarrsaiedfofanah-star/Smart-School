@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import VideoGuide from '../components/VideoGuide'
@@ -6,11 +6,15 @@ import toast from 'react-hot-toast'
 
 const steps = ['School', 'Level', 'Accounts', 'Admin', 'Review', 'Plan', 'Done']
 const initial = { schoolName: '', email: '', phone: '', address: '', level: 'Primary school', mpesaPaybill: '', mpesaTill: '', bankName: '', bankAccountName: '', bankAccountNumber: '', adminName: '', adminEmail: '', adminPhone: '', password: '', confirmPassword: '', plan: 'Starter' }
+const persistDraft = values => {
+  const { password, confirmPassword, ...safeDraft } = values
+  localStorage.setItem('smartschool_reg_draft', JSON.stringify(safeDraft))
+}
 
 const getPasswordStrength = (password) => {
   if (!password) return { label: '', color: 'transparent', score: 0 };
   let score = 0;
-  if (password.length > 7) score++;
+  if (password.length >= 12) score++;
   if (/[A-Z]/.test(password)) score++;
   if (/[0-9]/.test(password)) score++;
   if (/[^A-Za-z0-9]/.test(password)) score++;
@@ -33,7 +37,15 @@ export default function RegisterSchool(){
 
   const [form,setForm]=useState(()=>{
     const saved = localStorage.getItem('smartschool_reg_draft');
-    return saved ? JSON.parse(saved) : initial;
+    if (!saved) return initial
+    try {
+      const draft = { ...initial, ...JSON.parse(saved), password: '', confirmPassword: '' }
+      persistDraft(draft)
+      return draft
+    } catch {
+      localStorage.removeItem('smartschool_reg_draft')
+      return initial
+    }
   });
 
   const [saving,setSaving]=useState(false);
@@ -45,7 +57,7 @@ export default function RegisterSchool(){
 
   const update=(key,value)=>setForm(current=>{
     const updated = {...current,[key]:value};
-    localStorage.setItem('smartschool_reg_draft', JSON.stringify(updated));
+    persistDraft(updated)
     return updated;
   });
 
@@ -64,7 +76,7 @@ export default function RegisterSchool(){
   const next=()=>{
     if(step===0&&(!form.schoolName||!form.email||!form.phone)) return toast.error('Please add the school name, email and phone number.');
     if(step===3&&(!form.adminName||!form.adminEmail||!form.password)) return toast.error('Please complete the administrator details.');
-    if(step===3&&form.password.length<8) return toast.error('Password must be at least 8 characters long.');
+    if(step===3&&form.password.length<12) return toast.error('Use a password with at least 12 characters.');
     if(step===3&&form.password !== form.confirmPassword) return toast.error('Passwords do not match.');
     setStep(current=>Math.min(current+1,5))
   }
@@ -75,35 +87,24 @@ export default function RegisterSchool(){
     const id = toast.loading('Setting up your institutional workspace...');
     try{
       if(supabase){
-        const slug=form.schoolName.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now().toString().slice(-4);
-        const {data:school,error:schoolError}=await supabase.from('schools').insert({
-          name:form.schoolName,
-          slug,
-          email:form.email,
-          phone:form.phone,
-          address:form.address,
-          school_level:form.level,
-          subscription_plan:form.plan,
-          mpesa_paybill: form.mpesaPaybill,
-          mpesa_till: form.mpesaTill,
-          bank_name: form.bankName,
-          bank_account_name: form.bankAccountName,
-          bank_account_number: form.bankAccountNumber,
-          region: 'Nairobi'
-        }).select().single();
-        if(schoolError) throw schoolError;
-        const {error:authError}=await supabase.auth.signUp({email:form.adminEmail,password:form.password,options:{data:{full_name:form.adminName,phone:form.adminPhone,role:'school_admin',school_id:school.id}}});
-        if(authError) throw authError;
+        const { data, error } = await supabase.functions.invoke('register-school', { body: {
+          school: { name: form.schoolName, email: form.email, phone: form.phone, address: form.address, school_level: form.level, subscription_plan: form.plan, mpesa_paybill: form.mpesaPaybill, mpesa_till: form.mpesaTill, bank_name: form.bankName, bank_account_name: form.bankAccountName, bank_account_number: form.bankAccountNumber },
+          admin: { full_name: form.adminName, email: form.adminEmail.trim().toLowerCase(), phone: form.adminPhone, password: form.password }
+        } });
+        if (error) {
+          const response = await error.context?.json?.().catch(() => null)
+          throw new Error(response?.error || error.message)
+        }
+        if (data?.error) throw new Error(data.error)
+      } else {
+        throw new Error('School registration needs a Supabase connection. Configure the app credentials before creating a school.');
       }
       localStorage.removeItem('smartschool_reg_draft');
       localStorage.removeItem('smartschool_reg_step');
-      toast.success('School registered successfully!', {id});
+      toast.success('School request submitted. Verify the administrator email if prompted. Your school portals open after platform approval.', {id});
       setStep(6)
     }catch(e){
-      localStorage.removeItem('smartschool_reg_draft');
-      localStorage.removeItem('smartschool_reg_step');
-      toast.success('School workspace requested successfully (Demo Mode)!', {id});
-      setStep(6)
+      toast.error(e.message || 'Could not register the school. Check the details and try again.', {id});
     }finally{
       setSaving(false)
     }
@@ -131,14 +132,14 @@ export default function RegisterSchool(){
       plan: 'Professional'
     };
     setForm(demoData);
-    localStorage.setItem('smartschool_reg_draft', JSON.stringify(demoData));
+    persistDraft(demoData);
     toast.success('Demo school data loaded!');
   }
 
   const copyCredentials = () => {
-    const text = `School: ${form.schoolName}\nAdmin Email: ${form.adminEmail}\nPassword: ${form.password}\nPlan: ${form.plan}`;
+    const text = `School: ${form.schoolName}\nAdmin Email: ${form.adminEmail}\nPlan: ${form.plan}`;
     navigator.clipboard.writeText(text);
-    toast.success('Admin credentials copied to clipboard!');
+    toast.success('School details copied to clipboard.');
   }
 
   const openHelp = (topic) => {
@@ -160,7 +161,7 @@ export default function RegisterSchool(){
             </button>
           )}
           <button type="button" onClick={fillDemoData} style={{ fontSize: '0.8rem', padding: '8px 14px', background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, color: 'var(--green)' }}>
-            ⚡ Auto-fill Demo Data
+            Auto-fill demo data
           </button>
         </div>
       </div>
@@ -176,7 +177,7 @@ export default function RegisterSchool(){
         {['Primary school','Secondary school','Both primary & secondary'].map(level=>(
           <button type="button" onClick={()=>update('level',level)} className={'choice '+(form.level===level?'selected':'')} key={level}>
             <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '4px' }}>
-              {level === 'Primary school' ? '🎒' : level === 'Secondary school' ? '🎓' : '🏫'} {level}
+              {level}
             </div>
             <small style={{ color: 'var(--muted)' }}>Optimized reporting & term structures</small>
           </button>
@@ -187,7 +188,7 @@ export default function RegisterSchool(){
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
         <h2>School Payment Accounts</h2>
         <button type="button" onClick={()=>openHelp('payments')} style={{ background: 'none', border: 'none', color: 'var(--green)', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>
-          ℹ️ Why configure this?
+          Why configure this?
         </button>
       </div>
       <p className="form-help">Optional: Enable seamless fee payments via M-Pesa and bank transfer.</p>
@@ -205,7 +206,7 @@ export default function RegisterSchool(){
 
       <label>Password
         <div className="password-field" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-          <input type={showPassword?'text':'password'} value={form.password} onChange={event=>update('password',event.target.value)} placeholder="Minimum 8 characters" required style={{ width: '100%', paddingRight: '70px' }}/>
+          <input type={showPassword?'text':'password'} value={form.password} onChange={event=>update('password',event.target.value)} placeholder="At least 12 characters" minLength={12} autoComplete="new-password" required style={{ width: '100%', paddingRight: '70px' }}/>
           <button type="button" onClick={()=>setShowPassword(!showPassword)} style={{ position: 'absolute', right: '12px', background: 'transparent', border: 'none', fontWeight: 600, color: 'var(--muted)', cursor: 'pointer' }}>{showPassword?'Hide':'Show'}</button>
         </div>
         {form.password && (
@@ -220,12 +221,12 @@ export default function RegisterSchool(){
 
       <label style={{ marginTop: '15px' }}>Confirm Password
         <div className="password-field" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-          <input type={showConfirmPassword?'text':'password'} value={form.confirmPassword} onChange={event=>update('confirmPassword',event.target.value)} placeholder="Re-enter password" required style={{ width: '100%', paddingRight: '70px' }}/>
+          <input type={showConfirmPassword?'text':'password'} value={form.confirmPassword} onChange={event=>update('confirmPassword',event.target.value)} placeholder="Re-enter password" minLength={12} autoComplete="new-password" required style={{ width: '100%', paddingRight: '70px' }}/>
           <button type="button" onClick={()=>setShowConfirmPassword(!showConfirmPassword)} style={{ position: 'absolute', right: '12px', background: 'transparent', border: 'none', fontWeight: 600, color: 'var(--muted)', cursor: 'pointer' }}>{showConfirmPassword?'Hide':'Show'}</button>
         </div>
         {form.confirmPassword && (
           <div style={{ fontSize: '0.8rem', fontWeight: 700, marginTop: '6px', color: form.password === form.confirmPassword ? '#1cb681' : '#ff4d4d' }}>
-            {form.password === form.confirmPassword ? '✓ Passwords match' : '✕ Passwords do not match'}
+            {form.password === form.confirmPassword ? 'Passwords match' : 'Passwords do not match'}
           </div>
         )}
       </label>
@@ -238,8 +239,8 @@ export default function RegisterSchool(){
           <b style={{ fontSize: '1.1rem', color: 'var(--ink)' }}>{form.schoolName || 'Unnamed School'}</b>
           <span style={{ background: 'var(--green)', color: '#fff', padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700 }}>{form.level}</span>
         </div>
-        <p style={{ margin: '8px 0', color: 'var(--muted)', fontSize: '0.9rem' }}>{form.email} · {form.phone}</p>
-        <p style={{ margin: '0 0 12px', color: 'var(--muted)', fontSize: '0.85rem' }}>📍 {form.address || 'No address specified'}</p>
+        <p style={{ margin: '8px 0', color: 'var(--muted)', fontSize: '0.9rem' }}>{form.email} Â· {form.phone}</p>
+        <p style={{ margin: '0 0 12px', color: 'var(--muted)', fontSize: '0.85rem' }}>{form.address || 'No address specified'}</p>
         <hr style={{ borderColor: 'var(--line)', margin: '15px 0' }}/>
         <div style={{ display: 'grid', gap: '4px' }}>
           <b style={{ fontSize: '0.9rem' }}>Administrator: {form.adminName || 'Not specified'}</b>
@@ -249,7 +250,7 @@ export default function RegisterSchool(){
     </>,
     <>
       <h2>Choose your plan</h2>
-      <p className="form-help">Select the tier that fits your institutional size. You can upgrade or change anytime.</p>
+      <p className="form-help">Choose the plan you want to request. The platform administrator will review it; online payment checkout is not connected yet.</p>
       <div className="choice-grid">
         {['Starter','Professional','Enterprise'].map(plan=>(
           <button type="button" onClick={()=>update('plan',plan)} className={'choice '+(form.plan===plan?'selected':'')} key={plan} style={{ textAlign: 'left', padding: '20px' }}>
@@ -265,9 +266,9 @@ export default function RegisterSchool(){
       </div>
     </>,
     <div className="confirmation" style={{ textAlign: 'center', padding: '20px 0' }}>
-      <div style={{ width: '70px', height: '70px', background: 'var(--green)', color: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', margin: '0 auto 20px', boxShadow: '0 10px 25px rgba(28, 182, 129, 0.3)' }}>✓</div>
-      <h2 style={{ fontSize: '1.8rem', fontWeight: 800 }}>School Workspace Ready!</h2>
-      <p style={{ color: 'var(--muted)', maxWidth: '400px', margin: '0 auto 25px' }}>Your institution has been successfully registered on SmartSchool. You can now sign in with your administrator credentials.</p>
+      <div style={{ width: '70px', height: '70px', background: 'var(--green)', color: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', fontWeight: 800, margin: '0 auto 20px', boxShadow: '0 10px 25px rgba(28, 182, 129, 0.3)' }}>OK</div>
+      <h2 style={{ fontSize: '1.8rem', fontWeight: 800 }}>School request submitted</h2>
+      <p style={{ color: 'var(--muted)', maxWidth: '400px', margin: '0 auto 25px' }}>Your school and plan request are waiting for SmartSchool platform review. The school administrator can use the portal after approval. Online payment checkout is not connected yet.</p>
 
       <div style={{ background: 'var(--cream)', padding: '20px', borderRadius: '16px', maxWidth: '400px', margin: '0 auto 25px', textAlign: 'left', border: '1px solid var(--line)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
@@ -286,10 +287,10 @@ export default function RegisterSchool(){
 
       <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
         <button type="button" onClick={copyCredentials} className="outline-button" style={{ padding: '12px 20px', borderRadius: '12px', background: 'var(--panel)', border: '1px solid var(--line)', cursor: 'pointer', fontWeight: 600 }}>
-          📋 Copy Admin Credentials
+          Copy school details
         </button>
         <Link className="button blue-button" to="/login" style={{ padding: '12px 24px', borderRadius: '12px' }}>
-          Sign in to Portal →
+          Sign in to the portal
         </Link>
       </div>
     </div>
@@ -309,7 +310,7 @@ export default function RegisterSchool(){
         <ol className="step-list" style={{ listStyle: 'none', padding: 0, margin: '40px 0 0', display: 'grid', gap: '16px' }}>
           {steps.map((label, index) => (
             <li className={index < step ? 'done' : index === step ? 'current' : ''} key={label} style={{ display: 'flex', alignItems: 'center', gap: '14px', opacity: index === step ? 1 : index < step ? 0.9 : 0.4 }}>
-              <span className="step-num" style={{ width: '28px', height: '28px', borderRadius: '50%', background: index <= step ? 'var(--green)' : 'rgba(255,255,255,0.2)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.8rem' }}>{index < step ? '✓' : index + 1}</span>
+              <span className="step-num" style={{ width: '28px', height: '28px', borderRadius: '50%', background: index <= step ? 'var(--green)' : 'rgba(255,255,255,0.2)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.8rem' }}>{index < step ? 'OK' : index + 1}</span>
               <span className="step-label" style={{ fontWeight: index === step ? 700 : 500, fontSize: '0.95rem' }}>{label}</span>
             </li>
           ))}
@@ -321,7 +322,7 @@ export default function RegisterSchool(){
           <div className="register-top-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <p className="step-indicator" style={{ margin: 0, fontWeight: 700, fontSize: '0.8rem', color: 'var(--green)', letterSpacing: '1px' }}>STEP {step + 1} OF 6</p>
             <button type="button" className="button outline-button small" onClick={()=>setShowVideoGuide(!showVideoGuide)} style={{ padding: '6px 14px', fontSize: '0.8rem', background: 'var(--cream)', borderRadius: '8px', border: '1px solid var(--line)', cursor: 'pointer', fontWeight: 600 }}>
-              {showVideoGuide ? 'Hide Video Guide ▴' : '▶ Watch Setup Guide'}
+              {showVideoGuide ? 'Hide video guide' : 'Watch setup guide'}
             </button>
           </div>
           {showVideoGuide && <div style={{ marginBottom: '20px' }}><VideoGuide /></div>}
@@ -332,11 +333,11 @@ export default function RegisterSchool(){
           {content[step]}
 
           <div className="form-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '40px', borderTop: '1px solid var(--line)', paddingTop: '20px' }}>
-            {step > 0 ? <button type="button" className="back-btn" onClick={back} style={{ background: 'var(--cream)', border: '1px solid var(--line)', padding: '12px 20px', borderRadius: '12px', cursor: 'pointer', fontWeight: 600 }}>← Back</button> : <Link className="back-btn" to="/" style={{ color: 'var(--muted)', fontWeight: 600 }}>Cancel</Link>}
+            {step > 0 ? <button type="button" className="back-btn" onClick={back} style={{ background: 'var(--cream)', border: '1px solid var(--line)', padding: '12px 20px', borderRadius: '12px', cursor: 'pointer', fontWeight: 600 }}>Back</button> : <Link className="back-btn" to="/" style={{ color: 'var(--muted)', fontWeight: 600 }}>Cancel</Link>}
             {step < 5 ?
-              <button type="button" className="button blue-button" onClick={next} style={{ padding: '14px 28px', borderRadius: '12px' }}>Continue →</button> :
+              <button type="button" className="button blue-button" onClick={next} style={{ padding: '14px 28px', borderRadius: '12px' }}>Continue</button> :
               <button type="button" className="button blue-button" onClick={step === 5 ? submit : next} disabled={saving} style={{ padding: '14px 28px', borderRadius: '12px' }}>
-                {step === 5 ? (saving ? 'Creating Workspace…' : 'Create Workspace →') : 'Review Plan →'}
+                {step === 5 ? (saving ? 'Creating workspace...' : 'Create workspace') : 'Review plan'}
               </button>
             }
           </div>
@@ -350,7 +351,7 @@ export default function RegisterSchool(){
           <div className="glass-card" style={{ width: '100%', maxWidth: '450px', background: 'var(--panel)', borderRadius: '24px', padding: '30px', boxShadow: 'var(--shadow)', border: '1px solid var(--line)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
               <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Payment Accounts Setup</h3>
-              <button onClick={()=>setShowHelpModal(false)} style={{ background: 'var(--cream)', border: 'none', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', fontWeight: 700 }}>✕</button>
+              <button onClick={()=>setShowHelpModal(false)} style={{ background: 'var(--cream)', border: 'none', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', fontWeight: 700 }}>Close</button>
             </div>
             <p style={{ color: 'var(--muted)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '20px' }}>
               Configuring your M-Pesa Paybill, Till number, or bank accounts allows parents to pay school fees directly through the SmartSchool mobile and web parent portal. All transactions reconcile automatically with the finance module. You can also skip this and configure it later in School Settings.

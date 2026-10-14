@@ -1,48 +1,63 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
-import Landing from './pages/Landing'
-import Login from './pages/Login'
-import RegisterSchool from './pages/RegisterSchool'
+const Landing = lazy(() => import('./pages/Landing'))
+const Login = lazy(() => import('./pages/Login'))
+const RegisterSchool = lazy(() => import('./pages/RegisterSchool'))
 import { useAuth } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
-import RoleDashboard from './pages/RoleDashboard'
+const RoleDashboard = lazy(() => import('./pages/RoleDashboard'))
 import { roleRoute } from './lib/roleRoute'
-import PublicPage from './pages/PublicPage'
+const PublicPage = lazy(() => import('./pages/PublicPage'))
 import { initPushNotifications } from './lib/notifications'
 import { Toaster } from 'react-hot-toast'
-import Chat from './pages/Chat'
-import AcademicReport from './pages/AcademicReport'
-import SubmissionPortal from './pages/SubmissionPortal'
-import TeacherReview from './pages/TeacherReview'
-import SchoolCalendar from './pages/SchoolCalendar'
-import Timetable from './pages/Timetable'
-import Library from './pages/Library'
-import SchoolSettings from './pages/SchoolSettings'
-import QuizPortal from './pages/QuizPortal'
-import Broadcast from './pages/Broadcast'
-import InvoiceView from './pages/InvoiceView'
-import Gradebook from './pages/Gradebook'
-import MeetingScheduler from './pages/MeetingScheduler'
-import BehaviorLog from './pages/BehaviorLog'
-import AuditTrail from './pages/AuditTrail'
-import SecuritySettings from './pages/SecuritySettings'
-import AdmissionsPortal from './pages/AdmissionsPortal'
-import AdmissionsManager from './pages/AdmissionsManager'
-import CourseBuilder from './pages/CourseBuilder'
-import CourseView from './pages/CourseView'
-import CertificateGenerator from './pages/CertificateGenerator'
-import ProfileSettings from './pages/ProfileSettings'
-import LessonPlans from './pages/LessonPlans'
+const Chat = lazy(() => import('./pages/Chat'))
+const AcademicReport = lazy(() => import('./pages/AcademicReport'))
+const SubmissionPortal = lazy(() => import('./pages/SubmissionPortal'))
+const TeacherReview = lazy(() => import('./pages/TeacherReview'))
+const SchoolCalendar = lazy(() => import('./pages/SchoolCalendar'))
+const Timetable = lazy(() => import('./pages/Timetable'))
+const Library = lazy(() => import('./pages/Library'))
+const SchoolSettings = lazy(() => import('./pages/SchoolSettings'))
+const QuizPortal = lazy(() => import('./pages/QuizPortal'))
+const Broadcast = lazy(() => import('./pages/Broadcast'))
+const InvoiceView = lazy(() => import('./pages/InvoiceView'))
+const Gradebook = lazy(() => import('./pages/Gradebook'))
+const MeetingScheduler = lazy(() => import('./pages/MeetingScheduler'))
+const BehaviorLog = lazy(() => import('./pages/BehaviorLog'))
+const AuditTrail = lazy(() => import('./pages/AuditTrail'))
+const SecuritySettings = lazy(() => import('./pages/SecuritySettings'))
+const AdmissionsPortal = lazy(() => import('./pages/AdmissionsPortal'))
+const AdmissionsManager = lazy(() => import('./pages/AdmissionsManager'))
+const CourseBuilder = lazy(() => import('./pages/CourseBuilder'))
+const CourseView = lazy(() => import('./pages/CourseView'))
+const CertificateGenerator = lazy(() => import('./pages/CertificateGenerator'))
+const ProfileSettings = lazy(() => import('./pages/ProfileSettings'))
+const LessonPlans = lazy(() => import('./pages/LessonPlans'))
+const SchoolSubscription = lazy(() => import('./pages/SchoolSubscription'))
+const SchoolAccounts = lazy(() => import('./pages/SchoolAccounts'))
+import AppInstallPrompt from './components/AppInstallPrompt'
+
+const readTheme = () => {
+  try {
+    return localStorage.getItem('theme') === 'dark' ? 'dark' : 'light'
+  } catch {
+    return 'light'
+  }
+}
 
 function Guard() { const {session,profile,loading}=useAuth(); if(loading)return <div className="portal-loading"><div className="spinner"></div></div>; if(!session)return <Navigate to="/login" replace/>; return profile?.role ? <Navigate to={roleRoute(profile.role)} replace/> : <Navigate to="/login" replace/> }
 const roleRoutes=[['super-admin','super_admin'],['school-admin','school_admin'],['teacher','teacher'],['student','student'],['parent','parent']]
 export default function App(){
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+  const [theme, setTheme] = useState(readTheme);
 
   useEffect(() => {
     initPushNotifications();
+    if (import.meta.env.PROD && 'serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(error => console.error('SmartSchool app shell could not be registered:', error));
+  }, []);
+
+  useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
+    try { localStorage.setItem('theme', theme); } catch { /* Theme still works for this session. */ }
   }, [theme]);
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
@@ -50,13 +65,17 @@ export default function App(){
   return (
     <>
       <Toaster position="top-right" reverseOrder={false} />
+      <AppInstallPrompt />
       <button
         className="theme-toggle"
         onClick={toggleTheme}
-        aria-label="Toggle dark mode"
+        aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+        aria-pressed={theme === 'dark'}
+        title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
       >
         {theme === 'light' ? '🌙' : '☀️'}
       </button>
+      <Suspense fallback={<div className="portal-loading" role="status" aria-live="polite"><div className="spinner" /><span>Loading page…</span></div>}>
       <Routes>
         <Route path="/" element={<Landing/>}/>
         <Route path="/welcome" element={<Landing/>}/>
@@ -67,9 +86,10 @@ export default function App(){
         <Route path="/contact" element={<PublicPage page="contact"/>}/>
         <Route path="/register" element={<RegisterSchool/>}/>
         <Route path="/login" element={<Login/>}/>
+        <Route path="/login/:portalRole" element={<Login/>}/>
         <Route path="/chat" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><Chat /></ProtectedRoute>} />
         <Route path="/broadcast" element={<ProtectedRoute roles={['school_admin', 'teacher']}><Broadcast /></ProtectedRoute>} />
-        <Route path="/report-card/:studentId" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><AcademicReport /></ProtectedRoute>} />
+        <Route path="/report-card/:studentId" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']} shell={false}><AcademicReport /></ProtectedRoute>} />
         <Route path="/invoice/:paymentId" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><InvoiceView /></ProtectedRoute>} />
         <Route path="/gradebook" element={<ProtectedRoute roles={['school_admin', 'teacher']}><Gradebook /></ProtectedRoute>} />
         <Route path="/meetings" element={<ProtectedRoute roles={['teacher', 'parent']}><MeetingScheduler /></ProtectedRoute>} />
@@ -85,6 +105,8 @@ export default function App(){
         <Route path="/profile" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><ProfileSettings /></ProtectedRoute>} />
         <Route path="/lessons" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><LessonPlans /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute roles={['school_admin']}><SchoolSettings /></ProtectedRoute>} />
+        <Route path="/subscription" element={<ProtectedRoute roles={['school_admin']}><SchoolSubscription /></ProtectedRoute>} />
+        <Route path="/school-accounts" element={<ProtectedRoute roles={['school_admin']}><SchoolAccounts /></ProtectedRoute>} />
         <Route path="/course-builder" element={<ProtectedRoute roles={['school_admin', 'teacher']}><CourseBuilder /></ProtectedRoute>} />
         <Route path="/course/:courseId" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student']}><CourseView /></ProtectedRoute>} />
         <Route path="/certificate/:courseId" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student']}><CertificateGenerator /></ProtectedRoute>} />
@@ -92,10 +114,11 @@ export default function App(){
         <Route path="/admissions" element={<ProtectedRoute roles={['school_admin', 'super_admin']}><AdmissionsManager /></ProtectedRoute>} />
         <Route path="/portal" element={<Guard/>}/>
         {roleRoutes.map(([path,role])=>(
-          <Route key={path} path={'/'+path} element={<ProtectedRoute roles={[role]}><RoleDashboard role={role}/></ProtectedRoute>}/>
+          <Route key={path} path={'/'+path} element={<ProtectedRoute roles={[role]} shell={false}><RoleDashboard role={role}/></ProtectedRoute>}/>
         ))}
         <Route path="*" element={<Navigate to="/" replace/>}/>
       </Routes>
+      </Suspense>
     </>
   )
 }

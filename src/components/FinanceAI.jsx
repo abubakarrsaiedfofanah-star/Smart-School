@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
+import { formatCurrency } from '../lib/formatters';
 
 /**
  * FinanceAI Component
  * Automated financial intelligence dashboard card for SmartSchool Enterprise Finance.
  */
 const FinanceAI = () => {
-  const { profile, demo } = useAuth();
+  const { profile, school, demo } = useAuth();
   const [loading, setLoading] = useState(false);
   const [nudging, setNudging] = useState(false);
   const [stats, setStats] = useState({
@@ -99,7 +100,7 @@ const FinanceAI = () => {
         <div style={styles.statContainer}>
           <div style={styles.statLabel}>Total Outstanding School-wide</div>
           <div style={styles.statValue}>
-            <span style={styles.currency}>KES</span> {stats.totalOutstanding.toLocaleString()}
+            <span style={styles.currency}>{school?.currency_code || 'KES'}</span> {stats.totalOutstanding.toLocaleString()}
           </div>
           <div style={styles.statSubtext}>
             <span style={styles.trendIcon}>↑</span> 4.2% from last month
@@ -114,7 +115,7 @@ const FinanceAI = () => {
             stats.debtors.slice(0, 3).map((debtor, i) => (
               <div key={i} style={styles.debtorItem}>
                 <span style={styles.debtorName}>{debtor.name}</span>
-                <span style={styles.debtorAmount}>KES {Number(debtor.amount).toLocaleString()}</span>
+                <span style={styles.debtorAmount}>{formatCurrency(debtor.amount, school?.currency_code)}</span>
               </div>
             ))
           ) : (

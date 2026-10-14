@@ -113,10 +113,7 @@ export default function QuizPortal() {
     if (!supabase) return;
     try {
       // Fetch questions from Supabase
-      const { data: qData, error: qErr } = await supabase
-        .from('quiz_questions')
-        .select('*')
-        .eq('quiz_id', quiz.id);
+      const { data: qData, error: qErr } = await supabase.rpc('get_quiz_questions', { p_quiz_id: quiz.id });
 
       if (qErr) throw qErr;
 
@@ -152,59 +149,24 @@ export default function QuizPortal() {
 
   const submitQuiz = async (isForced = false) => {
     if (timerRef.current) clearInterval(timerRef.current);
-
-    let calculatedScore = 0;
-    let totalPoints = 0;
-
-    quizQuestions.forEach((q, idx) => {
-      const correctIdx = q.correct_option_index;
-      const studentSelected = selectedAnswers[idx];
-      const points = q.points || 1;
-      totalPoints += points;
-
-      if (studentSelected !== undefined && parseInt(studentSelected) === parseInt(correctIdx)) {
-        calculatedScore += points;
-      }
-    });
-
-    const finalSummary = {
-      score: calculatedScore,
-      total_points: totalPoints,
-      percentage: totalPoints > 0 ? Math.round((calculatedScore / totalPoints) * 100) : 0,
-      answersBreakdown: quizQuestions.map((q, idx) => ({
-        question: q.question_text,
-        options: q.options,
-        correctIdx: q.correct_option_index,
-        selectedIdx: selectedAnswers[idx]
-      }))
-    };
-
-    setQuizFinishedSummary(finalSummary);
-
-    // Save to Database
     try {
       if (!supabase) return;
-
-      const { data: studentData, error: sErr } = await supabase
-        .from('students')
-        .select('id')
-        .eq('profile_id', profile.id)
-        .maybeSingle();
-
-      if (sErr || !studentData) {
-        throw new Error('Could not identify student record.');
-      }
-
-      const { error: insertErr } = await supabase
-        .from('quiz_results')
-        .insert({
-          quiz_id: activeQuiz.id,
-          student_id: studentData.id,
-          score: calculatedScore,
-          total_points: totalPoints
-        });
-
-      if (insertErr) throw insertErr;
+      const answers = Object.fromEntries(quizQuestions.map((question, index) => [question.id, selectedAnswers[index]]));
+      const { data, error } = await supabase.rpc('submit_quiz', { p_quiz_id: activeQuiz.id, p_answers: answers });
+      if (error) throw error;
+      const result = Array.isArray(data) ? data[0] : data;
+      const totalPoints = Number(result?.total_points || 0);
+      const calculatedScore = Number(result?.score || 0);
+      setQuizFinishedSummary({
+        score: calculatedScore,
+        total_points: totalPoints,
+        percentage: totalPoints ? Math.round((calculatedScore / totalPoints) * 100) : 0,
+        answersBreakdown: quizQuestions.map((question, index) => ({
+          question: question.question_text,
+          options: question.options,
+          selectedIdx: selectedAnswers[index]
+        }))
+      });
       toast.success('Quiz submitted successfully!');
       fetchQuizzesAndResults();
     } catch (err) {
@@ -464,7 +426,7 @@ export default function QuizPortal() {
               <div key={index} style={{ marginBottom: '12px' }}>
                 <p style={{ fontWeight: '600', margin: '0 0 4px 0' }}>{index + 1}. {item.question}</p>
                 <div style={{ fontSize: '13px', color: '#94a3b8' }}>
-                  Your answer: <span style={{ color: item.selectedIdx === item.correctIdx ? '#4ade80' : '#f87171' }}>{item.selectedIdx !== undefined ? item.options[item.selectedIdx] : 'Skipped'}</span>
+                  Your answer: <span>{item.selectedIdx !== undefined ? item.options[item.selectedIdx] : 'Skipped'}</span>
                 </div>
               </div>
             ))}

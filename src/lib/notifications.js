@@ -1,5 +1,6 @@
 import { PushNotifications } from '@capacitor/push-notifications';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { Capacitor } from '@capacitor/core';
 import toast from 'react-hot-toast';
 
 /**
@@ -75,6 +76,7 @@ export async function scheduleEventReminder(event) {
  * and sets up event listeners for notification events.
  */
 export async function initPushNotifications() {
+  if (!Capacitor.isNativePlatform()) return;
   try {
     // Check current permission status
     let permStatus = await PushNotifications.checkPermissions();
@@ -91,12 +93,6 @@ export async function initPushNotifications() {
 
     // Register the device with the push notification service (APNS/FCM)
     await PushNotifications.register();
-
-    // Listen for successful registration and log the token
-    PushNotifications.addListener('registration', (token) => {
-      console.log('Push registration success. Token:', token.value);
-      // Note: This token would typically be saved to Supabase under the user's profile
-    });
 
     // Listen for registration errors
     PushNotifications.addListener('registrationError', (error) => {

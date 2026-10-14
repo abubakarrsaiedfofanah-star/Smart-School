@@ -1,0 +1,45 @@
+.portal-frame { --portal-side-width: 260px; display: flex; min-height: 100vh; background: #f4f7fb; color: #142b40; }
+.portal-sidebar { position: sticky; top: 0; z-index: 50; display: flex; flex: 0 0 var(--portal-side-width); flex-direction: column; width: var(--portal-side-width); height: 100vh; padding: 21px 13px 14px; overflow: hidden; background: color-mix(in srgb, var(--school-accent) 34%, #10263b); color: #e7f0f8; transition: width .22s ease, flex-basis .22s ease, transform .22s ease, background .2s ease; }
+.portal-frame-collapsed { --portal-side-width: 78px; }
+.portal-sidebar-brand { display: flex; align-items: center; justify-content: space-between; min-height: 46px; padding: 0 8px 13px; border-bottom: 1px solid #ffffff1a; }
+.tenant-brand { display: flex; min-width: 0; align-items: center; gap: 10px; color: #fff; }
+.tenant-mark, .tenant-brand img { display: grid; width: 38px; height: 38px; flex: 0 0 38px; place-items: center; overflow: hidden; border: 1px solid #ffffff23; border-radius: 11px; background: #ffffff15; color: #fff; font-size: 17px; font-weight: 800; object-fit: contain; }
+.tenant-brand-copy { display: flex; min-width: 0; flex-direction: column; gap: 4px; }.tenant-brand-copy b { max-width: 165px; overflow: hidden; color: #fff; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }.tenant-brand-copy small { color: #a3b5c6; font-size: 8px; font-weight: 800; letter-spacing: .1em; }
+.portal-sidebar-close { display: none; border: 0; background: transparent; color: #fff; font-size: 25px; cursor: pointer; }
+.portal-tenant-chip { display: flex; align-items: center; gap: 7px; min-height: 34px; margin: 12px 6px 10px; padding: 0 9px; border: 1px solid #ffffff1c; border-radius: 6px; color: #c4d1dd; font-size: 9px; }
+.tenant-status-dot { width: 6px; height: 6px; flex: 0 0 6px; border-radius: 50%; background: #9bdc88; box-shadow: 0 0 0 3px #9bdc8825; }
+.portal-navigation { flex: 1; overflow-y: auto; padding: 0 1px 12px; scrollbar-color: #ffffff30 transparent; scrollbar-width: thin; }
+.portal-nav-group { margin: 11px 0 17px; }.portal-nav-group h2 { margin: 0 9px 6px; color: #8297aa; font-size: 8px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+.portal-nav-group button, .portal-logout { position: relative; display: flex; width: 100%; min-height: 39px; align-items: center; gap: 11px; padding: 7px 10px; border: 0; border-radius: 6px; background: transparent; color: #c4d1dd; text-align: left; cursor: pointer; transition: background .16s ease, color .16s ease; }
+.portal-nav-group button:hover, .portal-logout:hover { background: #ffffff10; color: #fff; }.portal-nav-group button.active { background: color-mix(in srgb, var(--school-accent) 24%, transparent); color: #fff; }.portal-nav-group button.active::before { position: absolute; top: 8px; bottom: 8px; left: -1px; width: 3px; border-radius: 0 3px 3px 0; background: var(--school-accent); content: ''; }
+.portal-nav-icon { display: grid; width: 23px; height: 23px; flex: 0 0 23px; place-items: center; border-radius: 6px; background: #ffffff0d; color: #dbe7ef; font-size: 14px; font-style: normal; }
+.portal-nav-group button.active .portal-nav-icon { background: color-mix(in srgb, var(--school-accent) 35%, transparent); color: #fff; }.portal-nav-label { overflow: hidden; font-size: 10px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }.portal-nav-active-mark { width: 5px; height: 5px; margin-left: auto; border-radius: 50%; background: #a8d7ff; }
+.portal-upgrade-link { display: flex; align-items: center; gap: 11px; margin: 5px 2px 12px; padding: 11px 10px; border: 1px solid #ffffff1a; border-radius: 7px; color: #d9e6ee; }.portal-upgrade-link > span:first-child { display: grid; width: 24px; height: 24px; place-items: center; border-radius: 6px; background: #ffffff10; }.portal-upgrade-link b, .portal-upgrade-link small { display: block; }.portal-upgrade-link b { font-size: 9px; }.portal-upgrade-link small { margin-top: 3px; color: #91a5b7; font-size: 8px; }
+.portal-logout { flex: 0 0 auto; min-height: 43px; border-top: 1px solid #ffffff1c; border-radius: 0; padding-top: 12px; color: #c4d1dd; }
+.portal-settings-link { display: flex; width: 100%; min-height: 41px; flex: 0 0 auto; align-items: center; gap: 11px; margin-top: auto; padding: 7px 10px; border: 1px solid #ffffff1a; border-radius: 7px; background: #ffffff08; color: #d5e1eb; text-align: left; cursor: pointer; transition: background .16s ease, color .16s ease; }
+.portal-settings-link:hover { background: #ffffff14; color: #fff; }
+.portal-settings-link + .portal-logout { margin-top: 8px; }
+.portal-workspace { display: flex; min-width: 0; flex: 1; flex-direction: column; }
+.portal-topbar { position: sticky; top: 0; z-index: 30; display: flex; min-height: 72px; align-items: center; gap: 15px; padding: 10px clamp(20px, 3vw, 42px); border-bottom: 2px solid color-mix(in srgb, var(--school-accent) 28%, #dfe7ee); background: #ffffffed; backdrop-filter: blur(14px); }
+.portal-collapse-button, .portal-menu-button { display: grid; width: 31px; height: 31px; flex: 0 0 31px; place-items: center; border: 1px solid #dce5ec; border-radius: 6px; background: #fff; color: #526b80; font-size: 14px; cursor: pointer; }.portal-menu-button { display: none; }
+.portal-breadcrumb { display: flex; min-width: 0; align-items: center; gap: 10px; color: #7b8da0; font-size: 10px; }.portal-breadcrumb span { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.portal-breadcrumb b { color: #becbd5; font-weight: 500; }.portal-breadcrumb strong { overflow: hidden; color: #193a56; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.portal-topbar-user { display: flex; align-items: center; gap: 9px; margin-left: auto; }.portal-user-avatar { display: grid; width: 34px; height: 34px; place-items: center; border: 2px solid #fff; border-radius: 50%; background: color-mix(in srgb, var(--school-accent) 17%, #eef5fb); color: var(--school-accent); font-size: 12px; font-weight: 800; }.portal-topbar-user > span:last-child { display: grid; gap: 3px; }.portal-topbar-user b { color: #2f465a; font-size: 10px; }.portal-topbar-user small { color: #8192a0; font-size: 8px; text-transform: capitalize; }
+.portal-page-content { min-width: 0; flex: 1; padding: clamp(16px, 2.5vw, 32px); }.portal-page-content > * { max-width: 1500px; margin-right: auto; margin-left: auto; }
+.portal-scrim { display: none; }
+.portal-frame-collapsed .portal-sidebar { padding-right: 10px; padding-left: 10px; }.portal-frame-collapsed .tenant-brand-copy, .portal-frame-collapsed .portal-tenant-chip, .portal-frame-collapsed .portal-nav-group h2, .portal-frame-collapsed .portal-nav-label, .portal-frame-collapsed .portal-upgrade-link > span:last-child { display: none; }.portal-frame-collapsed .portal-sidebar-brand { justify-content: center; padding-right: 0; padding-left: 0; }.portal-frame-collapsed .portal-nav-group button, .portal-frame-collapsed .portal-logout, .portal-frame-collapsed .portal-settings-link { justify-content: center; padding-right: 4px; padding-left: 4px; }.portal-frame-collapsed .portal-nav-active-mark { position: absolute; right: 3px; margin: 0; }.portal-frame-collapsed .portal-upgrade-link { justify-content: center; padding-right: 4px; padding-left: 4px; }
+
+@media (max-width: 800px) {
+  .portal-sidebar { position: fixed; top: 0; bottom: 0; left: 0; width: min(290px, 84vw); height: 100vh; height: 100dvh; flex-basis: auto; transform: translateX(-105%); box-shadow: 12px 0 32px #07152230; }
+  .portal-sidebar.portal-sidebar-open { transform: translateX(0); }.portal-sidebar-close { display: block; }.portal-frame-collapsed { --portal-side-width: 0px; }.portal-collapse-button { display: none; }.portal-menu-button { display: grid; }.portal-scrim { position: fixed; z-index: 45; inset: 0; display: block; border: 0; background: #07152280; }
+  .portal-page-content { min-width: 0; padding: 18px 14px 28px; }
+  .portal-nav-group button, .portal-settings-link, .portal-logout { min-height: 44px; }
+  .portal-sidebar-close { min-width: 44px; min-height: 44px; }
+}
+@media (max-width: 520px) {
+  .portal-topbar { min-height: 61px; gap: 9px; padding: 8px 12px; }.portal-breadcrumb { font-size: 9px; }.portal-breadcrumb span { max-width: 110px; }.portal-topbar-user > span:last-child { display: none; }.portal-user-avatar { width: 31px; height: 31px; }.portal-page-content { padding: 13px 10px 25px; }
+  .portal-page-content input, .portal-page-content select, .portal-page-content textarea { font-size: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portal-sidebar, .portal-nav-group button, .portal-settings-link { transition: none; }
+}

@@ -33,6 +33,20 @@
   box-sizing: border-box;
 }
 
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--green) 72%, white);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 a {
   text-decoration: none;
 }
@@ -86,7 +100,7 @@ body {
 /* Sidebar & Header Premium Depth */
 .side {
   backdrop-filter: blur(30px);
-  background: rgba(18, 60, 53, 0.95) !important;
+  background: color-mix(in srgb, var(--school-accent, #2375e1) 34%, #10263b) !important;
 }
 
 .sticky-nav {
@@ -164,7 +178,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 @media (max-width: 768px) {
-  .theme-toggle { bottom: 95px; right: 20px; width: 48px; height: 48px; }
+  .theme-toggle { bottom: calc(95px + env(safe-area-inset-bottom)); right: max(16px, env(safe-area-inset-right)); width: 48px; height: 48px; }
 }
 
 /* Animations */
@@ -323,6 +337,12 @@ input:focus, select:focus, textarea:focus {
   transform: translateX(5px);
 }
 
+.login-demo-access { position: static; padding: 20px; margin-top: 22px; box-shadow: none; border-radius: 14px; }
+.login-demo-access > p { color: var(--muted); font-size: .85rem; margin: 0; }
+.login-demo-access .demo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+.login-demo-access .demo-grid button { display: grid; gap: 4px; padding: 12px; font-size: .82rem; }
+.login-demo-access .demo-grid button span { color: var(--green); font-size: .72rem; font-weight: 600; }
+
 @media (max-width: 1024px) {
   .auth-container { grid-template-columns: 1fr; max-width: 550px; }
   .demo-access { position: static; }
@@ -331,6 +351,7 @@ input:focus, select:focus, textarea:focus {
 @media (max-width: 600px) {
   .auth-card { padding: 40px 24px; }
   .auth-card h1 { font-size: 2.2rem; }
+  .login-demo-access .demo-grid { grid-template-columns: 1fr; }
 }
 
 .password-field {

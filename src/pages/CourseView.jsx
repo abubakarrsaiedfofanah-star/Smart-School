@@ -21,6 +21,7 @@ export default function CourseView() {
   const [course, setCourse] = useState(null);
   const [chapters, setChapters] = useState([]);
   const [progress, setProgress] = useState([]);
+  const [studentRecordId, setStudentRecordId] = useState(null);
   const [activeChapter, setActiveChapter] = useState(null);
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
@@ -44,16 +45,25 @@ export default function CourseView() {
     if (!supabase || !courseId) return;
     setLoading(true);
     try {
-      const [cRes, chRes, pRes] = await Promise.all([
+      const [cRes, chRes] = await Promise.all([
         supabase.from('courses').select('*').eq('id', courseId).single(),
-        supabase.from('course_chapters').select('*').eq('course_id', courseId).order('sort_order', { ascending: true }),
-        supabase.from('course_progress').select('chapter_id').eq('chapter_id', activeChapter?.id).eq('student_id', profile?.id)
+        supabase.from('course_chapters').select('*').eq('course_id', courseId).order('sort_order', { ascending: true })
       ]);
 
       if (cRes.error) throw cRes.error;
       setCourse(cRes.data);
       setChapters(chRes.data || []);
       if (chRes.data?.length > 0) setActiveChapter(chRes.data[0]);
+      if (profile?.role === 'student') {
+        const { data: student, error: studentError } = await supabase.from('students').select('id').eq('profile_id', profile.id).maybeSingle();
+        if (studentError) throw studentError;
+        setStudentRecordId(student?.id || null);
+        if (student?.id) {
+          const { data: completed, error: progressError } = await supabase.from('course_progress').select('chapter_id').eq('student_id', student.id);
+          if (progressError) throw progressError;
+          setProgress((completed || []).map(item => item.chapter_id));
+        }
+      }
     } catch (err) {
       console.error(err);
       toast.error('Failed to load course');
@@ -63,11 +73,11 @@ export default function CourseView() {
   }
 
   const handleMarkComplete = async () => {
-    if (!activeChapter || completing || !supabase) return;
+    if (!activeChapter || completing || !supabase || !studentRecordId) return;
     setCompleting(true);
     try {
         const { error } = await supabase.from('course_progress').upsert({
-            student_id: profile.id,
+            student_id: studentRecordId,
             chapter_id: activeChapter.id,
             completed_at: new Date().toISOString()
         });

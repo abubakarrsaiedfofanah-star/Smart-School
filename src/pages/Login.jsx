@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { roleRoute } from '../lib/roleRoute'
 import toast from 'react-hot-toast'
@@ -14,7 +14,9 @@ export default function Login(){
   const [forgotEmail,setForgotEmail]=useState('')
   const [forgotLoading,setForgotLoading]=useState(false)
 
-  const {login,resetPassword}=useAuth(),navigate=useNavigate();
+  const {login,loginDemo,resetPassword,session,profile,loading:authLoading}=useAuth(),navigate=useNavigate(),{portalRole}=useParams();
+  const roleLabels={school_admin:'School Admin',teacher:'Teacher',student:'Student',parent:'Parent',super_admin:'Platform Admin'};
+  const requestedRole=roleLabels[portalRole] ? portalRole : null;
 
   useEffect(() => {
     if (remember && email) {
@@ -30,16 +32,11 @@ export default function Login(){
     const id = toast.loading('Signing in to SmartSchool...');
     try{
       const {profile}=await login(email,password);
-      toast.success('Signed in successfully!', {id});
+      if(requestedRole&&profile.role!==requestedRole) toast('This account belongs to the '+(roleLabels[profile.role]||'assigned')+' portal. Opening that portal instead.',{id});
+      else toast.success('Signed in successfully!', {id});
       navigate(roleRoute(profile.role));
     }catch(e){
-      // If demo mode or auth fails without supabase credentials, fallback to demo admin if demo credentials used
-      if(!e.message || e.message.includes('Invalid login credentials') || e.message.includes('Supabase') || e.message.includes('No school profile')){
-        toast.success('Signed in successfully (Demo Mode)!', {id});
-        navigate('/portal');
-      } else {
-        toast.error(e.message||'Could not sign in. Please check your credentials.', {id});
-      }
+      toast.error(e.message||'Could not sign in. Please check your credentials.', {id});
     }finally{
       setLoading(false);
     }
@@ -56,19 +53,19 @@ export default function Login(){
       setShowForgotModal(false);
       setForgotEmail('');
     }catch(e){
-      toast.success('Password reset instructions sent (Demo Mode)!', {id});
-      setShowForgotModal(false);
-      setForgotEmail('');
+      toast.error(e.message||'Could not send password reset instructions.', {id});
     }finally{
       setForgotLoading(false);
     }
   }
 
-  const fillDemo = (demoEmail, demoPass) => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
-    toast.success(`Loaded ${demoEmail.split('@')[0]} credentials!`, { duration: 2000 });
+  function openDemo(role){
+    loginDemo(role)
+    navigate(roleRoute(role), { replace: true })
   }
+
+  if(authLoading) return <div className="portal-loading"><div className="spinner"/><p>Loading your account...</p></div>;
+  if(session&&profile) return <Navigate to={roleRoute(profile.role)} replace/>;
 
   return (
     <div className="auth page-transition" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'radial-gradient(circle at 50% 20%, rgba(35, 117, 225, 0.12) 0%, transparent 60%)' }}>
@@ -80,9 +77,9 @@ export default function Login(){
           </div>
 
           <div style={{ marginBottom: '25px' }}>
-            <span className="eyebrow" style={{ display: 'inline-block', marginBottom: '8px' }}>SECURE INSTITUTIONAL PORTAL</span>
-            <h1 style={{ fontSize: '1.9rem', fontWeight: 800, marginBottom: '8px', letterSpacing: '-0.5px' }}>Welcome Back</h1>
-            <p style={{ color: 'var(--muted)', margin: 0, fontSize: '0.95rem' }}>Sign in to manage your school workspace and academic tools.</p>
+            <span className="eyebrow" style={{ display: 'inline-block', marginBottom: '8px' }}>{requestedRole ? roleLabels[requestedRole].toUpperCase()+' PORTAL' : 'SECURE SCHOOL PORTAL'}</span>
+            <h1 style={{ fontSize: '1.9rem', fontWeight: 800, marginBottom: '8px', letterSpacing: '-0.5px' }}>{requestedRole ? roleLabels[requestedRole]+' sign in' : 'Welcome Back'}</h1>
+            <p style={{ color: 'var(--muted)', margin: 0, fontSize: '0.95rem' }}>Sign in with the account your school provided. You will open your own role portal.</p>
           </div>
 
           <form onSubmit={handleLogin} style={{ display: 'grid', gap: '18px' }}>
@@ -141,49 +138,15 @@ export default function Login(){
             </button>
           </form>
 
-          {/* Enhanced Interactive Demo Logins */}
-          <div style={{ marginTop: '30px', padding: '18px', background: 'var(--cream)', borderRadius: '16px', border: '1px solid var(--line)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                ⚡ Instant Role Demo Login:
-              </span>
-              <span style={{ fontSize: '0.7rem', color: 'var(--muted)', background: 'var(--panel)', padding: '2px 8px', borderRadius: '6px', border: '1px solid var(--line)' }}>One-click testing</span>
+          <section className="demo-access login-demo-access" aria-labelledby="demo-access-title">
+            <h3 id="demo-access-title">Explore with a demo account</h3>
+            <p>Demo workspace uses sample data saved only in this browser session.</p>
+            <div className="demo-grid">
+              {Object.entries(roleLabels).map(([role,label])=><button type="button" key={role} onClick={()=>openDemo(role)}>{label}<span>Open demo →</span></button>)}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-              <button type="button" onClick={()=>fillDemo('admin@smartschool.demo','password123')} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: '10px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }} className="demo-role-btn">
-                <span style={{ fontSize: '1.1rem' }}>🛡️</span>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--ink)' }}>Admin</div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>Full control</div>
-                </div>
-              </button>
+          </section>
 
-              <button type="button" onClick={()=>fillDemo('teacher@smartschool.demo','password123')} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: '10px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }} className="demo-role-btn">
-                <span style={{ fontSize: '1.1rem' }}>📚</span>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--ink)' }}>Teacher</div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>Classes & Grades</div>
-                </div>
-              </button>
-
-              <button type="button" onClick={()=>fillDemo('student@smartschool.demo','password123')} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: '10px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }} className="demo-role-btn">
-                <span style={{ fontSize: '1.1rem' }}>🎓</span>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--ink)' }}>Student</div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>Portal & Quizzes</div>
-                </div>
-              </button>
-
-              <button type="button" onClick={()=>fillDemo('parent@smartschool.demo','password123')} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: '10px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }} className="demo-role-btn">
-                <span style={{ fontSize: '1.1rem' }}>👨‍👩‍👧</span>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--ink)' }}>Parent</div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>Fees & Reports</div>
-                </div>
-              </button>
-            </div>
-          </div>
-
+          <nav className="login-portals" aria-label="Choose a role portal"><span>Choose a portal</span><div>{[['school_admin','School Admin'],['teacher','Teacher'],['student','Student'],['parent','Parent']].map(([role,label])=><Link className={requestedRole===role?'active':''} to={'/login/'+role} key={role}>{label}</Link>)}</div></nav>
           <div style={{ marginTop: '25px', textAlign: 'center', fontSize: '0.9rem', borderTop: '1px solid var(--line)', paddingTop: '20px' }}>
             <span style={{ color: 'var(--muted)' }}>New educational institution? </span>
             <Link to="/register" className="text-link" style={{ fontWeight: 700, color: 'var(--green)' }}>Register your school →</Link>

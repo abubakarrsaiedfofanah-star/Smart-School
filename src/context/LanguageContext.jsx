@@ -135,11 +135,16 @@ const translations = {
 
 const LanguageContext = createContext();
 
+const getSavedLanguage = () => {
+  try { return localStorage.getItem('lang') === 'sw' ? 'sw' : 'en'; }
+  catch { return 'en'; }
+};
+
 export function LanguageProvider({ children }) {
-  const [lang, setLang] = useState(localStorage.getItem('lang') || 'en');
+  const [lang, setLang] = useState(getSavedLanguage);
 
   useEffect(() => {
-    localStorage.setItem('lang', lang);
+    try { localStorage.setItem('lang', lang); } catch { /* Language still applies for this session. */ }
   }, [lang]);
 
   const t = (key) => translations[lang][key] || key;

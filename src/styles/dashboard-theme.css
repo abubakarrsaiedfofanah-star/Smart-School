@@ -11,7 +11,7 @@
 /* --- Sidebar System --- */
 .side {
   width: 280px;
-  background: #0f172a; /* Deep Indigo for premium contrast */
+  background: color-mix(in srgb, var(--school-accent) 34%, #10263b);
   padding: 32px 20px;
   display: flex;
   flex-direction: column;
@@ -71,7 +71,7 @@
 }
 
 .side-header .brand { color: #fff !important; display: flex; align-items: center; }
-.side-header .brand span { color: #00E5FF !important; }
+.side-header .brand span { color: #fff !important; }
 
 .side-close-btn {
   background: transparent;
@@ -146,9 +146,9 @@
 }
 
 .nav-group button.active {
-  background: linear-gradient(135deg, var(--green) 0%, #1e40af 100%);
+  background: var(--school-accent-strong, #174e89);
   color: #fff;
-  box-shadow: 0 10px 20px -5px rgba(35, 117, 225, 0.4);
+  box-shadow: 0 8px 18px -8px color-mix(in srgb, var(--school-accent, #2375e1) 60%, transparent);
 }
 
 .nav-icon { font-style: normal; font-size: 1.25rem; }
@@ -174,6 +174,26 @@
   color: #fff;
   transform: translateY(-2px);
 }
+
+.sidebar-settings {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 16px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 12px;
+  background: rgba(255,255,255,.07);
+  color: rgba(255,255,255,.82);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease;
+}
+.sidebar-settings:hover { background: rgba(255,255,255,.14); color: #fff; }
+.side.collapsed .sidebar-settings { justify-content: center; padding-right: 8px; padding-left: 8px; }
 
 /* --- Mobile Bottom Nav --- */
 .mobile-bottom-nav {
@@ -202,6 +222,8 @@
 
 .mobile-bottom-nav button {
   display: flex;
+  flex: 1 1 0;
+  min-width: 0;
   flex-direction: column;
   align-items: center;
   gap: 4px;
@@ -215,6 +237,7 @@
 }
 
 .mobile-bottom-nav button i { font-style: normal; font-size: 1.3rem; }
+.mobile-bottom-nav button span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mobile-bottom-nav button.active { color: var(--green); transform: translateY(-5px); }
 
 /* --- Main Content Area --- */
@@ -294,11 +317,14 @@
 .user-info { text-align: right; }
 .user-info b { display: block; font-size: 0.9rem; color: var(--ink); }
 .user-info small { color: var(--muted); text-transform: capitalize; }
+.mobile-user-summary { display: none; }
+.app-install-button { position: fixed; right: 22px; bottom: 22px; z-index: 35; min-height: 44px; padding: 0 16px; border: 0; border-radius: 24px; background: var(--school-accent-strong, #174e89); color: #fff; font: 700 .78rem 'DM Sans', sans-serif; box-shadow: 0 8px 24px #10263b33; cursor: pointer; }
+.app-install-button span { margin-left: 7px; font-size: 1rem; }
 
 .avatar {
   width: 42px;
   height: 42px;
-  background: var(--green);
+  background: var(--school-accent-strong, var(--green));
   color: #fff;
   border-radius: 50%;
   display: grid;
@@ -383,16 +409,126 @@
     box-shadow: 20px 0 50px rgba(0,0,0,0.2);
   }
   .side.mobile-open { transform: translateX(0); }
+  .menu-scrim { display: block; position: fixed; z-index: 19; inset: 0; border: 0; background: #061a2b99; }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 768px) {
-  .side.mobile-open { width: 100%; border-radius: 0; }
+  .side.mobile-open { width: min(310px, 86vw); border-radius: 0; }
   .mobile-bottom-nav { display: flex; }
-  .portal-main { padding: 20px 20px 100px; gap: 24px; }
-  .main-header h1 { font-size: 1.8rem; }
-  .stats-grid { grid-template-columns: 1fr; gap: 16px; }
+  .portal-main { min-width: 0; padding: 18px 15px 130px; gap: 20px; }
+  .main-header { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 12px; min-height: 72px; }
+  .header-left { min-width: 0; gap: 10px; }
+  .title-stack { min-width: 0; }
+  .title-stack .eyebrow { max-width: 42vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .portal .main-header .user-profile { min-width: 0; gap: 8px; padding: 4px; }
+  .portal .main-header .user-profile .user-info { display: none !important; }
+  .portal .main-header .mobile-user-summary { display: flex; grid-column: 1 / -1; align-items: center; gap: 9px; min-width: 0; margin: 0 0 0 48px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 11px; background: var(--panel); }
+  .mobile-user-summary-avatar { display: grid; width: 29px; height: 29px; flex: 0 0 29px; place-items: center; border-radius: 50%; background: var(--school-accent-strong, var(--green)); color: #fff; font-size: .76rem; font-weight: 800; }
+  .mobile-user-summary > span:last-child { display: grid; min-width: 0; gap: 2px; }
+  .mobile-user-summary b, .mobile-user-summary small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mobile-user-summary b { color: var(--ink); font-size: .74rem; }
+  .mobile-user-summary small { color: var(--muted); font-size: .64rem; text-transform: capitalize; }
+  .main-header h1 { font-size: clamp(1.35rem, 5vw, 1.8rem); }
+  .content-area { display: flex; min-width: 0; flex-direction: column; gap: 18px; padding-top: 8px; }
+  .content-area .module { width: 100%; min-width: 0; margin: 0; overflow: hidden; }
+  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .stat-card { min-width: 0; padding: 16px; border-radius: 16px; }
+  .stat-card strong { font-size: clamp(1.25rem, 5vw, 1.8rem); overflow-wrap: anywhere; }
   .demo-role-switcher { flex-direction: column; align-items: flex-start; padding: 20px; border-radius: 20px; }
+  .app-install-button { right: 14px; bottom: 103px; }
+}
+
+@media (max-width: 480px) {
+  .portal .portal-main > .main-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+  .portal-main { padding: 14px 11px 92px; gap: 16px; }
+  .header-left { min-width: 0; gap: 9px; }
+  .title-stack { min-width: 0; }
+  .title-stack .eyebrow { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: .12em; }
+  .main-header h1 { font-size: 1.25rem; }
+  .portal .main-header .user-profile { display: flex; min-width: 0; gap: 7px; padding: 0; border: 0; background: transparent; box-shadow: none; }
+  .portal .main-header .user-profile .user-info { display: none !important; }
+  .portal .main-header .mobile-user-summary { margin-left: 48px; }
+  .notif-bell, .lang-select { display: none; }
+  .avatar { width: 34px; height: 34px; flex: 0 0 34px; }
+  .main-header { min-width: 0; }
+  .header-left { flex: 1 1 auto; }
+  .title-stack h1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .stats-grid { grid-template-columns: minmax(0, 1fr); gap: 9px; }
+  .stat-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 15px; }
+  .stat-card p { margin: 0; font-size: .68rem; }
+  .stat-card strong { margin: 0; font-size: 1.15rem; }
+  .content-area { min-width: 0; }
+}
+
+@media (max-width: 360px) {
+  .portal .main-header .user-profile .user-info { width: 68px; max-width: 68px; flex-basis: 68px; }
+  .portal .main-header .user-profile .user-info small { display: none; }
+  .header-left { gap: 7px; }
+  .menu-toggle-btn { width: 38px; height: 38px; flex: 0 0 38px; }
+  .main-header h1 { font-size: 1.08rem; }
+}
+
+/* Keep the scrollable menu between its fixed brand and footer controls. */
+.side { min-height: 0; }
+.side-header { flex: 0 0 auto; }
+.side-content { min-height: 0; flex: 1 1 0; overscroll-behavior: contain; padding-top: 2px; padding-bottom: 18px; }
+.sidebar-settings, .side > .signout { position: relative; z-index: 1; flex: 0 0 auto; }
+.nav-group small { position: sticky; top: 0; z-index: 2; padding: 5px 0; background: color-mix(in srgb, var(--school-accent) 34%, #10263b); }
+
+@media (max-width: 1200px) {
+  .side { box-sizing: border-box; height: 100dvh; min-height: 0; padding-top: max(20px, env(safe-area-inset-top)); padding-bottom: max(14px, env(safe-area-inset-bottom)); }
+  .side-header { margin-bottom: 18px; }
+  .side-content { min-height: 0; }
+  .side .sidebar-settings { margin-top: 8px; }
+  .side > .signout { margin-top: 8px; }
+}
+
+/* Small-screen fit and safe-area support for installed/mobile browsers. */
+@media (max-width: 768px) {
+  .portal { min-height: 100dvh; height: 100dvh; }
+  .portal-main { padding-bottom: calc(98px + env(safe-area-inset-bottom)); }
+  .mobile-bottom-nav {
+    right: max(10px, env(safe-area-inset-right));
+    bottom: max(10px, env(safe-area-inset-bottom));
+    left: max(10px, env(safe-area-inset-left));
+    height: 64px;
+    padding: 0 8px;
+    border-radius: 20px;
+  }
+  .mobile-bottom-nav button { min-height: 44px; }
+  .mobile-bottom-nav button.active { transform: none; }
+  .app-install-button { bottom: calc(86px + env(safe-area-inset-bottom)); }
+  .portal-main > *, .content-area > *, .stats-grid > * { min-width: 0; }
+  .main-header h1 { overflow-wrap: anywhere; }
+}
+@media (max-width: 480px) {
+  .portal-main { padding: 12px 10px calc(88px + env(safe-area-inset-bottom)); gap: 14px; }
+  .portal .main-header .mobile-user-summary { margin-left: 0; }
+  .mobile-bottom-nav { height: 60px; border-radius: 17px; }
+  .mobile-bottom-nav button { gap: 2px; font-size: .57rem; }
+  .mobile-bottom-nav button i { font-size: 1.15rem; }
+  .app-install-button { right: 10px; bottom: calc(78px + env(safe-area-inset-bottom)); min-height: 40px; }
+}
+@media (max-width: 360px) {
+  .portal-main { padding-right: 8px; padding-left: 8px; }
+  .mobile-bottom-nav { right: 8px; left: 8px; padding: 0 5px; }
+  .mobile-bottom-nav button { font-size: .52rem; }
+  .stat-card { gap: 8px; padding: 11px 12px; }
+  .stat-card p { font-size: .62rem; }
+}
+
+@media (max-width: 768px) {
+  .side { width: min(320px, 88vw); padding-right: 16px; padding-left: 16px; }
+  .side-header { margin-bottom: 14px; }
+  .side-header .brand { min-height: 44px; min-width: 0; }
+  .side-header .brand span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .side-close-btn { width: 44px; height: 44px; flex: 0 0 44px; }
+  .nav-group { margin-bottom: 16px; }
+  .nav-group small { margin-bottom: 6px; font-size: .62rem; }
+  .nav-group button { min-height: 44px; margin-bottom: 2px; padding: 9px 12px; border-radius: 10px; font-size: .85rem; }
+  .side-content { overscroll-behavior-y: contain; scrollbar-gutter: stable; }
+  .sidebar-settings, .side > .signout { min-height: 48px; margin-top: 8px; padding-top: 10px; padding-bottom: 10px; border-radius: 10px; }
 }
 
 /* Animation for switching modules */

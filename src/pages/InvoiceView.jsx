@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
+import { formatCurrency } from '../lib/formatters';
 import '../styles/invoice.css';
 
 export default function InvoiceView() {
@@ -96,13 +97,13 @@ export default function InvoiceView() {
           <tbody>
             <tr>
               <td>{fee?.name || 'School Fees'}</td>
-              <td className="right">KES {payment.amount?.toLocaleString()}</td>
+              <td className="right">{formatCurrency(payment.amount, school?.currency_code)}</td>
             </tr>
           </tbody>
           <tfoot>
             <tr>
               <td><b>Total Amount Due</b></td>
-              <td className="right"><b>KES {payment.amount?.toLocaleString()}</b></td>
+              <td className="right"><b>{formatCurrency(payment.amount, school?.currency_code)}</b></td>
             </tr>
           </tfoot>
         </table>

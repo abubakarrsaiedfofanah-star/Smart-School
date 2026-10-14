@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import { detectLogoColor, normalizeBrandColor } from '../lib/brandColor';
 
 export default function SchoolSettings() {
-  const { profile } = useAuth();
+  const { profile, setSchool: setTenant, demo } = useAuth();
   const [loading, setLoading] = useState(true);
   const [school, setSchool] = useState({
     name: '',
@@ -17,13 +18,17 @@ export default function SchoolSettings() {
     mpesa_till: '',
     bank_name: '',
     bank_account_number: '',
-    primary_color: '#2375e1'
+    primary_color: '#2375e1',
+    timezone: 'Africa/Nairobi',
+    currency_code: 'KES',
+    academic_terms: ['Term 1', 'Term 2', 'Term 3'],
+    grading_scale: [{ min: 80, grade: 'A' }, { min: 70, grade: 'B' }, { min: 60, grade: 'C' }, { min: 50, grade: 'D' }, { min: 0, grade: 'E' }]
   });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     // Immediate fallback for no profile or demo environment
-    if (!profile || !supabase || demo || !profile.school_id || profile.school_id === 'demo-school-id') {
+    if (!profile || !supabase || !profile.school_id || profile.school_id === 'demo-school-id') {
       setSchool({
         name: 'SmartSchool Demo Academy',
         school_motto: 'Learning for the Future',
@@ -34,7 +39,11 @@ export default function SchoolSettings() {
         mpesa_paybill: '247247',
         mpesa_till: '512345',
         bank_name: 'Equity Bank',
-        bank_account_number: '0123456789'
+        bank_account_number: '0123456789',
+        timezone: 'Africa/Nairobi',
+        currency_code: 'KES',
+        academic_terms: ['Term 1', 'Term 2', 'Term 3'],
+        grading_scale: [{ min: 80, grade: 'A' }, { min: 70, grade: 'B' }, { min: 60, grade: 'C' }, { min: 50, grade: 'D' }, { min: 0, grade: 'E' }]
       });
       setLoading(false);
       return;
@@ -71,6 +80,21 @@ export default function SchoolSettings() {
 
   async function saveSettings(e) {
     e.preventDefault();
+    const gradeBands = school.grading_scale || [];
+    const boundaries = gradeBands.map(band => Number(band.min));
+    const terms = (school.academic_terms || []).map(term => term.trim());
+    if (terms.length < 2 || terms.length > 6 || terms.some(term => term.length < 2 || term.length > 40) || new Set(terms.map(term => term.toLowerCase())).size !== terms.length) {
+      toast.error('Add 2–6 distinct academic terms, each between 2 and 40 characters.');
+      return;
+    }
+    if (!gradeBands.length || boundaries.some(value => !Number.isFinite(value) || value < 0 || value > 100) || new Set(boundaries).size !== boundaries.length || !boundaries.includes(0)) {
+      toast.error('Grade boundaries must be unique values from 0 to 100, including a starting grade at 0%.');
+      return;
+    }
+    if (demo) {
+      const next = { ...school, academic_terms: terms, primary_color: normalizeBrandColor(school.primary_color) };
+      setSchool(next); setTenant(next); toast.success('Demo branding updated for this session.'); return;
+    }
     setSaving(true);
     try {
       const { error } = await supabase.from('schools').update({
@@ -84,9 +108,14 @@ export default function SchoolSettings() {
         mpesa_till: school.mpesa_till,
         bank_name: school.bank_name,
         bank_account_number: school.bank_account_number,
-        primary_color: school.primary_color
+        primary_color: school.primary_color,
+        timezone: school.timezone || 'Africa/Nairobi',
+        currency_code: school.currency_code || 'KES',
+        academic_terms: terms,
+        grading_scale: school.grading_scale || [{ min: 80, grade: 'A' }, { min: 70, grade: 'B' }, { min: 60, grade: 'C' }, { min: 50, grade: 'D' }, { min: 0, grade: 'E' }]
       }).eq('id', profile.school_id);
       if (error) throw error;
+      setTenant({ ...school, academic_terms: terms });
       toast.success('School settings updated!');
     } catch (err) {
       toast.error(err.message);
@@ -100,10 +129,21 @@ export default function SchoolSettings() {
     if (!file) return;
     const toastId = toast.loading('Uploading image...');
     try {
-      const path = `${profile.school_id}/${field}-${Date.now()}`;
-      const url = await uploadFile(file, 'branding', path);
-      setSchool({ ...school, [field]: url });
-      toast.success('Image uploaded!', { id: toastId });
+      let detectedColor;
+      if (field === 'logo_url') {
+        const localImage = URL.createObjectURL(file);
+        try { detectedColor = await detectLogoColor(localImage); }
+        catch (error) { toast(error.message || 'Could not detect the logo color. You can choose it manually.'); }
+        finally { URL.revokeObjectURL(localImage); }
+      }
+      let url;
+      if (demo) url = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); });
+      else { const path = `${profile.school_id}/${field}-${Date.now()}`; url = await uploadFile(file, 'branding', path); }
+      const updates = { [field]: url };
+      if (detectedColor) updates.primary_color = detectedColor;
+      setSchool(current => ({ ...current, ...updates }));
+      if (demo) setTenant(current => ({ ...current, ...updates }));
+      toast.success(field === 'logo_url' && updates.primary_color ? `Logo uploaded. Detected ${updates.primary_color}.` : 'Image uploaded!', { id: toastId });
     } catch (err) {
       toast.error('Upload failed', { id: toastId });
     }
@@ -122,11 +162,17 @@ export default function SchoolSettings() {
         .asset-info { flex: 1; }
         .asset-info b { display: block; margin-bottom: 5px; }
         .asset-info input { font-size: 0.8rem; }
+        .school-local-settings { display:grid; gap:15px; }
+        .school-local-settings h3, .school-local-settings p { margin:0; }
+        .grading-scale-editor { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; padding-top:8px; }
+        .grading-scale-editor > b, .grading-scale-editor > p { grid-column:1/-1; }
+        .grading-scale-editor label { display:grid; gap:6px; color:var(--muted); font-size:.78rem; }
+        .grading-scale-editor input { min-height:40px; padding:8px 10px; border-radius:8px; }
       `}</style>
 
       <p className="eyebrow blue-eyebrow">ADMINISTRATION</p>
       <h1>School Branding & Settings</h1>
-      <p>Customize your report cards with your school logo and official signatures.</p>
+      <p>Set your school identity. We sample the logo’s most common clear color, then apply it to portal navigation and highlights. You can refine it at any time.</p>
 
       <form onSubmit={saveSettings} className="settings-grid">
         <div className="glass-card">
@@ -171,13 +217,44 @@ export default function SchoolSettings() {
           <input value={school.bank_account_number || ''} onChange={e => setSchool({...school, bank_account_number: e.target.value})} placeholder="e.g. 0123456789" />
         </div>
 
+        <div className="glass-card school-local-settings">
+          <h3>Local school settings</h3>
+          <p style={{fontSize:'.85rem', color:'var(--muted)'}}>Set how dates and money display, define your academic terms, and configure report card grades. Currency changes formatting only; existing balances are not converted.</p>
+          <label>Time zone
+            <select value={school.timezone || 'Africa/Nairobi'} onChange={e => setSchool({...school, timezone:e.target.value})}>
+              <option value="Africa/Nairobi">East Africa Time · Nairobi</option>
+              <option value="Africa/Kampala">East Africa Time · Kampala</option>
+              <option value="Africa/Dar_es_Salaam">East Africa Time · Dar es Salaam</option>
+              <option value="Africa/Johannesburg">South Africa Standard Time</option>
+              <option value="UTC">Coordinated Universal Time</option>
+            </select>
+          </label>
+          <label>Currency
+            <select value={school.currency_code || 'KES'} onChange={e => setSchool({...school, currency_code:e.target.value})}>
+              <option value="KES">Kenyan Shilling (KES)</option><option value="UGX">Ugandan Shilling (UGX)</option><option value="TZS">Tanzanian Shilling (TZS)</option><option value="USD">US Dollar (USD)</option>
+            </select>
+          </label>
+          <div className="grading-scale-editor"><b>Academic terms</b><p>These names are used for exams and report card filters. Existing records keep their term name.</p>
+            {(school.academic_terms || []).map((term, index) => <label key={`term-${index}`}>Term {index + 1}
+              <input type="text" maxLength="40" value={term} onChange={event => setSchool({...school, academic_terms:school.academic_terms.map((item, itemIndex) => itemIndex === index ? event.target.value : item)})} />
+            </label>)}
+            {(school.academic_terms || []).length < 6 && <button type="button" className="outline-button" onClick={() => setSchool({...school, academic_terms:[...school.academic_terms, `Term ${school.academic_terms.length + 1}`]})}>Add term</button>}
+            {(school.academic_terms || []).length > 2 && <button type="button" className="outline-button" onClick={() => setSchool({...school, academic_terms:school.academic_terms.slice(0, -1)})}>Remove last term</button>}
+          </div>
+          <div className="grading-scale-editor"><b>Grade boundaries</b><p>Minimum percentage for each grade. Keep each boundary between 0 and 100, and include a grade starting at 0%.</p>
+            {(school.grading_scale || []).map((band, index) => <label key={`${band.grade}-${index}`}>{band.grade} starts at
+              <input type="number" min="0" max="100" value={band.min} onChange={event => setSchool({...school, grading_scale:school.grading_scale.map((item, itemIndex) => itemIndex === index ? {...item, min:Number(event.target.value)} : item)})} />%
+            </label>)}
+          </div>
+        </div>
+
         <div className="asset-row">
           <div className="asset-preview">
             {school.logo_url ? <img src={school.logo_url} alt="Logo" /> : <span>Logo</span>}
           </div>
           <div className="asset-info">
             <b>School Logo / Badge</b>
-            <input type="file" accept="image/*" onChange={e => handleFileChange(e, 'logo_url')} />
+            <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={e => handleFileChange(e, 'logo_url')} />
           </div>
         </div>
 

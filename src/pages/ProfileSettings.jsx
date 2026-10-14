@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import toast from 'react-hot-toast';
 
 export default function ProfileSettings() {
   const { profile, setProfile, demo } = useAuth();
+  const { lang, setLang } = useLanguage();
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({ full_name: '', phone: '', signature_url: '' });
+  const [formData, setFormData] = useState({ full_name: '', phone: '', signature_url: '', notification_preferences: { absences: true, announcements: true, behavior: true, schoolwork: true } });
 
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -16,7 +18,8 @@ export default function ProfileSettings() {
       setFormData({
         full_name: profile.full_name || '',
         phone: profile.phone || '',
-        signature_url: profile.signature_url || ''
+        signature_url: profile.signature_url || '',
+        notification_preferences: { absences: true, announcements: true, behavior: true, schoolwork: true, ...(profile.notification_preferences || {}) }
       });
     }
   }, [profile]);
@@ -89,15 +92,18 @@ export default function ProfileSettings() {
     setLoading(true);
     try {
       if (demo) {
+        setProfile(current => ({ ...current, full_name: formData.full_name, phone: formData.phone, notification_preferences: formData.notification_preferences }));
         toast.success('Profile updated locally (Demo)!');
         return;
       }
       const { error } = await supabase.from('profiles').update({
         full_name: formData.full_name,
         phone: formData.phone,
-        signature_url: formData.signature_url
+        signature_url: formData.signature_url,
+        notification_preferences: formData.notification_preferences
       }).eq('id', profile.id);
       if (error) throw error;
+      setProfile(current => ({ ...current, full_name: formData.full_name, phone: formData.phone, notification_preferences: formData.notification_preferences }));
       toast.success('Profile saved successfully');
     } catch (err) {
       toast.error(err.message);
@@ -115,6 +121,10 @@ export default function ProfileSettings() {
         .sig-controls { display: flex; gap: 10px; padding: 10px; background: #f8fafc; border-top: 1px solid var(--line); border-radius: 0 0 12px 12px; }
         .sig-preview { width: 150px; height: 80px; background: #fff; border: 1px dashed var(--line); border-radius: 8px; display: grid; place-items: center; margin-top: 15px; overflow: hidden; }
         .sig-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .notification-preferences { display:grid; gap:12px; margin:0; padding:16px; border:1px solid var(--line); border-radius:12px; }
+        .notification-preferences legend { padding:0 6px; font-weight:750; }
+        .notification-preferences label { display:flex; align-items:flex-start; gap:10px; color:var(--ink); font-size:.88rem; line-height:1.45; }
+        .notification-preferences input { width:18px; height:18px; flex:0 0 18px; margin:1px 0 0; }
       `}</style>
 
       <p className="eyebrow">Personal Account</p>
@@ -127,6 +137,21 @@ export default function ProfileSettings() {
         <label>Phone Number
           <input value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
         </label>
+
+        <label>Portal language
+          <select value={lang} onChange={event => setLang(event.target.value)}>
+            <option value="en">English</option><option value="sw">Kiswahili</option>
+          </select>
+          <small style={{display:'block', marginTop:6, color:'var(--muted)'}}>This preference is saved on this device.</small>
+        </label>
+
+        <fieldset className="notification-preferences">
+          <legend>School notifications</legend>
+          <label><input type="checkbox" checked={formData.notification_preferences.absences} onChange={event => setFormData({...formData, notification_preferences:{...formData.notification_preferences, absences:event.target.checked}})} /> Notify me when a learner I’m linked to is marked absent</label>
+          <label><input type="checkbox" checked={formData.notification_preferences.announcements} onChange={event => setFormData({...formData, notification_preferences:{...formData.notification_preferences, announcements:event.target.checked}})} /> Send me school announcement alerts</label>
+          <label><input type="checkbox" checked={formData.notification_preferences.behavior} onChange={event => setFormData({...formData, notification_preferences:{...formData.notification_preferences, behavior:event.target.checked}})} /> Send me behavior update alerts</label>
+          <label><input type="checkbox" checked={formData.notification_preferences.schoolwork} onChange={event => setFormData({...formData, notification_preferences:{...formData.notification_preferences, schoolwork:event.target.checked}})} /> Send me classwork, exam, and published result alerts</label>
+        </fieldset>
 
         {profile?.role === 'teacher' && (
           <div className="signature-section">

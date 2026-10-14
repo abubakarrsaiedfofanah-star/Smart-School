@@ -1,0 +1,20 @@
+{
+  "id": "/",
+  "name": "SmartSchool",
+  "short_name": "SmartSchool",
+  "description": "School operations, teaching, learning, and family communication in one place.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5f8fb",
+  "theme_color": "#123d68",
+  "icons": [
+    { "src": "/icons/smartschool.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Student portal", "short_name": "Student", "url": "/login/student", "icons": [{ "src": "/icons/smartschool.svg", "sizes": "any", "type": "image/svg+xml" }] },
+    { "name": "Teacher portal", "short_name": "Teacher", "url": "/login/teacher", "icons": [{ "src": "/icons/smartschool.svg", "sizes": "any", "type": "image/svg+xml" }] },
+    { "name": "Parent portal", "short_name": "Parent", "url": "/login/parent", "icons": [{ "src": "/icons/smartschool.svg", "sizes": "any", "type": "image/svg+xml" }] }
+  ]
+}
