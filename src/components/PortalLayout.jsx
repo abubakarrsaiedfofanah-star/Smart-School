@@ -54,8 +54,8 @@ export default function PortalLayout({ children, portal = null }) {
       ['Security & reports', '\u2261', '?module=Security & Reports']
     ]]],
     finance: [['Finance', [
-      ['Dashboard', '\u2302', '?module=Dashboard'], ['Expenses', '$', '?module=Expenses'],
-      ['Payment reconciliation', '\u2713', '?module=Reconciliation'], ['Payroll', '\u25a5', '/hr-payroll?module=Payroll']
+      ['Dashboard', '\u2302', '?module=Dashboard'], ['Fee collections', '$', '?module=Collections'],
+      ['Expenses', '\u25a7', '?module=Expenses'], ['Payment reconciliation', '\u2713', '?module=Reconciliation']
     ]]]
   }
   const financeOnly = role === 'teacher' && assignedRoles.includes('finance_officer') && !assignedRoles.includes('principal') && !assignedRoles.includes('hr_admin')

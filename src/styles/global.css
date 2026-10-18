@@ -349,6 +349,7 @@ input:focus, select:focus, textarea:focus {
 .login-demo-access .demo-hr-preview b { font-size: .82rem; }
 .login-demo-access .demo-hr-preview small { color: var(--muted); font-size: .73rem; }
 .login-demo-access .demo-hr-preview strong { flex: 0 0 auto; color: var(--green); font-size: .76rem; }
+.login-demo-access .demo-finance-preview { margin-top: 8px; border-color: color-mix(in srgb, var(--blue, #2375e1) 30%, var(--line)); background: color-mix(in srgb, var(--blue, #2375e1) 5%, white); }
 .staff-role-note { padding: 10px 12px; border-left: 3px solid var(--school-accent, var(--green)); border-radius: 6px; background: var(--bg); color: var(--muted); font-size: .82rem; }
 
 @media (max-width: 1024px) {

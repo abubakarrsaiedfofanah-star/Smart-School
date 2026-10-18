@@ -80,6 +80,11 @@ export default function Login(){
     navigate('/hr-payroll', { replace: true })
   }
 
+  function openFinanceDemo(){
+    loginDemo('school_admin')
+    navigate('/finance-operations?module=Dashboard', { replace: true })
+  }
+
   if(authLoading) return <div className="portal-loading"><div className="spinner"/><p>Loading your account...</p></div>;
   if(session&&profile) return <Navigate to={portalDestination(profile, staffRoles)} replace/>;
 
@@ -160,8 +165,9 @@ export default function Login(){
             <div className="demo-grid">
               {Object.entries(roleLabels).filter(([role]) => ['school_admin','teacher','student','parent'].includes(role)).map(([role,label])=><button type="button" key={role} onClick={()=>openDemo(role)}>{label}<span>Open demo →</span></button>)}
             </div>
-            <button type="button" className="demo-hr-preview" onClick={openHrDemo}><span><b>HR & Payroll preview</b><small>View sample staff and payroll activity</small></span><strong>Open preview →</strong></button>
-            <p className="demo-specialist-note"><b>HR & Finance access</b> is assigned by your school administrator. Sign in with your school staff account; access is checked before the workspace opens. The HR preview above uses demo data.</p>
+            <button type="button" className="demo-hr-preview" onClick={openHrDemo}><span><b>HR & Payroll portal preview</b><small>Staff records, recruitment, and payroll</small></span><strong>Open HR →</strong></button>
+            <button type="button" className="demo-hr-preview demo-finance-preview" onClick={openFinanceDemo}><span><b>Finance portal preview</b><small>Expenses and payment reconciliation</small></span><strong>Open Finance →</strong></button>
+            <p className="demo-specialist-note"><b>HR & Finance are separate school portals.</b> Each uses its own dashboard and navigation. Live access is assigned by your school administrator; previews use read-only sample data.</p>
           </section>
 
           <nav className="login-portals" aria-label="Choose a role portal"><span>Choose a portal</span><div>{[['school_admin','School Admin'],['teacher','Teacher'],['student','Student'],['parent','Parent'],['hr','HR & Payroll'],['finance','Finance']].map(([role,label])=><Link className={requestedRole===role?'active':''} to={'/login/'+role} key={role}>{label}</Link>)}</div></nav>

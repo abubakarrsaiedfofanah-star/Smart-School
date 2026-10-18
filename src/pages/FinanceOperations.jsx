@@ -11,9 +11,9 @@ const blankExpense = { title: '', category: '', vendor: '', amount: '', incurred
 const blankRecon = { provider: '', provider_reference: '', amount: '', transaction_at: '', payment_id: '', note: '', status: 'unmatched' }
 
 export default function FinanceOperations({ portalMode = false }) {
-  const { profile, school, staffRoles } = useAuth()
+  const { profile, school, staffRoles, demo } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
-  const validSections = ['Dashboard', 'Expenses', 'Reconciliation']
+  const validSections = ['Dashboard', 'Collections', 'Expenses', 'Reconciliation']
   const requestedSection = validSections.includes(searchParams.get('module')) ? searchParams.get('module') : portalMode ? 'Dashboard' : 'Expenses'
   const [section, setSection] = useState(requestedSection)
   const [expenses, setExpenses] = useState([])
@@ -33,6 +33,22 @@ export default function FinanceOperations({ portalMode = false }) {
   const selectSection = next => { setSection(next); setSearchParams({ module: next }) }
 
   const load = useCallback(async () => {
+    if (demo) {
+      setExpenses([
+        { id: 'demo-expense-1', incurred_on: '2026-10-02', title: 'Science lab supplies', category: 'Learning materials', vendor: 'Sample School Supplies', amount: 24500, status: 'approved', receipt_reference: 'DEMO-EXP-001' },
+        { id: 'demo-expense-2', incurred_on: '2026-10-08', title: 'Classroom repairs', category: 'Maintenance', vendor: 'Sample Repairs', amount: 12000, status: 'recorded', receipt_reference: 'DEMO-EXP-002' }
+      ])
+      setReconciliations([
+        { id: 'demo-recon-1', provider: 'Mobile money', provider_reference: 'DEMO-TXN-1042', transaction_at: '2026-10-16T09:30:00Z', amount: 18000, status: 'unmatched', payment_id: null, note: 'Sample fee payment' },
+        { id: 'demo-recon-2', provider: 'Bank transfer', provider_reference: 'DEMO-TXN-1031', transaction_at: '2026-10-15T11:00:00Z', amount: 25000, status: 'matched', payment_id: 'demo-payment-1', note: 'Sample reconciled payment' }
+      ])
+      setPayments([
+        { id: 'demo-payment-1', reference: 'DEMO-FEE-031', amount: 25000, status: 'paid', paid_at: '2026-10-15T11:00:00Z' },
+        { id: 'demo-payment-2', reference: 'DEMO-FEE-032', amount: 11000, status: 'pending', paid_at: null }
+      ])
+      setLoading(false)
+      return
+    }
     if (!profile?.school_id || !supabase) return
     setLoading(true)
     const expenseAccess = canManageExpenses
@@ -48,12 +64,13 @@ export default function FinanceOperations({ portalMode = false }) {
     setReconciliations(reconResult.data || [])
     setPayments(paymentResult.data || [])
     setLoading(false)
-  }, [profile?.id, profile?.role, profile?.school_id, canManageExpenses, canReconcile])
+  }, [profile?.id, profile?.role, profile?.school_id, canManageExpenses, canReconcile, demo])
 
   useEffect(() => { load() }, [load])
 
   async function addExpense(event) {
     event.preventDefault()
+    if (demo) { toast('Demo portal is read only. No financial records were changed.'); return }
     setSaving(true)
     const { error } = await supabase.from('school_expenses').insert({
       ...expense, school_id: profile.school_id, title: expense.title.trim(), category: expense.category.trim(),
@@ -69,6 +86,7 @@ export default function FinanceOperations({ portalMode = false }) {
   }
 
   async function setExpenseStatus(row, status) {
+    if (demo) { toast('Demo portal is read only. No financial records were changed.'); return }
     const patch = { status, updated_at: new Date().toISOString() }
     if (status === 'approved' || status === 'paid') { patch.approved_by = profile.id; patch.approved_at = new Date().toISOString() }
     if (status === 'paid') patch.paid_at = new Date().toISOString()
@@ -80,6 +98,7 @@ export default function FinanceOperations({ portalMode = false }) {
 
   async function addReconciliation(event) {
     event.preventDefault()
+    if (demo) { toast('Demo portal is read only. No financial records were changed.'); return }
     setSaving(true)
     const { error } = await supabase.from('payment_reconciliation_records').insert({
       ...recon, school_id: profile.school_id, amount: Number(recon.amount), currency_code: currency,
@@ -96,6 +115,7 @@ export default function FinanceOperations({ portalMode = false }) {
   }
 
   async function updateRecon(row, status, selectedPaymentId = reconMatches[row.id] || row.payment_id) {
+    if (demo) { toast('Demo portal is read only. No financial records were changed.'); return }
     const paymentId = status === 'matched' ? selectedPaymentId : null
     if (status === 'matched' && !paymentId) { toast.error('Edit the transaction and select a school payment to match it'); return }
     const { error } = await supabase.from('payment_reconciliation_records').update({ status, payment_id: paymentId, reviewed_by: profile.id, reviewed_at: new Date().toISOString() }).eq('id', row.id).eq('school_id', profile.school_id)
@@ -106,13 +126,16 @@ export default function FinanceOperations({ portalMode = false }) {
 
   const totalExpenses = expenses.filter(row => row.status !== 'void').reduce((sum, row) => sum + Number(row.amount || 0), 0)
   const fmt = amount => formatCurrency(amount, currency)
-  return <main className="finance-ops-page">
+  return <main className={`finance-ops-page ${demo ? 'finance-demo' : ''}`}>
     <style>{`.finance-ops-page{max-width:1200px;margin:auto;padding:36px 24px;color:var(--ink)}.finance-ops-head{margin-bottom:22px}.finance-ops-head h1{margin:4px 0}.finance-ops-head p{color:var(--muted);margin:0}.finance-ops-summary{display:flex;gap:14px;margin:18px 0;flex-wrap:wrap}.finance-ops-summary article{padding:14px 18px;border:1px solid var(--line);border-radius:12px;background:var(--surface,white);flex:1;min-width:160px}.finance-ops-summary span{display:block;color:var(--muted);font-size:.85rem}.finance-ops-tabs{display:flex;gap:8px;margin:20px 0}.finance-ops-tabs button{padding:10px 14px;border:1px solid var(--line);border-radius:9px;background:var(--surface,white);color:var(--ink);cursor:pointer}.finance-ops-tabs button[aria-pressed="true"]{background:var(--blue,#1769d2);color:white}.finance-ops-grid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:18px;align-items:start}.finance-ops-card{padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--surface,white)}.finance-ops-card h2{font-size:1.05rem;margin:0 0 14px}.finance-ops-form input,.finance-ops-form select,.finance-ops-form textarea{width:100%;box-sizing:border-box;padding:10px;margin:0 0 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}.finance-ops-form textarea{min-height:75px;resize:vertical}.finance-ops-table-wrap{overflow:auto}.finance-ops-table{width:100%;border-collapse:collapse;min-width:650px}.finance-ops-table th,.finance-ops-table td{text-align:left;padding:11px 9px;border-bottom:1px solid var(--line);font-size:.88rem}.finance-ops-table th{color:var(--muted)}.finance-ops-status{text-transform:capitalize;white-space:nowrap}.finance-ops-note{color:var(--muted);font-size:.84rem;margin:0 0 14px}.finance-ops-empty{padding:25px;text-align:center;color:var(--muted)}@media(max-width:900px){.finance-ops-grid{grid-template-columns:1fr}}`}</style>
-    <header className="finance-ops-head"><p className="eyebrow">{school?.name || 'School workspace'}</p><h1>{section === 'Dashboard' ? 'Finance overview' : section === 'Expenses' ? 'Expense management' : 'Payment reconciliation'}</h1><p>Track school expenses, fee collections and statement matching in one finance workspace.</p></header>
-    {canManageExpenses || canReconcile ? <div className="finance-ops-summary"><article><span>Recorded expenses</span><strong>{fmt(totalExpenses)}</strong></article><article><span>Transactions to review</span><strong>{reconciliations.filter(row => row.status === 'unmatched').length}</strong></article><article><span>Matched transactions</span><strong>{reconciliations.filter(row => row.status === 'matched').length}</strong></article></div> : null}
+    <style>{`.finance-demo .finance-ops-grid{grid-template-columns:minmax(0,1fr)}.finance-demo .finance-ops-form,.finance-demo .finance-ops-table button{display:none}`}</style>
+    {demo && <div className="dashboard-data-note" role="status">Finance portal demo · sample records are read only and are not school financial data.</div>}
+    <header className="finance-ops-head"><p className="eyebrow">{school?.name || 'School workspace'}</p><h1>{section === 'Dashboard' ? 'Finance overview' : section === 'Collections' ? 'Fee collections' : section === 'Expenses' ? 'Expense management' : 'Payment reconciliation'}</h1><p>Track school expenses, fee collections and statement matching in one finance workspace.</p></header>
+    {canManageExpenses || canReconcile ? <div className="finance-ops-summary"><article><span>Recorded expenses</span><strong>{fmt(totalExpenses)}</strong></article><article><span>Transactions to review</span><strong>{reconciliations.filter(row => row.status === 'unmatched').length}</strong></article><article><span>Matched transactions</span><strong>{reconciliations.filter(row => row.status === 'matched').length}</strong></article><article><span>Recent collections · paid</span><strong>{fmt(payments.filter(row => row.status === 'paid').reduce((sum, row) => sum + Number(row.amount || 0), 0))}</strong></article></div> : null}
     {!portalMode && <div className="finance-ops-tabs"><button aria-pressed={section === 'Expenses'} onClick={() => selectSection('Expenses')}>Expenses</button><button aria-pressed={section === 'Reconciliation'} onClick={() => selectSection('Reconciliation')}>Payment reconciliation</button></div>}
-    {section === 'Dashboard' && portalMode && <section className="finance-ops-card"><h2>Finance workspace</h2><p className="finance-ops-note">Review school spending and fee payment reconciliation. Access to each action follows your assigned school finance permissions.</p><div className="finance-ops-tabs"><button type="button" onClick={() => selectSection('Expenses')}>Open expenses</button><button type="button" onClick={() => selectSection('Reconciliation')}>Review payments</button></div></section>}
-    <div style={{ display: section === 'Dashboard' && portalMode ? 'none' : undefined }}>
+    {section === 'Dashboard' && portalMode && <section className="finance-ops-card"><h2>Finance workspace</h2><p className="finance-ops-note">Manage fee collections, school expenses and payment reconciliation here. Payroll and employee records stay in the separate HR & Payroll portal.</p><div className="finance-ops-tabs"><button type="button" onClick={() => selectSection('Collections')}>View fee collections</button><button type="button" onClick={() => selectSection('Expenses')}>Open expenses</button><button type="button" onClick={() => selectSection('Reconciliation')}>Review payments</button></div></section>}
+    {section === 'Collections' && portalMode && <section className="finance-ops-card"><h2>Recent school payments</h2><p className="finance-ops-note">Latest payment records for this school (up to 200). This view does not change or confirm payments.</p>{loading ? <div className="finance-ops-empty">Loading payments…</div> : payments.length === 0 ? <div className="finance-ops-empty">No payment records found.</div> : <div className="finance-ops-table-wrap"><table className="finance-ops-table"><thead><tr><th>Payment reference</th><th>Paid on</th><th>Amount</th><th>Status</th></tr></thead><tbody>{payments.map(payment => <tr key={payment.id}><td>{payment.reference || payment.id.slice(0, 8)}</td><td>{payment.paid_at ? new Date(payment.paid_at).toLocaleDateString() : '—'}</td><td>{fmt(payment.amount)}</td><td className="finance-ops-status">{payment.status}</td></tr>)}</tbody></table></div>}</section>}
+    <div style={{ display: ['Dashboard', 'Collections'].includes(section) && portalMode ? 'none' : undefined }}>
     {!canManageExpenses && !canReconcile ? <section className="finance-ops-card finance-ops-empty">This area is limited to the principal and finance officer. Ask the school administrator to assign your finance portal access.</section> : section === 'Expenses' && !canManageExpenses ? <section className="finance-ops-card finance-ops-empty">You do not have permission to manage school expenses.</section> : section === 'Reconciliation' && !canReconcile ? <section className="finance-ops-card finance-ops-empty">Payment reconciliation is limited to the principal and finance officer.</section> : section === 'Expenses' ? <div className="finance-ops-grid"><form className="finance-ops-card finance-ops-form" onSubmit={addExpense}><h2>Record expense</h2><input required maxLength="160" placeholder="Description" value={expense.title} onChange={e => setExpense({ ...expense, title: e.target.value })} /><input required maxLength="80" placeholder="Category" value={expense.category} onChange={e => setExpense({ ...expense, category: e.target.value })} /><input placeholder="Vendor / payee" value={expense.vendor} onChange={e => setExpense({ ...expense, vendor: e.target.value })} /><input required type="number" min="0.01" step="0.01" placeholder="Amount" value={expense.amount} onChange={e => setExpense({ ...expense, amount: e.target.value })} /><input required type="date" value={expense.incurred_on} onChange={e => setExpense({ ...expense, incurred_on: e.target.value })} /><input placeholder="Receipt or voucher reference" value={expense.receipt_reference} onChange={e => setExpense({ ...expense, receipt_reference: e.target.value })} /><textarea placeholder="Notes" value={expense.notes} onChange={e => setExpense({ ...expense, notes: e.target.value })} /><button className="button blue-button" disabled={saving}>{saving ? 'Saving…' : 'Record expense'}</button></form><section className="finance-ops-card"><h2>Expense register</h2>{loading ? <div className="finance-ops-empty">Loading…</div> : expenses.length === 0 ? <div className="finance-ops-empty">No expenses recorded.</div> : <div className="finance-ops-table-wrap"><table className="finance-ops-table"><thead><tr><th>Date</th><th>Description</th><th>Vendor</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead><tbody>{expenses.map(row => <tr key={row.id}><td>{row.incurred_on}</td><td><strong>{row.title}</strong><div className="finance-ops-note">{row.category} · {row.receipt_reference || 'No receipt ref'}</div></td><td>{row.vendor || '—'}</td><td>{fmt(row.amount)}</td><td className="finance-ops-status">{row.status}</td><td>{row.status === 'recorded' && canApprove && <button className="button outline-button" onClick={() => setExpenseStatus(row, 'approved')}>Approve</button>}{row.status === 'approved' && canApprove && <button className="button outline-button" onClick={() => setExpenseStatus(row, 'paid')}>Mark paid</button>}</td></tr>)}</tbody></table></div>}</section></div> : <><p className="finance-ops-note">Add transactions from your bank or mobile money statement, then match them to recorded school payments. This records reconciliation evidence; it does not connect to a payment provider.</p><div className="finance-ops-grid"><form className="finance-ops-card finance-ops-form" onSubmit={addReconciliation}><h2>Add statement transaction</h2><input required placeholder="Provider (bank / mobile money)" value={recon.provider} onChange={e => setRecon({ ...recon, provider: e.target.value })} /><input required placeholder="Provider transaction reference" value={recon.provider_reference} onChange={e => setRecon({ ...recon, provider_reference: e.target.value })} /><input required type="number" min="0.01" step="0.01" placeholder="Amount" value={recon.amount} onChange={e => setRecon({ ...recon, amount: e.target.value })} /><input type="datetime-local" value={recon.transaction_at} onChange={e => setRecon({ ...recon, transaction_at: e.target.value })} /><select value={recon.payment_id} onChange={e => setRecon({ ...recon, payment_id: e.target.value, status: e.target.value ? 'matched' : 'unmatched' })}><option value="">Leave unmatched for review</option>{payments.map(payment => <option key={payment.id} value={payment.id}>{payment.reference || payment.id.slice(0, 8)} · {fmt(payment.amount)} · {payment.status}</option>)}</select><textarea placeholder="Reconciliation note" value={recon.note} onChange={e => setRecon({ ...recon, note: e.target.value })} /><button className="button blue-button" disabled={saving}>{saving ? 'Saving…' : 'Add transaction'}</button></form><section className="finance-ops-card"><h2>Statement transactions</h2>{loading ? <div className="finance-ops-empty">Loading…</div> : reconciliations.length === 0 ? <div className="finance-ops-empty">No statement transactions added.</div> : <div className="finance-ops-table-wrap"><table className="finance-ops-table"><thead><tr><th>Provider / reference</th><th>Date</th><th>Amount</th><th>Payment match</th><th>Status</th><th></th></tr></thead><tbody>{reconciliations.map(row => <tr key={row.id}><td>{row.provider}<div className="finance-ops-note">{row.provider_reference}</div></td><td>{row.transaction_at ? new Date(row.transaction_at).toLocaleString() : '—'}</td><td>{fmt(row.amount)}</td><td>{row.status === 'unmatched' ? <select aria-label="Match school payment" value={reconMatches[row.id] || ''} onChange={e => setReconMatches(current => ({ ...current, [row.id]: e.target.value }))}><option value="">Select payment</option>{payments.filter(payment => Number(payment.amount) === Number(row.amount)).map(payment => <option key={payment.id} value={payment.id}>{payment.reference || payment.id.slice(0, 8)} · {fmt(payment.amount)} · {payment.status}</option>)}</select> : payments.find(payment => payment.id === row.payment_id)?.reference || 'Unmatched'}</td><td className="finance-ops-status">{row.status}</td><td>{row.status === 'unmatched' && <><button className="button outline-button" onClick={() => updateRecon(row, 'matched')}>Match</button><button className="button outline-button" onClick={() => updateRecon(row, 'reviewed', null)}>Mark reviewed</button></>}</td></tr>)}</tbody></table></div>}</section></div></>}
     </div>
   </main>
