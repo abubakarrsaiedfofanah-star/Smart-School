@@ -39,7 +39,7 @@ export default function PortalLayout({ children, portal = null }) {
   const assignedRoles = staffRoles || []
   const specialistItems = []
   if (assignedRoles.some(item => ['principal', 'deputy_principal', 'hr_admin'].includes(item))) specialistItems.push(['Staff attendance', '\u2713', '/staff-attendance'])
-  if (assignedRoles.some(item => ['principal', 'hr_admin', 'finance_officer'].includes(item))) specialistItems.push(['HR & Payroll portal', '\u25a4', '/hr-payroll'])
+  if (assignedRoles.some(item => ['principal', 'hr_admin'].includes(item))) specialistItems.push(['HR & Payroll portal', '\u25a4', '/hr-payroll'])
   if (assignedRoles.some(item => ['principal', 'finance_officer'].includes(item))) specialistItems.push(['Finance portal', '$', '/finance-operations'])
   if (assignedRoles.some(item => ['principal', 'deputy_principal', 'registrar'].includes(item))) specialistItems.push(['Admissions', '\u2197', '/admissions'])
   if (assignedRoles.some(item => ['principal', 'deputy_principal', 'inventory_manager', 'librarian'].includes(item))) specialistItems.push(['Inventory & assets', '\u25a7', '/inventory'])
@@ -58,11 +58,8 @@ export default function PortalLayout({ children, portal = null }) {
       ['Expenses', '\u25a7', '?module=Expenses'], ['Payment reconciliation', '\u2713', '?module=Reconciliation']
     ]]]
   }
-  const financeOnly = role === 'teacher' && assignedRoles.includes('finance_officer') && !assignedRoles.includes('principal') && !assignedRoles.includes('hr_admin')
   const hrOnly = role === 'teacher' && assignedRoles.includes('hr_admin') && !assignedRoles.includes('principal')
-  const groups = portal ? specialistNavigation[portal].map(([group, items]) => [group, portal === 'hr' && financeOnly
-    ? items.filter(([label]) => ['Dashboard', 'Payroll', 'Payments', 'Payslips'].includes(label))
-    : portal === 'hr' && hrOnly
+  const groups = portal ? specialistNavigation[portal].map(([group, items]) => [group, portal === 'hr' && hrOnly
       ? items.filter(([label]) => ['Dashboard', 'Staff records', 'Recruitment', 'Contracts', 'Attendance & leave', 'Salary settings', 'Payroll', 'Approvals', 'Payslips', 'Security & reports'].includes(label))
       : items]) : role === 'teacher'
     ? [...navigation.teacher, ['Staff portals', [['Portal hub', '\u25c8', '/staff-portals'], ...specialistItems]]]

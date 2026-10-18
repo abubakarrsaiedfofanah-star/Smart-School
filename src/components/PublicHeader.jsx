@@ -33,15 +33,14 @@ export default function PublicHeader() {
   }, [])
 
   return <>
-    <div className="announcement-bar school-announcement">
-      <span>For the people who run a school, teach a class, and help students grow.</span>
-      <Link to="/register">Set up your school <b aria-hidden="true">→</b></Link>
-    </div>
     {menuOpen && <button className="public-menu-scrim" type="button" aria-label="Close navigation menu" onClick={closeMenu} />}
     <header className="nav blue-nav sticky-nav school-nav">
-      <Link className="brand" to="/" aria-label="SmartSchool home">Smart<span>School</span></Link>
+      <Link className="brand school-logo" to="/" aria-label="SmartSchool home">
+        <span className="school-brand-mark" aria-hidden="true">S</span>
+        <span className="school-brand-name">Smart<span>School</span></span>
+      </Link>
       <button className="public-menu" type="button" onClick={() => setMenuOpen(open => !open)} aria-expanded={menuOpen} aria-controls="public-navigation" aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}>
-        {menuOpen ? '×' : '☰'}
+        {menuOpen ? '\u00d7' : '\u2630'}
       </button>
       <nav id="public-navigation" className={menuOpen ? 'public-nav-open' : ''} aria-label="Main navigation">
         {navigation.map(([label, to]) => {
