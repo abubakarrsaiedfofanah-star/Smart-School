@@ -26,6 +26,15 @@
 .portal-topbar-user { display: flex; align-items: center; gap: 9px; margin-left: auto; }.portal-user-avatar { display: grid; width: 34px; height: 34px; place-items: center; border: 2px solid #fff; border-radius: 50%; background: color-mix(in srgb, var(--school-accent) 17%, #eef5fb); color: var(--school-accent); font-size: 12px; font-weight: 800; }.portal-topbar-user > span:last-child { display: grid; gap: 3px; }.portal-topbar-user b { color: #2f465a; font-size: 10px; }.portal-topbar-user small { color: #8192a0; font-size: 8px; text-transform: capitalize; }
 .portal-page-content { min-width: 0; flex: 1; padding: clamp(16px, 2.5vw, 32px); }.portal-page-content > * { max-width: 1500px; margin-right: auto; margin-left: auto; }
 .portal-scrim { display: none; }
+
+/* Role dashboards share this shell with their feature pages. */
+.portal-page-content > .portal { position: relative; display: block; width: 100%; height: auto; min-height: 0; max-width: none; overflow: visible; background: transparent; }
+.portal-page-content > .portal > .side,
+.portal-page-content > .portal > .menu-scrim,
+.portal-page-content > .portal > .mobile-bottom-nav { display: none !important; }
+.portal-page-content > .portal > .portal-main { display: block; width: 100%; min-width: 0; height: auto; min-height: 0; overflow: visible; padding: 0; background: transparent; }
+.portal-page-content > .portal > .portal-main > .main-header { display: none !important; }
+.portal-page-content > .portal > .portal-main > .content-area { display: flex; width: 100%; min-width: 0; flex-direction: column; gap: 22px; padding: 0; }
 .portal-nav-group button:focus-visible, .portal-settings-link:focus-visible, .portal-logout:focus-visible, .portal-menu-button:focus-visible, .portal-collapse-button:focus-visible { outline: 2px solid #a8d7ff; outline-offset: 2px; }
 .portal-frame-collapsed .portal-sidebar { padding-right: 10px; padding-left: 10px; }.portal-frame-collapsed .tenant-brand-copy, .portal-frame-collapsed .portal-tenant-chip, .portal-frame-collapsed .portal-nav-group h2, .portal-frame-collapsed .portal-nav-label, .portal-frame-collapsed .portal-upgrade-link > span:last-child { display: none; }.portal-frame-collapsed .portal-sidebar-brand { justify-content: center; padding-right: 0; padding-left: 0; }.portal-frame-collapsed .portal-nav-group button, .portal-frame-collapsed .portal-logout, .portal-frame-collapsed .portal-settings-link { justify-content: center; padding-right: 4px; padding-left: 4px; }.portal-frame-collapsed .portal-nav-active-mark { position: absolute; right: 3px; margin: 0; }.portal-frame-collapsed .portal-upgrade-link { justify-content: center; padding-right: 4px; padding-left: 4px; }
 

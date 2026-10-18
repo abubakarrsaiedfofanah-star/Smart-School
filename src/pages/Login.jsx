@@ -89,15 +89,23 @@ export default function Login(){
   if(session&&profile) return <Navigate to={portalDestination(profile, staffRoles)} replace/>;
 
   return (
-    <div className="auth page-transition" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'radial-gradient(circle at 50% 20%, rgba(35, 117, 225, 0.12) 0%, transparent 60%)' }}>
-      <div className="auth-container" style={{ width: '100%', maxWidth: '500px' }}>
-        <main className="auth-card glass-card neumorph-flat" style={{ padding: '40px', borderRadius: '28px', background: 'var(--panel)', border: '1px solid var(--line)', boxShadow: 'var(--shadow)' }}>
+    <div className="auth page-transition login-page" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'radial-gradient(circle at 50% 20%, rgba(35, 117, 225, 0.12) 0%, transparent 60%)' }}>
+      <div className="auth-container login-container" style={{ width: '100%', maxWidth: '500px' }}>
+        <aside className="login-aside">
+          <Link className="brand" to="/">Smart<span>School</span></Link>
+          <p className="eyebrow">ONE SCHOOL. ONE WORKSPACE.</p>
+          <h2>Make room for better learning.</h2>
+          <p className="login-aside-copy">A calmer place to manage classes, follow progress, and keep your school community connected.</p>
+          <div className="login-aside-points"><span><b>01</b> Tools matched to your role</span><span><b>02</b> Your school’s work in one place</span><span><b>03</b> Secure access for every account</span></div>
+          <div className="login-aside-footer"><span>Setting up a school?</span><Link to="/register">Create your school workspace <b aria-hidden="true">→</b></Link></div>
+        </aside>
+        <main className="auth-card login-card glass-card neumorph-flat" style={{ padding: '40px', borderRadius: '28px', background: 'var(--panel)', border: '1px solid var(--line)', boxShadow: 'var(--shadow)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
-            <Link className="brand" to="/" style={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.5px' }}>Smart<span>School</span></Link>
+            <span className="login-card-brand">SmartSchool account</span>
             <Link to="/" className="text-link" style={{ fontSize: '0.85rem', fontWeight: 600, padding: '6px 12px', background: 'var(--cream)', borderRadius: '8px' }}>← Back to Home</Link>
           </div>
 
-          <div style={{ marginBottom: '25px' }}>
+          <div className="login-heading" style={{ marginBottom: '25px' }}>
             <span className="eyebrow" style={{ display: 'inline-block', marginBottom: '8px' }}>{requestedRole ? roleLabels[requestedRole].toUpperCase()+' PORTAL' : 'SECURE SCHOOL PORTAL'}</span>
             <h1 style={{ fontSize: '1.9rem', fontWeight: 800, marginBottom: '8px', letterSpacing: '-0.5px' }}>{requestedRole ? roleLabels[requestedRole]+' sign in' : 'Welcome Back'}</h1>
             <p style={{ color: 'var(--muted)', margin: 0, fontSize: '0.95rem' }}>Sign in with the account your school provided. You will open your own role portal.</p>

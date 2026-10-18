@@ -14,8 +14,9 @@ const navigation = {
     ['Community', [['Calendar & events', '\u25a6', '/calendar'], ['Messages', '\u2709', '/chat'], ['Announcements', '\u25c9', '?module=Announcements'], ['Audit trail', '\u2261', '/audit-trail']]]
   ],
   teacher: [
-    ['Teaching', [['Dashboard', '\u2302', ''], ['My classes', '\u25a6', '?module=My classes'], ['Attendance', '\u2713', '?module=Take attendance'], ['Assignments', '\u25a4', '/teacher-assignments'], ['Gradebook', '\u25a5', '/gradebook'], ['Lesson plans', '\u25a7', '/lessons'], ['Timetable', '\u25f7', '/timetable'], ['Quizzes', '\u270e', '/quizzes'], ['Courses', '\u25a6', '/course-builder'], ['Library', '\u25a8', '/library']]],
-    ['Connect', [['Messages', '\u2709', '/chat'], ['Meetings', '\u25f7', '/meetings'], ['Announcements', '\u25c9', '?module=Announcements'], ['Calendar', '\u25a6', '/calendar']]]
+    ['Teaching', [['Dashboard', '\u2302', ''], ['My classes', '\u25a6', '?module=My classes'], ['My subjects', '\u25a4', '?module=My subjects'], ['Students', '\u25c9', '?module=Students'], ['Class performance', '\u25ce', '?module=Class performance'], ['Timetable', '\u25f7', '/timetable'], ['Gradebook', '\u25a5', '/gradebook'], ['Lesson plans', '\u25a7', '/lessons'], ['Quizzes', '\u270e', '/quizzes'], ['Courses', '\u25a6', '/course-builder'], ['Library', '\u25a8', '/library']]],
+    ['Work', [['Attendance', '\u2713', '?module=Take attendance'], ['Assignments', '\u25a4', '/teacher-assignments'], ['Submissions', '\u25a5', '?module=Submissions'], ['Exams', '\u25a4', '?module=Exams'], ['Results', '\u25a5', '?module=Results'], ['Behavior log', '\u2605', '?module=Behavior Log'], ['Meetings', '\u25f7', '/meetings']]],
+    ['Connect', [['Messages', '\u2709', '/chat'], ['Announcements', '\u25c9', '?module=Announcements'], ['Broadcast', '\u25cf', '?module=Broadcast'], ['Calendar', '\u25a6', '/calendar']]]
   ],
   student: [
     ['My school', [['Dashboard', '\u2302', ''], ['Assignments', '\u25a4', '?module=Assignments'], ['My results', '\u25a5', '?module=My results'], ['Timetable', '\u25f7', '/timetable'], ['Attendance', '\u2713', '?module=Attendance'], ['Library', '\u25a8', '/library'], ['Quizzes', '\u270e', '/quizzes']]],

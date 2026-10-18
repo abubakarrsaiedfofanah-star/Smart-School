@@ -314,11 +314,12 @@ function DashboardIntro({ role, name, schoolName, timezone }) {
     super_admin: 'Keep track of schools, subscriptions, and platform health.',
     school_admin: 'Review today’s school activity and jump into common tasks.',
     student: 'See what is coming up and get to your learning tools quickly.',
-    parent: 'Follow your learner’s progress, school updates, and upcoming work.'
+    parent: 'Follow your learner’s progress, school updates, and upcoming work.',
+    teacher: 'Your classes, attendance, and assignments are ready when you are.'
   }
   const date = new Intl.DateTimeFormat(undefined, { weekday: 'long', day: 'numeric', month: 'long', timeZone: timezone }).format(new Date())
-  return <section className="dashboard-intro">
-    <div><p className="eyebrow">{schoolName || (role === 'super_admin' ? 'SMARTSCHOOL PLATFORM' : 'SCHOOL PORTAL')}</p><h2>{role === 'super_admin' ? titles[role] : `Good day, ${firstName}`}</h2><p>{descriptions[role] || 'Your school workspace, all in one place.'}</p></div>
+  return <section className={`dashboard-intro dashboard-intro-${role}`}>
+    <div><p className="eyebrow">{role === 'teacher' ? 'TEACHER WORKSPACE' : schoolName || (role === 'super_admin' ? 'SMARTSCHOOL PLATFORM' : 'SCHOOL PORTAL')}</p><h2>{role === 'super_admin' ? titles[role] : role === 'teacher' ? `Your teaching day, ${firstName}` : `Good day, ${firstName}`}</h2><p>{descriptions[role] || 'Your school workspace, all in one place.'}</p></div>
     <div className="dashboard-intro-date"><span aria-hidden="true">◷</span><div><small>TODAY</small><b>{date}</b></div></div>
   </section>
 }
@@ -327,11 +328,11 @@ function DashboardQuickActions({ role, studentId, onSelect }) {
   const actions = {
     super_admin: [['Schools', 'Manage school accounts', '▦', 'select'], ['School approvals', 'Review new applications', '✓', 'select'], ['Analytics', 'Explore platform trends', '↗', 'select'], ['Security', 'Review access settings', '◇', '/security']],
     school_admin: [['Students', 'Open learner records', '♧', 'select'], ['Teachers', 'Manage staff accounts', '♙', 'select'], ['Timetable', 'View or edit the schedule', '◷', '/timetable'], ['School accounts', 'Manage school access', '＋', '/school-accounts'], ['HR & Payroll', 'Open staff and payroll management', '▤', '/hr-payroll'], ['Finance', 'Manage school expenses and reconciliation', '$', '/finance-operations'], ['Staff portal hub', 'Open specialist school services', '◈', '/staff-portals']],
-    teacher: [['My classes', 'Open your assigned classes', '▦', 'select'], ['Take attendance', 'Record today’s attendance', '✓', 'select'], ['Assignments', 'Create work and review submissions', '✎', '/teacher-assignments'], ['Staff portals', 'Open specialist tools assigned to you', '◈', '/staff-portals']],
+    teacher: [['My classes', 'Open your assigned classes', '▦', 'select'], ['Take attendance', 'Record today’s attendance', '✓', 'select'], ['Assignments', 'Create work and review submissions', '✎', '/teacher-assignments'], ['Gradebook', 'Review marks and class results', '▤', '/gradebook'], ['Timetable', 'See your classes for the week', '◷', '/timetable'], ['Lesson plans', 'Prepare and organize lessons', '◈', '/lessons']],
     student: [['Timetable', 'See your lessons', '◷', '/timetable'], ['Assignments', 'Open classwork', '✎', 'select'], ['Quizzes', 'Practice and revise', '◇', '/quizzes'], ['My results', 'View your report card', '▤', studentId ? `/report-card/${studentId}` : 'select']],
     parent: [['Timetable', 'See your learner’s schedule', '◷', '/timetable'], ['Meetings', 'Connect with school staff', '▣', '/meetings'], ['Messages', 'Open school messages', '✉', '/chat'], ['Child fees', 'Review payments and balances', '¤', 'select']]
   }
-  return <section className="dashboard-actions-section"><div className="dashboard-section-heading"><div><p className="eyebrow">SHORTCUTS</p><h2>Quick actions</h2></div></div><div className="dashboard-quick-actions">
+  return <section className="dashboard-actions-section"><div className="dashboard-section-heading"><div><p className="eyebrow">{role === 'teacher' ? 'YOUR CLASSROOM' : 'SHORTCUTS'}</p><h2>{role === 'teacher' ? 'Teaching tools' : 'Quick actions'}</h2></div></div><div className={`dashboard-quick-actions ${role === 'teacher' ? 'teacher-actions' : ''}`}>
     {(actions[role] || []).map(([title, description, icon, target]) => target === 'select' ? <button type="button" className="dashboard-action-card" key={title} onClick={() => onSelect(title)}><i>{icon}</i><span><b>{title}</b><small>{description}</small></span><em aria-hidden="true">↗</em></button> : <Link className="dashboard-action-card" key={title} to={target}><i>{icon}</i><span><b>{title}</b><small>{description}</small></span><em aria-hidden="true">↗</em></Link>)}
   </div></section>
 }

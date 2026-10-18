@@ -375,6 +375,9 @@
 .dashboard-intro-date small, .dashboard-intro-date b { display: block; }
 .dashboard-intro-date small { color: var(--muted); font-size: .62rem; font-weight: 800; letter-spacing: .12em; }
 .dashboard-intro-date b { margin-top: 3px; color: var(--ink); font-size: .83rem; }
+.dashboard-intro-teacher { background: radial-gradient(ellipse at 100% 0%, color-mix(in srgb, var(--school-accent, #13835b) 16%, white), transparent 48%), linear-gradient(115deg, #fff, #f5fbf8); }
+.dashboard-intro-teacher .eyebrow { color: var(--school-accent-strong, #13734f); }
+.dashboard-quick-actions.teacher-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .dashboard-actions-section { display: grid; gap: 14px; }
 .dashboard-section-heading { display: flex; align-items: end; justify-content: space-between; }
 .dashboard-section-heading .eyebrow { margin: 0 0 4px; color: var(--school-accent-strong, var(--green)); font-size: .65rem; font-weight: 800; letter-spacing: .14em; }
@@ -511,6 +514,7 @@
   .dashboard-intro-date { padding: 9px 12px; }
   .dashboard-intro-date b { font-size: .75rem; }
   .dashboard-quick-actions { gap: 8px; }
+  .dashboard-quick-actions.teacher-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dashboard-action-card { min-height: 95px; gap: 9px; padding: 12px; border-radius: 13px; }
   .dashboard-action-card > i { flex-basis: 30px; width: 30px; height: 30px; font-size: .9rem; }
   .dashboard-action-card b { font-size: .76rem; }
