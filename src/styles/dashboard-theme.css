@@ -340,6 +340,22 @@
   gap: 20px;
 }
 
+.dashboard-data-note {
+  margin: 14px 0 6px;
+  padding: 11px 15px;
+  border: 1px solid #cfe2fb;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #285b91;
+  font-size: .86rem;
+}
+
+.dashboard-data-note-error {
+  border-color: #f2d2c9;
+  background: #fff5f2;
+  color: #9c412c;
+}
+
 .stat-card {
   padding: 24px;
   border-radius: 24px;
