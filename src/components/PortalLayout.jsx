@@ -9,13 +9,13 @@ const navigation = {
     ['Platform', [['Dashboard', '\u2302', ''], ['Schools', '\u25a3', '?module=Schools'], ['Approvals', '\u2713', '?module=School approvals'], ['Subscriptions', '\u25c7', '?module=Subscriptions'], ['Payments', '$', '?module=Payments'], ['Analytics', '\u25ce', '?module=Analytics'], ['Audit trail', '\u2261', '?module=Audit Trail']]]
   ],
   school_admin: [
-    ['School', [['Dashboard', '\u2302', ''], ['Students', '\u25c9', '?module=Students'], ['Teachers', '\u25c8', '?module=Teachers'], ['Portal accounts', '\u2637', '/school-accounts'], ['Classes', '\u25a6', '?module=Classes'], ['Attendance', '\u2713', '?module=Attendance'], ['Fees & payments', '$', '?module=Fees'], ['Admissions', '\u2197', '/admissions'], ['School settings', '\u2699', '/settings'], ['Plan & billing', '\u25c7', '/subscription']]],
+    ['School', [['Dashboard', '\u2302', ''], ['Students', '\u25c9', '?module=Students'], ['Teachers', '\u25c8', '?module=Teachers'], ['Teacher subject assignments', '\u25a4', '/teacher-loads'], ['Portal accounts', '\u2637', '/school-accounts'], ['Staff roles & access', '\u2659', '/staff-roles'], ['Staff portal hub', '\u25c8', '/staff-portals'], ['Classes', '\u25a6', '?module=Classes'], ['Attendance', '\u2713', '?module=Attendance'], ['Staff attendance', '\u2713', '/staff-attendance'], ['Fees & payments', '$', '?module=Fees'], ['Expenses & reconciliation', '$', '/finance-operations'], ['Inventory & assets', '\u25a7', '/inventory'], ['HR & Payroll', '\u25a4', '/hr-payroll'], ['Admissions', '\u2197', '/admissions'], ['School settings', '\u2699', '/settings'], ['Plan & billing', '\u25c7', '/subscription']]],
     ['Learning', [['Timetable', '\u25f7', '/timetable'], ['Assignments', '\u25a4', '?module=Assignments'], ['Gradebook', '\u25a5', '/gradebook'], ['Library', '\u25a7', '/library'], ['Quizzes', '\u270e', '/quizzes']]],
     ['Community', [['Calendar & events', '\u25a6', '/calendar'], ['Messages', '\u2709', '/chat'], ['Announcements', '\u25c9', '?module=Announcements'], ['Audit trail', '\u2261', '/audit-trail']]]
   ],
   teacher: [
-    ['Teaching', [['Dashboard', '\u2302', ''], ['My classes', '\u25a6', '?module=My classes'], ['Attendance', '\u2713', '?module=Take attendance'], ['Assignments', '\u25a4', '?module=Assignments'], ['Gradebook', '\u25a5', '/gradebook'], ['Lesson plans', '\u25a7', '/lessons'], ['Timetable', '\u25f7', '/timetable'], ['Library', '\u25a8', '/library']]],
-    ['Connect', [['Messages', '\u2709', '/chat'], ['Meetings', '\u25f7', '/meetings'], ['Announcements', '\u25c9', '?module=Announcements']]]
+    ['Teaching', [['Dashboard', '\u2302', ''], ['My classes', '\u25a6', '?module=My classes'], ['Attendance', '\u2713', '?module=Take attendance'], ['Assignments', '\u25a4', '/teacher-assignments'], ['Gradebook', '\u25a5', '/gradebook'], ['Lesson plans', '\u25a7', '/lessons'], ['Timetable', '\u25f7', '/timetable'], ['Quizzes', '\u270e', '/quizzes'], ['Courses', '\u25a6', '/course-builder'], ['Library', '\u25a8', '/library']]],
+    ['Connect', [['Messages', '\u2709', '/chat'], ['Meetings', '\u25f7', '/meetings'], ['Announcements', '\u25c9', '?module=Announcements'], ['Calendar', '\u25a6', '/calendar']]]
   ],
   student: [
     ['My school', [['Dashboard', '\u2302', ''], ['Assignments', '\u25a4', '?module=Assignments'], ['My results', '\u25a5', '?module=My results'], ['Timetable', '\u25f7', '/timetable'], ['Attendance', '\u2713', '?module=Attendance'], ['Library', '\u25a8', '/library'], ['Quizzes', '\u270e', '/quizzes']]],
@@ -27,16 +27,24 @@ const navigation = {
   ]
 }
 
-const pageNames = { '/calendar': 'Calendar & events', '/timetable': 'Timetable', '/library': 'Library', '/quizzes': 'Quizzes', '/chat': 'Messages', '/gradebook': 'Gradebook', '/lessons': 'Lesson plans', '/meetings': 'Meetings', '/settings': 'School settings', '/admissions': 'Admissions', '/broadcast': 'Broadcast', '/audit-trail': 'Audit trail', '/security': 'Security settings', '/profile': 'My profile', '/course-builder': 'Course builder', '/school-accounts': 'Portal accounts', '/subscription': 'Plan & billing' }
+const pageNames = { '/calendar': 'Calendar & events', '/timetable': 'Timetable', '/library': 'Library', '/inventory': 'Inventory & assets', '/staff-attendance': 'Staff attendance', '/finance-operations': 'Expenses & reconciliation', '/quizzes': 'Quizzes', '/chat': 'Messages', '/gradebook': 'Gradebook', '/lessons': 'Lesson plans', '/meetings': 'Meetings', '/settings': 'School settings', '/admissions': 'Admissions', '/broadcast': 'Broadcast', '/audit-trail': 'Audit trail', '/security': 'Security settings', '/profile': 'My profile', '/course-builder': 'Course builder', '/teacher-assignments': 'Assignments & submissions', '/teacher-loads': 'Teacher class & subject assignments', '/school-accounts': 'Portal accounts', '/staff-roles': 'Staff roles & access', '/staff-portals': 'Staff portal hub', '/subscription': 'Plan & billing' }
 
 export default function PortalLayout({ children }) {
-  const { profile, school, logout } = useAuth()
+  const { profile, school, staffRoles, logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const role = profile?.role || 'school_admin'
-  const groups = navigation[role] || navigation.school_admin
+  const specialistItems = []
+  if (staffRoles.some(item => ['principal', 'deputy_principal'].includes(item))) specialistItems.push(['Staff attendance', '\u2713', '/staff-attendance'])
+  if (staffRoles.includes('hr_admin')) specialistItems.push(['HR & Payroll', '\u25a4', '/hr-payroll'])
+  if (staffRoles.includes('finance_officer')) specialistItems.push(['Finance operations', '$', '/finance-operations'], ['Payroll', '\u25a4', '/hr-payroll'])
+  if (staffRoles.includes('inventory_manager')) specialistItems.push(['Inventory', '\u25a7', '/inventory'])
+  if (staffRoles.includes('registrar')) specialistItems.push(['Admissions', '\u2197', '/admissions'])
+  const groups = role === 'teacher'
+    ? [...navigation.teacher, ['Staff portals', [['Portal hub', '\u25c8', '/staff-portals'], ...specialistItems]]]
+    : navigation[role] || navigation.school_admin
   const home = roleRoute(role)
   const accent = normalizeBrandColor(school?.primary_color)
   const title = location.pathname === home ? (new URLSearchParams(location.search).get('module') || 'Dashboard') : (pageNames[location.pathname] || 'School workspace')

@@ -84,22 +84,21 @@ export default function SubmissionPortal() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!file && !submission?.file_path) {
-      toast.error('Please select a file to upload');
-      return;
-    }
+    if (assignment.due_date && new Date(`${assignment.due_date}T23:59:59`) < new Date()) { toast.error('The due date has passed. Contact your teacher if you need an extension.'); return; }
+    if (!comment.trim() && !file && !submission?.file_path) { toast.error('Add written work or attach a file before submitting.'); return; }
+    if (file && file.size > 10 * 1024 * 1024) { toast.error('Choose a file smaller than 10 MB.'); return; }
 
     setUploading(true);
     try {
       let filePath = submission?.file_path;
 
       if (file) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
+        const fileExt = (file.name.split('.').pop() || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 10);
+        const fileName = `${crypto.randomUUID()}${fileExt ? `.${fileExt}` : ''}`;
         const newPath = `submissions/${assignmentId}/${studentId}/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
-          .from('assignments')
+          .from('assignment-files')
           .upload(newPath, file, { upsert: true });
 
         if (uploadError) throw uploadError;
@@ -155,7 +154,7 @@ export default function SubmissionPortal() {
           <p className="eyebrow blue-eyebrow">{assignment.subjects?.name || 'Assignment'}</p>
           <h1>{assignment.title}</h1>
           <div className="meta">
-            <span>📅 Due: {new Date(assignment.due_date).toLocaleDateString()}</span>
+            {assignment.due_date && <span>Due {new Date(`${assignment.due_date}T12:00:00`).toLocaleDateString()}</span>}
             {submission && <span className="status-badge success">✓ Submitted</span>}
           </div>
         </header>
@@ -168,7 +167,7 @@ export default function SubmissionPortal() {
         {submission?.score !== null && submission?.score !== undefined && (
           <div className="grade-feedback">
             <h3>Feedback Received</h3>
-            <p><strong>Score:</strong> {submission.score} / 100</p>
+            <p><strong>Score:</strong> {submission.score} / {assignment.max_score || 100}</p>
             {submission.feedback && <p><strong>Teacher Comments:</strong> {submission.feedback}</p>}
           </div>
         )}
@@ -182,12 +181,13 @@ export default function SubmissionPortal() {
           />
 
           <div className="file-input-wrapper">
-            <label>Upload Work (PDF, Image, or Doc)</label>
+            <label>Upload Work (optional, up to 10 MB)</label>
             <input
               type="file"
               onChange={e => setFile(e.target.files[0])}
-              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+              accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.txt"
             />
+            <small>You can submit written comments without attaching a file.</small>
             {submission?.file_path && !file && (
               <span className="current-file">Current file: {submission.file_path.split('/').pop()}</span>
             )}
@@ -197,7 +197,7 @@ export default function SubmissionPortal() {
             <button
               type="submit"
               className="button blue-button full"
-              disabled={uploading}
+              disabled={uploading || Boolean(assignment.due_date && new Date(`${assignment.due_date}T23:59:59`) < new Date())}
             >
               {uploading ? 'Uploading...' : submission ? 'Update Submission →' : 'Submit Assignment →'}
             </button>

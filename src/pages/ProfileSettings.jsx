@@ -8,7 +8,7 @@ export default function ProfileSettings() {
   const { profile, setProfile, demo } = useAuth();
   const { lang, setLang } = useLanguage();
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({ full_name: '', phone: '', signature_url: '', notification_preferences: { absences: true, announcements: true, behavior: true, schoolwork: true } });
+  const [formData, setFormData] = useState({ full_name: '', phone: '', signature_url: '', notification_preferences: { absences: true, announcements: true, behavior: true, schoolwork: true }, delivery_preferences: { email: false, sms: false, whatsapp: false, push: false } });
 
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -19,7 +19,8 @@ export default function ProfileSettings() {
         full_name: profile.full_name || '',
         phone: profile.phone || '',
         signature_url: profile.signature_url || '',
-        notification_preferences: { absences: true, announcements: true, behavior: true, schoolwork: true, ...(profile.notification_preferences || {}) }
+        notification_preferences: { absences: true, announcements: true, behavior: true, schoolwork: true, ...(profile.notification_preferences || {}) },
+        delivery_preferences: { email: false, sms: false, whatsapp: false, push: false, ...(profile.delivery_preferences || {}) }
       });
     }
   }, [profile]);
@@ -92,7 +93,7 @@ export default function ProfileSettings() {
     setLoading(true);
     try {
       if (demo) {
-        setProfile(current => ({ ...current, full_name: formData.full_name, phone: formData.phone, notification_preferences: formData.notification_preferences }));
+        setProfile(current => ({ ...current, full_name: formData.full_name, phone: formData.phone, notification_preferences: formData.notification_preferences, delivery_preferences: formData.delivery_preferences }));
         toast.success('Profile updated locally (Demo)!');
         return;
       }
@@ -100,10 +101,11 @@ export default function ProfileSettings() {
         full_name: formData.full_name,
         phone: formData.phone,
         signature_url: formData.signature_url,
-        notification_preferences: formData.notification_preferences
+        notification_preferences: formData.notification_preferences,
+        delivery_preferences: formData.delivery_preferences
       }).eq('id', profile.id);
       if (error) throw error;
-      setProfile(current => ({ ...current, full_name: formData.full_name, phone: formData.phone, notification_preferences: formData.notification_preferences }));
+      setProfile(current => ({ ...current, full_name: formData.full_name, phone: formData.phone, notification_preferences: formData.notification_preferences, delivery_preferences: formData.delivery_preferences }));
       toast.success('Profile saved successfully');
     } catch (err) {
       toast.error(err.message);
@@ -151,6 +153,12 @@ export default function ProfileSettings() {
           <label><input type="checkbox" checked={formData.notification_preferences.announcements} onChange={event => setFormData({...formData, notification_preferences:{...formData.notification_preferences, announcements:event.target.checked}})} /> Send me school announcement alerts</label>
           <label><input type="checkbox" checked={formData.notification_preferences.behavior} onChange={event => setFormData({...formData, notification_preferences:{...formData.notification_preferences, behavior:event.target.checked}})} /> Send me behavior update alerts</label>
           <label><input type="checkbox" checked={formData.notification_preferences.schoolwork} onChange={event => setFormData({...formData, notification_preferences:{...formData.notification_preferences, schoolwork:event.target.checked}})} /> Send me classwork, exam, and published result alerts</label>
+        </fieldset>
+
+        <fieldset className="notification-preferences">
+          <legend>Delivery channel preferences</legend>
+          <p style={{ margin: 0, color: 'var(--muted)' }}>External delivery starts after the school configures its messaging providers.</p>
+          {Object.entries({ email: 'Email', sms: 'SMS', whatsapp: 'WhatsApp', push: 'Push notifications' }).map(([key, label]) => <label key={key}><input type="checkbox" checked={Boolean(formData.delivery_preferences[key])} onChange={event => setFormData(current => ({ ...current, delivery_preferences: { ...current.delivery_preferences, [key]: event.target.checked } }))} /> {label}</label>)}
         </fieldset>
 
         {profile?.role === 'teacher' && (

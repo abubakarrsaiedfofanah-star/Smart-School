@@ -5,7 +5,9 @@ import VideoGuide from '../components/VideoGuide'
 import toast from 'react-hot-toast'
 
 const steps = ['School', 'Level', 'Accounts', 'Admin', 'Review', 'Plan', 'Done']
-const initial = { schoolName: '', email: '', phone: '', address: '', level: 'Primary school', mpesaPaybill: '', mpesaTill: '', bankName: '', bankAccountName: '', bankAccountNumber: '', adminName: '', adminEmail: '', adminPhone: '', password: '', confirmPassword: '', plan: 'Starter' }
+const countryDefaults = { KE: { currency: 'KES', timezone: 'Africa/Nairobi', label: 'Kenya' }, SL: { currency: 'SLE', timezone: 'Africa/Freetown', label: 'Sierra Leone' }, UG: { currency: 'UGX', timezone: 'Africa/Kampala', label: 'Uganda' }, TZ: { currency: 'TZS', timezone: 'Africa/Dar_es_Salaam', label: 'Tanzania' }, GH: { currency: 'GHS', timezone: 'Africa/Accra', label: 'Ghana' }, NG: { currency: 'NGN', timezone: 'Africa/Lagos', label: 'Nigeria' }, RW: { currency: 'RWF', timezone: 'Africa/Kigali', label: 'Rwanda' }, ZM: { currency: 'ZMW', timezone: 'Africa/Lusaka', label: 'Zambia' }, MW: { currency: 'MWK', timezone: 'Africa/Blantyre', label: 'Malawi' }, ZA: { currency: 'ZAR', timezone: 'Africa/Johannesburg', label: 'South Africa' }, LR: { currency: 'LRD', timezone: 'Africa/Monrovia', label: 'Liberia' }, GM: { currency: 'GMD', timezone: 'Africa/Banjul', label: 'The Gambia' }, SN: { currency: 'XOF', timezone: 'Africa/Dakar', label: 'Senegal' }, CI: { currency: 'XOF', timezone: 'Africa/Abidjan', label: 'Côte d’Ivoire' }, CM: { currency: 'XAF', timezone: 'Africa/Douala', label: 'Cameroon' }, ET: { currency: 'ETB', timezone: 'Africa/Addis_Ababa', label: 'Ethiopia' }, EG: { currency: 'EGP', timezone: 'Africa/Cairo', label: 'Egypt' }, US: { currency: 'USD', timezone: 'America/New_York', label: 'United States' }, GB: { currency: 'GBP', timezone: 'Europe/London', label: 'United Kingdom' }, OTHER: { currency: 'USD', timezone: 'UTC', label: 'Other country' } }
+const currencyOptions = [...new Set([...Object.values(countryDefaults).map(country => country.currency), 'KES','SLE','UGX','TZS','GHS','NGN','USD'])]
+const initial = { schoolName: '', email: '', phone: '', address: '', countryCode: 'KE', customCountryCode: '', currencyCode: 'KES', timezone: 'Africa/Nairobi', level: 'Primary school', mobileProvider: 'M-Pesa', mobileMoneyNumber: '', mobileMoneyAccountName: '', mpesaPaybill: '', mpesaTill: '', bankName: '', bankAccountName: '', bankAccountNumber: '', adminName: '', adminEmail: '', adminPhone: '', password: '', confirmPassword: '', plan: 'Starter' }
 const persistDraft = values => {
   const { password, confirmPassword, ...safeDraft } = values
   localStorage.setItem('smartschool_reg_draft', JSON.stringify(safeDraft))
@@ -75,6 +77,7 @@ export default function RegisterSchool(){
 
   const next=()=>{
     if(step===0&&(!form.schoolName||!form.email||!form.phone)) return toast.error('Please add the school name, email and phone number.');
+    if(step===0&&(!/^[A-Z]{3}$/.test(form.currencyCode)|| (form.countryCode==='OTHER'&&!/^[A-Z]{2}$/.test(form.customCountryCode)))) return toast.error('Choose a valid 3-letter currency and country.');
     if(step===3&&(!form.adminName||!form.adminEmail||!form.password)) return toast.error('Please complete the administrator details.');
     if(step===3&&form.password.length<12) return toast.error('Use a password with at least 12 characters.');
     if(step===3&&form.password !== form.confirmPassword) return toast.error('Passwords do not match.');
@@ -88,7 +91,7 @@ export default function RegisterSchool(){
     try{
       if(supabase){
         const { data, error } = await supabase.functions.invoke('register-school', { body: {
-          school: { name: form.schoolName, email: form.email, phone: form.phone, address: form.address, school_level: form.level, subscription_plan: form.plan, mpesa_paybill: form.mpesaPaybill, mpesa_till: form.mpesaTill, bank_name: form.bankName, bank_account_name: form.bankAccountName, bank_account_number: form.bankAccountNumber },
+          school: { name: form.schoolName, email: form.email, phone: form.phone, address: form.address, country_code: form.countryCode==='OTHER'?form.customCountryCode:form.countryCode, currency_code: form.currencyCode, timezone: form.timezone, school_level: form.level, subscription_plan: form.plan, mobile_money_provider: form.mobileProvider, mobile_money_number: form.mobileMoneyNumber, mobile_money_account_name: form.mobileMoneyAccountName, mpesa_paybill: form.mpesaPaybill, mpesa_till: form.mpesaTill, bank_name: form.bankName, bank_account_name: form.bankAccountName, bank_account_number: form.bankAccountNumber },
           admin: { full_name: form.adminName, email: form.adminEmail.trim().toLowerCase(), phone: form.adminPhone, password: form.password }
         } });
         if (error) {
@@ -118,6 +121,7 @@ export default function RegisterSchool(){
       email: 'info@greenfield.edu',
       phone: '+254 712 345678',
       address: '123 Education Ave, Nairobi',
+      countryCode: 'KE', currencyCode: 'KES', timezone: 'Africa/Nairobi', mobileProvider: 'M-Pesa', mobileMoneyNumber: '123456', mobileMoneyAccountName: 'Greenfield Academy',
       level: 'Primary school',
       mpesaPaybill: '123456',
       mpesaTill: '789012',
@@ -169,6 +173,10 @@ export default function RegisterSchool(){
       <Field label="School email" type="email" value={form.email} onChange={v=>update('email',v)} placeholder="info@springfield.edu"/>
       <Field label="Phone number" value={form.phone} onChange={v=>update('phone',v)} placeholder="+254 700 000000"/>
       <Field label="Address / Location" value={form.address} onChange={v=>update('address',v)} placeholder="City, Street, Region"/>
+      <label style={{display:'grid',gap:'6px',fontWeight:600,fontSize:'0.9rem',marginBottom:'16px'}}><span>Country</span><select value={form.countryCode} onChange={event => { const country = event.target.value; const defaults = countryDefaults[country]; setForm(current => { const updated = { ...current, countryCode: country, customCountryCode: '', currencyCode: defaults.currency, timezone: defaults.timezone, mobileProvider: country === 'KE' ? 'M-Pesa' : '' }; persistDraft(updated); return updated }) }}>{Object.entries(countryDefaults).map(([code, country]) => <option key={code} value={code}>{country.label}</option>)}</select></label>
+      {form.countryCode==='OTHER' && <Field label="2-letter country code" value={form.customCountryCode} onChange={v=>update('customCountryCode',v.toUpperCase().slice(0,2))} placeholder="e.g. SL"/>}
+      <label style={{display:'grid',gap:'6px',fontWeight:600,fontSize:'0.9rem',marginBottom:'16px'}}><span>School currency</span><select value={form.currencyCode} onChange={event => update('currencyCode', event.target.value)}>{currencyOptions.map(currency => <option key={currency} value={currency}>{currency}</option>)}</select></label>
+      {form.countryCode==='OTHER' && <Field label="Other 3-letter currency code" value={form.currencyCode} onChange={v=>update('currencyCode',v.toUpperCase().slice(0,3))} placeholder="e.g. SLE"/>}
     </>,
     <>
       <h2>Choose your school level</h2>
@@ -191,11 +199,13 @@ export default function RegisterSchool(){
           Why configure this?
         </button>
       </div>
-      <p className="form-help">Optional: Enable seamless fee payments via M-Pesa and bank transfer.</p>
-      <Field label="M-Pesa Paybill (Optional)" value={form.mpesaPaybill} onChange={v=>update('mpesaPaybill',v)} placeholder="e.g. 123456"/>
-      <Field label="M-Pesa Till Number (Optional)" value={form.mpesaTill} onChange={v=>update('mpesaTill',v)} placeholder="e.g. 789012"/>
-      <Field label="Bank Name" value={form.bankName} onChange={v=>update('bankName',v)} placeholder="e.g. Equity Bank / KCB"/>
-      <Field label="Bank Account Number" value={form.bankAccountNumber} onChange={v=>update('bankAccountNumber',v)} placeholder="e.g. 011000123456"/>
+      <p className="form-help">Add the school’s own local bank or mobile money details. These provide payment instructions; automated collection is enabled after a supported provider is connected.</p>
+      <Field label="Mobile money provider (Optional)" value={form.mobileProvider} onChange={v=>update('mobileProvider',v)} placeholder="e.g. M-Pesa, Orange Money"/>
+      <Field label="Mobile money account / number" value={form.mobileMoneyNumber} onChange={v=>update('mobileMoneyNumber',v)} placeholder="Provider account or merchant number"/>
+      <Field label="Mobile money account name" value={form.mobileMoneyAccountName} onChange={v=>update('mobileMoneyAccountName',v)} placeholder="Name shown to payers"/>
+      <Field label="Bank name" value={form.bankName} onChange={v=>update('bankName',v)} placeholder="Your school’s bank"/>
+      <Field label="Bank account name" value={form.bankAccountName} onChange={v=>update('bankAccountName',v)} placeholder="Account holder"/>
+      <Field label="Bank account number" value={form.bankAccountNumber} onChange={v=>update('bankAccountNumber',v)} placeholder="School account number"/>
     </>,
     <>
       <h2>Create the administrator</h2>
@@ -354,7 +364,7 @@ export default function RegisterSchool(){
               <button onClick={()=>setShowHelpModal(false)} style={{ background: 'var(--cream)', border: 'none', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', fontWeight: 700 }}>Close</button>
             </div>
             <p style={{ color: 'var(--muted)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '20px' }}>
-              Configuring your M-Pesa Paybill, Till number, or bank accounts allows parents to pay school fees directly through the SmartSchool mobile and web parent portal. All transactions reconcile automatically with the finance module. You can also skip this and configure it later in School Settings.
+              Each school stores its own local mobile money and bank details. Parents see those instructions in the school portal. Automatic checkout and transaction reconciliation require the school’s supported payment provider to be connected separately.
             </p>
             <button type="button" onClick={()=>setShowHelpModal(false)} className="button blue-button full" style={{ borderRadius: '12px', padding: '12px' }}>Got it</button>
           </div>

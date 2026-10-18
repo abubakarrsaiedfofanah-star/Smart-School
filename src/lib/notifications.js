@@ -2,6 +2,7 @@ import { PushNotifications } from '@capacitor/push-notifications';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
 import toast from 'react-hot-toast';
+import { supabase } from './supabase';
 
 /**
  * Sends a local notification (e.g., for attendance alerts).
@@ -75,8 +76,11 @@ export async function scheduleEventReminder(event) {
  * Requests permissions, registers the device, logs the token,
  * and sets up event listeners for notification events.
  */
-export async function initPushNotifications() {
-  if (!Capacitor.isNativePlatform()) return;
+export async function initPushNotifications(profile) {
+  if (!Capacitor.isNativePlatform() || !profile?.id || !profile?.school_id || !supabase) return () => {};
+  const handles = [];
+  let disposed = false;
+  const cleanup = () => { disposed = true; for (const handle of handles) void handle.remove(); };
   try {
     // Check current permission status
     let permStatus = await PushNotifications.checkPermissions();
@@ -88,28 +92,37 @@ export async function initPushNotifications() {
 
     if (permStatus.receive !== 'granted') {
       console.warn('Push notification permission denied');
-      return;
+      return cleanup;
     }
 
-    // Register the device with the push notification service (APNS/FCM)
-    await PushNotifications.register();
-
-    // Listen for registration errors
-    PushNotifications.addListener('registrationError', (error) => {
-      console.error('Push registration error:', error);
-    });
+    handles.push(await PushNotifications.addListener('registration', async token => {
+      if (disposed) return;
+      const { error } = await supabase.from('push_devices').upsert({
+        school_id: profile.school_id, user_id: profile.id, device_token: token.value,
+        platform: Capacitor.getPlatform(), active: true
+      }, { onConflict: 'user_id,device_token' });
+      if (error) console.error('Push device registration could not be saved.');
+    }));
+    handles.push(await PushNotifications.addListener('registrationError', () => {
+      console.error('Push registration error.');
+    }));
 
     // Handle incoming notifications while the app is in the foreground
-    PushNotifications.addListener('pushNotificationReceived', (notification) => {
-      console.log('Push notification received in foreground:', notification);
-    });
+    handles.push(await PushNotifications.addListener('pushNotificationReceived', () => {
+      // Keep notification contents out of application logs.
+    }));
 
     // Handle user actions performed on notifications (e.g., tapping the notification)
-    PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
-      console.log('Push notification action performed:', action);
-    });
+    handles.push(await PushNotifications.addListener('pushNotificationActionPerformed', () => {
+      // Notification destinations can be handled here without logging their payload.
+    }));
+    await PushNotifications.register();
+    if (disposed) cleanup();
+    return cleanup;
 
   } catch (error) {
     console.error('Error during push notification initialization:', error);
+    cleanup();
+    return cleanup;
   }
 }

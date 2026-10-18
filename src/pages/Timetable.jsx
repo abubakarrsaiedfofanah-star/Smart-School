@@ -1,265 +1,143 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
+import React, { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
+import { useAuth } from '../context/AuthContext'
+import { hasSchoolPermission } from '../lib/schoolRoles'
+
+const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+const emptyForm = { class_id: '', subject_id: '', day_of_week: '1', start_time: '08:00', end_time: '09:00', room_number: '' }
 
 export default function Timetable() {
-  const { profile } = useAuth();
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [timetable, setTimetable] = useState([]);
-  const [classes, setClasses] = useState([]);
-  const [selectedClassId, setSelectedClassId] = useState('');
+  const { profile, staffRoles } = useAuth()
+  const navigate = useNavigate()
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [timetable, setTimetable] = useState([])
+  const [classes, setClasses] = useState([])
+  const [subjects, setSubjects] = useState([])
+  const [teacherPairs, setTeacherPairs] = useState([])
+  const [selectedClassId, setSelectedClassId] = useState('')
+  const [activeDay, setActiveDay] = useState(1)
+  const [editing, setEditing] = useState(null)
+  const [form, setForm] = useState(emptyForm)
+  const role = profile?.role
+  const canManage = hasSchoolPermission(role, staffRoles, 'school.timetable.manage')
+  const isTeacher = role === 'teacher' && !canManage
 
-  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-  const timeSlots = [
-    '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'
-  ];
-
-  useEffect(() => {
-    if (!profile) return;
-    init();
-  }, [profile]);
+  useEffect(() => { if (profile) init() }, [profile])
 
   async function init() {
-    setLoading(true);
+    setLoading(true)
     try {
-      if (profile.role === 'student') {
-        const { data: student } = await supabase
-          .from('students')
-          .select('class_id')
-          .eq('profile_id', profile.id)
-          .single();
-        if (student?.class_id) {
-          fetchTimetable(student.class_id, null);
-        }
-      } else if (profile.role === 'teacher') {
-        fetchTimetable(null, profile.id);
-      } else if (['school_admin', 'super_admin'].includes(profile.role)) {
-        const { data: classesList } = await supabase
-          .from('classes')
-          .select('*')
-          .eq('school_id', profile.school_id)
-          .order('name');
-        setClasses(classesList || []);
-        if (classesList?.length > 0) {
-          setSelectedClassId(classesList[0].id);
-          fetchTimetable(classesList[0].id, null);
-        }
+      let classQuery = supabase.from('classes').select('id,name,grade').eq('school_id', profile.school_id).order('name')
+      if (isTeacher) {
+        const [{ data: assigned }, { data: owned }] = await Promise.all([
+          supabase.from('teacher_subject_assignments').select('class_id,subject_id,classes(id,name,grade),subjects(id,name,code)').eq('teacher_id', profile.id),
+          supabase.from('classes').select('id,name,grade').eq('school_id', profile.school_id).eq('teacher_id', profile.id).order('name')
+        ])
+        const byId = new Map()
+        ;(owned || []).forEach(c => byId.set(c.id, c))
+        ;(assigned || []).forEach(a => { if (a.classes) byId.set(a.classes.id, a.classes) })
+        const classList = [...byId.values()].sort((a, b) => a.name.localeCompare(b.name))
+        const subjectMap = new Map()
+        ;(assigned || []).forEach(a => { if (a.subjects) subjectMap.set(a.subjects.id, a.subjects) })
+        setClasses(classList)
+        setSubjects([...subjectMap.values()].sort((a, b) => a.name.localeCompare(b.name)))
+        setTeacherPairs(assigned || [])
+        const firstId = classList[0]?.id || ''
+        setSelectedClassId(firstId)
+        if (firstId) await fetchTimetable(firstId)
+        else setTimetable([])
+      } else if (role === 'student') {
+        const { data: student } = await supabase.from('students').select('class_id').eq('profile_id', profile.id).maybeSingle()
+        if (student?.class_id) { setSelectedClassId(student.class_id); await fetchTimetable(student.class_id) }
+      } else {
+        const { data: list, error } = await classQuery
+        if (error) throw error
+        const { data: subjectList, error: subjectError } = await supabase.from('subjects').select('id,name,code').eq('school_id', profile.school_id).order('name')
+        if (subjectError) throw subjectError
+        setClasses(list || [])
+        setSubjects(subjectList || [])
+        const firstId = list?.[0]?.id || ''
+        setSelectedClassId(firstId)
+        if (firstId) await fetchTimetable(firstId)
       }
-    } catch (err) {
-      console.error('Timetable init error:', err);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error('Timetable init error:', err) }
+    finally { setLoading(false) }
   }
 
-  async function fetchTimetable(classId, teacherId) {
-    setLoading(true);
+  async function fetchTimetable(classId) {
+    if (!classId) { setTimetable([]); return }
+    const { data, error } = await supabase.from('timetable')
+      .select('*, subjects(name,code), classes(name), teacher:profiles!timetable_teacher_id_fkey(full_name)')
+      .eq('school_id', profile.school_id).eq('class_id', classId)
+      .order('day_of_week').order('start_time')
+    if (error) throw error
+    setTimetable(data || [])
+  }
+
+  const bySlot = useMemo(() => {
+    const map = new Map()
+    timetable.forEach(item => {
+      const key = `${item.day_of_week}-${item.start_time.slice(0, 5)}`
+      map.set(key, [...(map.get(key) || []), item])
+    })
+    return map
+  }, [timetable])
+  const sessions = (day, time) => bySlot.get(`${day}-${time}`) || []
+
+  function beginEdit(item) {
+    setEditing(item?.id || 'new')
+    setForm(item ? { class_id: item.class_id, subject_id: item.subject_id, day_of_week: String(item.day_of_week), start_time: item.start_time.slice(0, 5), end_time: item.end_time.slice(0, 5), room_number: item.room_number || '' } : { ...emptyForm, class_id: selectedClassId, subject_id: subjects[0]?.id || '' })
+  }
+
+  async function savePeriod(event) {
+    event.preventDefault()
+    if (form.end_time <= form.start_time) { window.alert('End time must be later than start time.'); return }
+    setSaving(true)
     try {
-      let query = supabase
-        .from('timetable')
-        .select(`
-          *,
-          subjects(name, code),
-          classes(name),
-          teacher:teacher_id(full_name)
-        `)
-        .eq('school_id', profile.school_id);
-
-      if (classId) query = query.eq('class_id', classId);
-      if (teacherId) query = query.eq('teacher_id', teacherId);
-
-      const { data, error } = await query;
-      if (error) throw error;
-      setTimetable(data || []);
-    } catch (err) {
-      console.error('Fetch timetable error:', err);
-    } finally {
-      setLoading(false);
-    }
+      const payload = { ...form, day_of_week: Number(form.day_of_week), school_id: profile.school_id, teacher_id: isTeacher ? profile.id : (editing !== 'new' ? timetable.find(x => x.id === editing)?.teacher_id || null : null) }
+      const result = editing === 'new'
+        ? await supabase.from('timetable').insert(payload)
+        : await supabase.from('timetable').update(payload).eq('id', editing)
+      if (result.error) throw result.error
+      setEditing(null)
+      if (form.class_id !== selectedClassId) setSelectedClassId(form.class_id)
+      await fetchTimetable(form.class_id)
+    } catch (err) { window.alert(err.message || 'Could not save this timetable period.') }
+    finally { setSaving(false) }
   }
 
-  const [activeDay, setActiveDay] = useState(1); // 1: Mon, 5: Fri
+  async function deletePeriod(id) {
+    if (!window.confirm('Delete this timetable period?')) return
+    const { error } = await supabase.from('timetable').delete().eq('id', id)
+    if (error) window.alert(error.message)
+    else await fetchTimetable(selectedClassId)
+  }
 
-  const handleClassSelect = (e) => {
-    const id = e.target.value;
-    setSelectedClassId(id);
-    fetchTimetable(id, null);
-  };
+  const timeSlots = [...new Set([...Array.from({ length: 10 }, (_, i) => `${String(i + 8).padStart(2, '0')}:00`), ...timetable.map(x => x.start_time.slice(0, 5))])].sort()
 
-  const renderCells = () => {
-    // Desktop View: Original Grid
-    const desktopGrid = (
-      <table className="tt-table desktop-only">
-        <thead>
-          <tr>
-            <th className="tt-time-col">Time</th>
-            {days.map(d => <th key={d}>{d}</th>)}
-          </tr>
-        </thead>
-        <tbody>
-          {timeSlots.map(time => (
-            <tr key={time}>
-              <td className="tt-time-col">{time}</td>
-              {days.map((_, dayIdx) => (
-                <td key={dayIdx}>
-                  {getSlot(dayIdx, time).map(s => (
-                    <div key={s.id} className="session-card">
-                      <div className="session-subject">{s.subjects?.name}</div>
-                      <div className="session-teacher">{s.teacher?.full_name || 'Staff'}</div>
-                      <div className="session-meta">
-                        <span>Room {s.room_number || 'TBA'}</span>
-                        <span>{s.start_time.slice(0, 5)} - {s.end_time.slice(0, 5)}</span>
-                      </div>
-                    </div>
-                  ))}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    );
-
-    // Mobile View: Single Day List
-    const mobileList = (
-      <div className="tt-mobile-list mobile-only">
-        <div className="day-tabs">
-          {['M', 'T', 'W', 'T', 'F'].map((d, i) => (
-            <button
-              key={i}
-              className={activeDay === i + 1 ? 'active' : ''}
-              onClick={() => setActiveDay(i + 1)}
-            >
-              {d}
-            </button>
-          ))}
-        </div>
-        <div className="day-sessions">
-          <h3>{days[activeDay - 1]} Schedule</h3>
-          {timeSlots.map(time => {
-            const sessions = getSlot(activeDay - 1, time);
-            if (sessions.length === 0) return null;
-            return sessions.map(s => (
-              <div key={s.id} className="session-card mobile-session">
-                <div className="session-time-badge">{time}</div>
-                <div className="session-details">
-                  <div className="session-subject">{s.subjects?.name}</div>
-                  <div className="session-teacher">{s.teacher?.full_name}</div>
-                  <div className="session-meta">Room {s.room_number} • {s.start_time.slice(0, 5)}</div>
-                </div>
-              </div>
-            ));
-          })}
-          {timeSlots.every(t => getSlot(activeDay - 1, t).length === 0) && (
-            <div className="empty-day">No classes scheduled for today.</div>
-          )}
-        </div>
-      </div>
-    );
-
-    return <> {desktopGrid} {mobileList} </>;
-  };
-
-  return (
-    <div className="timetable-page page-transition">
-      <style>{`
-        .timetable-page { min-height: 100vh; background: var(--bg); color: var(--ink); padding: 40px 24px; }
-        .tt-container { max-width: 1200px; margin: 0 auto; }
-        .tt-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
-        .tt-title h1 { font-size: 2.5rem; font-weight: 800; margin: 0; background: linear-gradient(135deg, var(--green) 0%, var(--ink) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .tt-title p { color: var(--muted); margin: 8px 0 0; }
-
-        .tt-grid-wrapper { border-radius: var(--radius); overflow: hidden; }
-        .tt-table { width: 100%; border-collapse: collapse; min-width: 900px; }
-        .tt-table th { background: var(--panel); padding: 20px; text-align: center; color: var(--green); border-bottom: 1px solid var(--line); }
-        .tt-table td { padding: 10px; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); vertical-align: top; min-width: 160px; background: var(--panel); }
-
-        .session-card { background: var(--cream); border-left: 4px solid var(--green); padding: 12px; border-radius: 12px; margin-bottom: 8px; transition: transform 0.2s; }
-        .session-card:hover { transform: translateY(-3px); }
-        .session-subject { font-weight: 800; color: var(--ink); margin-bottom: 4px; }
-        .session-teacher { color: var(--muted); font-size: 0.8rem; font-weight: 600; }
-
-        /* Mobile Specifics */
-        .mobile-only { display: none; }
-        .day-tabs { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 30px; }
-        .day-tabs button { flex: 1; padding: 15px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); font-weight: 800; cursor: pointer; }
-        .day-tabs button.active { background: var(--green); color: #fff; border-color: var(--green); box-shadow: var(--shadow); }
-
-        .day-sessions h3 { margin-bottom: 20px; font-weight: 800; color: var(--ink); }
-        .mobile-session { display: flex; align-items: center; gap: 20px; padding: 20px; margin-bottom: 15px; }
-        .session-time-badge { font-weight: 800; color: var(--green); font-size: 1.1rem; }
-
-        @media (max-width: 900px) {
-          .desktop-only { display: none; }
-          .mobile-only { display: block; }
-          .tt-header { flex-direction: column; align-items: flex-start; gap: 20px; }
-          .timetable-page { padding: 20px 15px 100px; }
-        }
-      `}</style>
-
-      <div className="tt-container">
-        <header className="tt-header">
-          <div className="tt-title">
-            <h1>School Timetable</h1>
-            <p>Weekly academic schedule and class allocations</p>
-          </div>
-          <button className="back-btn" onClick={() => navigate('/portal')}>
-            ← Back to Portal
-          </button>
-        </header>
-
-        {['school_admin', 'super_admin'].includes(profile?.role) && (
-          <div className="tt-controls">
-            <span>Viewing Class:</span>
-            <select value={selectedClassId} onChange={handleClassSelect}>
-              {classes.map(c => (
-                <option key={c.id} value={c.id}>{c.name} ({c.grade})</option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        <div className="tt-grid-wrapper">
-          {loading ? (
-            <div className="loading-state">
-              <div className="spinner" style={{margin: '0 auto 20px'}}></div>
-              Loading schedule...
-            </div>
-          ) : (
-            <table className="tt-table">
-              <thead>
-                <tr>
-                  <th className="tt-time-col">Time</th>
-                  {days.map(d => <th key={d}>{d}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {timeSlots.map(time => (
-                  <tr key={time}>
-                    <td className="tt-time-col">{time}</td>
-                    {days.map((_, dayIdx) => (
-                      <td key={dayIdx}>
-                        {getSlot(dayIdx, time).map(s => (
-                          <div key={s.id} className="session-card">
-                            <div className="session-subject">{s.subjects?.name}</div>
-                            <div className="session-teacher">{s.teacher?.full_name || 'Staff'}</div>
-                            <div className="session-meta">
-                              <span>Room {s.room_number || 'TBA'}</span>
-                              <span>{s.start_time.slice(0, 5)} - {s.end_time.slice(0, 5)}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
+  return <div className="timetable-page page-transition">
+    <style>{`.timetable-page{min-height:100vh;background:var(--bg);color:var(--ink);padding:40px 24px}.tt-container{max-width:1200px;margin:auto}.tt-header{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:28px}.tt-title h1{font-size:2.4rem;font-weight:800;margin:0;color:var(--green)}.tt-title p{color:var(--muted);margin:8px 0}.tt-actions,.tt-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0}.tt-table{width:100%;border-collapse:collapse;min-width:850px}.tt-table th,.tt-table td{padding:10px;border:1px solid var(--line);vertical-align:top;background:var(--panel)}.tt-table th{color:var(--green);text-align:center}.tt-time-col{width:90px;font-weight:700}.tt-grid-wrapper{overflow:auto;border-radius:var(--radius)}.session-card{background:var(--cream);border-left:4px solid var(--green);padding:12px;border-radius:10px;margin-bottom:8px}.session-subject{font-weight:800}.session-teacher,.session-meta{color:var(--muted);font-size:.82rem;margin-top:4px}.session-buttons{display:flex;gap:6px;margin-top:8px}.session-buttons button,.tt-button{cursor:pointer;border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--panel);color:var(--ink)}.tt-button.primary{background:var(--green);color:white;border-color:var(--green)}.tt-mobile{display:none}.tt-form{display:grid;grid-template-columns:repeat(3,minmax(150px,1fr));gap:12px;padding:16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;margin:16px 0}.tt-form label{display:grid;gap:6px;color:var(--muted);font-size:.9rem}.tt-form input,.tt-form select,.tt-controls select{padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}.tt-form-actions{grid-column:1/-1;display:flex;gap:8px}.tt-empty{padding:24px;text-align:center;color:var(--muted)}@media(max-width:800px){.timetable-page{padding:20px 14px 90px}.tt-header{align-items:flex-start;flex-direction:column}.tt-table.desktop{display:none}.tt-mobile{display:block}.tt-day-tabs{display:flex;gap:8px;margin:18px 0}.tt-day-tabs button{flex:1;padding:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px}.tt-day-tabs button.active{background:var(--green);color:white}.tt-form{grid-template-columns:1fr 1fr}}`}</style>
+    <div className="tt-container">
+      <header className="tt-header"><div className="tt-title"><h1>School timetable</h1><p>Weekly schedule and class allocations</p></div><button className="tt-button" onClick={() => navigate('/portal')}>← Back to portal</button></header>
+      <div className="tt-controls"><label htmlFor="class-select">Class:</label><select id="class-select" value={selectedClassId} onChange={async e => { setSelectedClassId(e.target.value); try { await fetchTimetable(e.target.value) } catch (err) { window.alert(err.message) } }}>
+        {classes.map(c => <option key={c.id} value={c.id}>{c.name}{c.grade ? ` (${c.grade})` : ''}</option>)}
+      </select>{classes.length === 0 && <span>No classes are assigned to your account yet.</span>}</div>
+      {canManage && classes.length > 0 && <div className="tt-actions"><button className="tt-button primary" onClick={() => beginEdit(null)}>＋ Add period</button></div>}
+      {editing && <form className="tt-form" onSubmit={savePeriod}>
+        <label>Class<select required value={form.class_id} onChange={e => { const classId = e.target.value; const nextSubject = isTeacher ? teacherPairs.find(a => a.class_id === classId)?.subject_id || '' : form.subject_id; setForm({ ...form, class_id: classId, subject_id: nextSubject }) }}>{classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+        <label>Subject<select required value={form.subject_id} onChange={e => setForm({ ...form, subject_id: e.target.value })}>{(isTeacher ? teacherPairs.filter(a => a.class_id === form.class_id).map(a => a.subjects).filter(Boolean) : subjects).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
+        <label>Day<select value={form.day_of_week} onChange={e => setForm({ ...form, day_of_week: e.target.value })}>{days.map((d, i) => <option key={d} value={i + 1}>{d}</option>)}</select></label>
+        <label>Starts<input type="time" required value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })}/></label>
+        <label>Ends<input type="time" required value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })}/></label>
+        <label>Room<input value={form.room_number} onChange={e => setForm({ ...form, room_number: e.target.value })} placeholder="Optional"/></label>
+        <div className="tt-form-actions"><button className="tt-button primary" disabled={saving || !subjects.length}>{saving ? 'Saving…' : 'Save period'}</button><button type="button" className="tt-button" onClick={() => setEditing(null)}>Cancel</button>{!subjects.length && <span>Ask your school admin to assign subjects first.</span>}</div>
+      </form>}
+      <div className="tt-grid-wrapper">{loading ? <div className="tt-empty">Loading schedule…</div> : timetable.length === 0 ? <div className="tt-empty">No classes scheduled for this class yet.</div> : <>
+        <table className="tt-table desktop"><thead><tr><th className="tt-time-col">Time</th>{days.map(d => <th key={d}>{d}</th>)}</tr></thead><tbody>{timeSlots.map(time => <tr key={time}><td className="tt-time-col">{time}</td>{days.map((d, i) => <td key={d}>{sessions(i + 1, time).map(s => <div key={s.id} className="session-card"><div className="session-subject">{s.subjects?.name || 'Subject'}</div><div className="session-teacher">{s.teacher?.full_name || 'Staff'}</div><div className="session-meta">Room {s.room_number || 'TBA'} · {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}</div>{canManage && <div className="session-buttons"><button onClick={() => beginEdit(s)}>Edit</button><button onClick={() => deletePeriod(s.id)}>Delete</button></div>}</div>)}</td>)}</tr>)}</tbody></table>
+        <div className="tt-mobile"><div className="tt-day-tabs">{days.map((d, i) => <button key={d} className={activeDay === i + 1 ? 'active' : ''} onClick={() => setActiveDay(i + 1)}>{d.slice(0, 1)}</button>)}</div><h3>{days[activeDay - 1]}</h3>{timetable.filter(s => s.day_of_week === activeDay).map(s => <div key={s.id} className="session-card"><div className="session-subject">{s.subjects?.name || 'Subject'}</div><div className="session-teacher">{s.teacher?.full_name || 'Staff'}</div><div className="session-meta">{s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)} · Room {s.room_number || 'TBA'}</div>{canManage && <div className="session-buttons"><button onClick={() => beginEdit(s)}>Edit</button><button onClick={() => deletePeriod(s.id)}>Delete</button></div>}</div>)}</div>
+      </>}</div>
     </div>
-  );
+  </div>
 }

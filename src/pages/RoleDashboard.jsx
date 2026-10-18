@@ -1,6 +1,7 @@
 import {useEffect,useState} from 'react';import {useAuth} from '../context/AuthContext';import {useLanguage} from '../context/LanguageContext';import {Link, useNavigate, useSearchParams} from 'react-router-dom';import {supabase} from '../lib/supabase';import ModulePanel from '../components/ModulePanel';import SuperAdminOverview from '../components/SuperAdminOverview';import Analytics from '../components/Analytics';import AIGuide from '../components/AI_Guide';import PerformanceSummary from '../components/PerformanceSummary';import BadgeSystem from '../components/BadgeSystem';import FinanceAI from '../components/FinanceAI';import CampusGeofence from '../components/CampusGeofence';import NotificationHub from '../components/NotificationHub';
 import AcademicPredictor from '../components/AcademicPredictor';
 import AIStudyBuddyWidget from '../components/AIStudyBuddyWidget';
+import SchoolSetupChecklist from '../components/SchoolSetupChecklist';
 import PlatformManagement from '../components/PlatformManagement';
 import { lazy, Suspense } from 'react'
 import { accessibleBrandColor, normalizeBrandColor } from '../lib/brandColor';
@@ -244,6 +245,7 @@ return <div className="portal" style={{'--school-accent':accent,'--school-accent
         <Suspense fallback={<div className="portal-loading" role="status"><div className="spinner" />Loading attendance…</div>}><TeacherAttendance /></Suspense>
       ) : selected === 'Dashboard' ? (
         <>
+          {role === 'school_admin' && <SchoolSetupChecklist />}
           {role === 'parent' && (
             <div className="child-switch glass-card mini-switch">
               <b>{t('viewing_child')}:</b>

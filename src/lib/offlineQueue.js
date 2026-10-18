@@ -71,6 +71,30 @@ export async function syncOfflineWrites({ ownerId, supabase }) {
   return synced
 }
 
+// Remove device-cached school records when an account signs out. This storage is
+// convenience data for the signed-in user, not an authoritative record store.
+export async function clearOfflineDataForUser(ownerId) {
+  if (!ownerId || !('indexedDB' in window)) return
+  const db = await openQueue()
+  await new Promise((resolve, reject) => {
+    const transaction = db.transaction([STORE, ROSTERS], 'readwrite')
+    for (const storeName of [STORE, ROSTERS]) {
+      const store = transaction.objectStore(storeName)
+      const request = store.openCursor()
+      request.onsuccess = () => {
+        const cursor = request.result
+        if (!cursor) return
+        if (cursor.value.ownerId === ownerId) cursor.delete()
+        cursor.continue()
+      }
+      request.onerror = () => reject(request.error || new Error('Could not clear offline data.'))
+    }
+    transaction.oncomplete = resolve
+    transaction.onerror = () => reject(transaction.error || new Error('Could not clear offline data.'))
+  })
+  db.close()
+}
+
 function removeEntry(id) {
   return openQueue().then(db => new Promise((resolve, reject) => {
     const transaction = db.transaction(STORE, 'readwrite')

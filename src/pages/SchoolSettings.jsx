@@ -16,6 +16,10 @@ export default function SchoolSettings() {
     teacher_signature_url: '',
     mpesa_paybill: '',
     mpesa_till: '',
+    country_code: 'KE',
+    mobile_money_provider: '',
+    mobile_money_number: '',
+    mobile_money_account_name: '',
     bank_name: '',
     bank_account_number: '',
     primary_color: '#2375e1',
@@ -38,6 +42,10 @@ export default function SchoolSettings() {
         teacher_signature_url: '',
         mpesa_paybill: '247247',
         mpesa_till: '512345',
+        country_code: 'KE',
+        mobile_money_provider: 'M-Pesa',
+        mobile_money_number: '247247',
+        mobile_money_account_name: 'SmartSchool Demo Academy',
         bank_name: 'Equity Bank',
         bank_account_number: '0123456789',
         timezone: 'Africa/Nairobi',
@@ -106,7 +114,12 @@ export default function SchoolSettings() {
         teacher_signature_url: school.teacher_signature_url,
         mpesa_paybill: school.mpesa_paybill,
         mpesa_till: school.mpesa_till,
+        country_code: school.country_code || 'KE',
+        mobile_money_provider: school.mobile_money_provider || '',
+        mobile_money_number: school.mobile_money_number || '',
+        mobile_money_account_name: school.mobile_money_account_name || '',
         bank_name: school.bank_name,
+        bank_account_name: school.bank_account_name,
         bank_account_number: school.bank_account_number,
         primary_color: school.primary_color,
         timezone: school.timezone || 'Africa/Nairobi',
@@ -204,35 +217,35 @@ export default function SchoolSettings() {
         <div className="glass-card">
           <h3>Payment Accounts</h3>
           <p style={{fontSize:'0.8rem', color:'var(--muted)', marginBottom:'15px'}}>Configure your school's official payment channels.</p>
-          <label>M-Pesa Paybill</label>
-          <input value={school.mpesa_paybill || ''} onChange={e => setSchool({...school, mpesa_paybill: e.target.value})} placeholder="e.g. 247247" />
+          <label>Mobile money provider</label>
+          <input value={school.mobile_money_provider || ''} onChange={e => setSchool({...school, mobile_money_provider: e.target.value})} placeholder="e.g. M-Pesa, Orange Money" />
 
-          <label style={{marginTop:'15px'}}>M-Pesa Till Number</label>
-          <input value={school.mpesa_till || ''} onChange={e => setSchool({...school, mpesa_till: e.target.value})} placeholder="e.g. 512345" />
+          <label style={{marginTop:'15px'}}>Mobile money account / merchant number</label>
+          <input value={school.mobile_money_number || school.mpesa_paybill || school.mpesa_till || ''} onChange={e => setSchool({...school, mobile_money_number: e.target.value})} placeholder="Merchant or mobile account number" />
+
+          <label style={{marginTop:'15px'}}>Mobile money account name</label>
+          <input value={school.mobile_money_account_name || ''} onChange={e => setSchool({...school, mobile_money_account_name: e.target.value})} placeholder="Account holder" />
 
           <label style={{marginTop:'15px'}}>Bank Name</label>
           <input value={school.bank_name || ''} onChange={e => setSchool({...school, bank_name: e.target.value})} placeholder="e.g. Equity Bank" />
 
+          <label style={{marginTop:'15px'}}>Bank Account Name</label>
+          <input value={school.bank_account_name || ''} onChange={e => setSchool({...school, bank_account_name: e.target.value})} placeholder="Account holder name" />
+
           <label style={{marginTop:'15px'}}>Bank Account Number</label>
           <input value={school.bank_account_number || ''} onChange={e => setSchool({...school, bank_account_number: e.target.value})} placeholder="e.g. 0123456789" />
+          <label style={{marginTop:'15px'}}>Country code</label>
+          <input value={school.country_code || 'KE'} maxLength={2} onChange={e => setSchool({...school, country_code: e.target.value.toUpperCase()})} placeholder="e.g. KE, SL" />
         </div>
 
         <div className="glass-card school-local-settings">
           <h3>Local school settings</h3>
           <p style={{fontSize:'.85rem', color:'var(--muted)'}}>Set how dates and money display, define your academic terms, and configure report card grades. Currency changes formatting only; existing balances are not converted.</p>
           <label>Time zone
-            <select value={school.timezone || 'Africa/Nairobi'} onChange={e => setSchool({...school, timezone:e.target.value})}>
-              <option value="Africa/Nairobi">East Africa Time · Nairobi</option>
-              <option value="Africa/Kampala">East Africa Time · Kampala</option>
-              <option value="Africa/Dar_es_Salaam">East Africa Time · Dar es Salaam</option>
-              <option value="Africa/Johannesburg">South Africa Standard Time</option>
-              <option value="UTC">Coordinated Universal Time</option>
-            </select>
+            <input value={school.timezone || 'Africa/Nairobi'} onChange={e => setSchool({...school, timezone:e.target.value})} placeholder="IANA time zone, e.g. Africa/Freetown" />
           </label>
           <label>Currency
-            <select value={school.currency_code || 'KES'} onChange={e => setSchool({...school, currency_code:e.target.value})}>
-              <option value="KES">Kenyan Shilling (KES)</option><option value="UGX">Ugandan Shilling (UGX)</option><option value="TZS">Tanzanian Shilling (TZS)</option><option value="USD">US Dollar (USD)</option>
-            </select>
+            <input value={school.currency_code || 'KES'} maxLength={3} pattern="[A-Z]{3}" onChange={e => setSchool({...school, currency_code:e.target.value.toUpperCase()})} placeholder="3-letter code, e.g. SLE" />
           </label>
           <div className="grading-scale-editor"><b>Academic terms</b><p>These names are used for exams and report card filters. Existing records keep their term name.</p>
             {(school.academic_terms || []).map((term, index) => <label key={`term-${index}`}>Term {index + 1}

@@ -24,7 +24,7 @@ export default function TeacherReview() {
         setLoading(true);
 
         if (!supabase || profile?.school_id === 'demo-school-id' || assignmentId.startsWith('demo')) {
-          const demoAss = { title: 'Algebra Quadratic Equations', classes: { name: 'Grade 7A' }, subjects: { name: 'Mathematics' } };
+          const demoAss = { title: 'Algebra Quadratic Equations', max_score: 100, classes: { name: 'Grade 7A' }, subjects: { name: 'Mathematics' } };
           const demoSubs = [
             { id: 'ds1', score: null, content: 'Done my best.', file_path: 'demo.pdf', students: { admission_number: 'ST001', profiles: { full_name: 'Amina Hassan' } } },
             { id: 'ds2', score: 85, content: 'Easy assignment.', file_path: 'demo2.pdf', students: { admission_number: 'ST002', profiles: { full_name: 'David Kimani' } } }
@@ -73,20 +73,22 @@ export default function TeacherReview() {
 
   const handleSelect = (sub) => {
     setSelectedSubmission(sub);
-    setScore(sub.score || '');
+    setScore(sub.score ?? '');
     setFeedback(sub.feedback || '');
   };
 
   const handleSaveGrade = async (e) => {
     e.preventDefault();
     if (!selectedSubmission) return;
+    const numericScore = Number(score);
+    if (!Number.isFinite(numericScore) || numericScore < 0 || numericScore > Number(assignment?.max_score || 100)) { toast.error(`Score must be between 0 and ${assignment?.max_score || 100}.`); return; }
 
     setSaving(true);
     try {
       const { error } = await supabase
         .from('submissions')
         .update({
-          score: parseFloat(score),
+          score: numericScore,
           feedback: feedback
         })
         .eq('id', selectedSubmission.id);
@@ -97,7 +99,7 @@ export default function TeacherReview() {
 
       // Update local state
       setSubmissions(prev => prev.map(s =>
-        s.id === selectedSubmission.id ? { ...s, score: parseFloat(score), feedback } : s
+        s.id === selectedSubmission.id ? { ...s, score: numericScore, feedback } : s
       ));
       setSelectedSubmission(null);
     } catch (error) {
@@ -111,7 +113,7 @@ export default function TeacherReview() {
   const downloadFile = async (path) => {
     try {
       const { data, error } = await supabase.storage
-        .from('assignments')
+        .from('assignment-files')
         .download(path);
 
       if (error) throw error;
@@ -187,11 +189,12 @@ export default function TeacherReview() {
             </div>
 
             <form onSubmit={handleSaveGrade}>
-              <label>Score (Out of 100)</label>
+              <label>Score (Out of {assignment.max_score || 100})</label>
               <input
                 type="number"
-                max="100"
+                max={assignment.max_score || 100}
                 min="0"
+                step="0.01"
                 value={score}
                 onChange={e => setScore(e.target.value)}
                 required

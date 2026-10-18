@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -16,7 +16,27 @@ export default function Gradebook() {
   const [selectedAssignId, setSelectedAssignId] = useState('');
   const [selectedExamId, setSelectedExamId] = useState('');
   const [marks, setMarks] = useState({});
+  const [assessmentMarks, setAssessmentMarks] = useState([]);
   const [online, setOnline] = useState(navigator.onLine);
+  const assessmentAverages = useMemo(() => {
+    const latest = new Map();
+    assessmentMarks.forEach(mark => {
+      const key = `${mark.quiz_id}:${mark.student_id}`;
+      if (!latest.has(key) || Number(mark.attempt_number) > Number(latest.get(key).attempt_number)) latest.set(key, mark);
+    });
+    const groups = {};
+    latest.forEach(mark => {
+      const type = mark.quizzes?.assessment_type || 'quiz';
+      const weight = Math.max(0, Number(mark.quizzes?.weight ?? 1));
+      const entry = groups[type] || (groups[type] = { weightedScore: 0, totalWeight: 0, count: 0 });
+      if (weight > 0 && Number(mark.total_points) > 0) {
+        entry.weightedScore += (Number(mark.score) / Number(mark.total_points)) * 100 * weight;
+        entry.totalWeight += weight;
+      }
+      entry.count += 1;
+    });
+    return Object.entries(groups).map(([type, values]) => ({ type, count: values.count, average: values.totalWeight ? Math.round(values.weightedScore / values.totalWeight) : null }));
+  }, [assessmentMarks]);
 
   useEffect(() => {
     const update = () => setOnline(navigator.onLine);
@@ -44,7 +64,7 @@ export default function Gradebook() {
   }, [profile]);
 
   useEffect(() => {
-    if (selectedAssignId && selectedExamId) fetchStudentsAndGrades();
+    if (selectedAssignId) fetchStudentsAndGrades();
   }, [selectedAssignId, selectedExamId]);
 
   async function fetchInitialData() {
@@ -52,7 +72,7 @@ export default function Gradebook() {
     try {
       const [assRes, examsRes] = await Promise.all([
         supabase.from('teacher_subject_assignments').select('*, subjects(id, name), classes(id, name)').eq('teacher_id', profile.id).eq('school_id', profile.school_id),
-        supabase.from('exams').select('id, name, max_score').eq('school_id', profile.school_id)
+        supabase.from('exams').select('id, name, max_score, subject_id, class_id').eq('school_id', profile.school_id)
       ]);
       if (assRes.error) throw assRes.error;
       if (examsRes.error) throw examsRes.error;
@@ -67,13 +87,16 @@ export default function Gradebook() {
     try {
       const selected = assignedSubjects.find(a => a.id === selectedAssignId);
       if (!selected) return;
-      const [stuRes, resRes] = await Promise.all([
+      const [stuRes, resRes, assessmentRes] = await Promise.all([
         supabase.from('students').select('id, admission_number, profiles(full_name)').eq('school_id', profile.school_id).eq('class_id', selected.class_id),
-        supabase.from('results').select('student_id, score, remarks').eq('school_id', profile.school_id).eq('exam_id', selectedExamId).eq('subject_id', selected.subject_id)
+        selectedExamId ? supabase.from('results').select('student_id, score, remarks').eq('school_id', profile.school_id).eq('exam_id', selectedExamId).eq('subject_id', selected.subject_id) : Promise.resolve({ data: [], error: null }),
+        supabase.from('quiz_results').select('id, student_id, score, total_points, attempt_number, taken_at, needs_review, students!inner(class_id, profiles(full_name)), quizzes!inner(title, assessment_type, unit_title, subject_id, weight, school_id)').eq('quizzes.school_id', profile.school_id).eq('quizzes.subject_id', selected.subject_id).eq('students.class_id', selected.class_id).order('taken_at', { ascending: false })
       ]);
       if (stuRes.error) throw stuRes.error;
       if (resRes.error) throw resRes.error;
+      if (assessmentRes.error && assessmentRes.error.code !== '42P01') throw assessmentRes.error;
       setStudents(stuRes.data || []);
+      setAssessmentMarks(assessmentRes.data || []);
       const map = {}; (resRes.data || []).forEach(r => { map[r.student_id] = { score: r.score, remarks: r.remarks }; });
       setMarks(map);
     } catch (err) { console.error(err); } finally { setLoading(false); }
@@ -81,11 +104,26 @@ export default function Gradebook() {
 
   const handleMarkChange = (id, f, v) => setMarks(prev => ({ ...prev, [id]: { ...prev[id], [f]: v } }));
 
+  function exportAssessmentCsv() {
+    const columns = ['Student', 'Subject', 'Unit', 'Assessment', 'Type', 'Score', 'Total', 'Percentage', 'Weight', 'Attempt', 'Submitted', 'Review status'];
+    const escape = value => `"${String(value ?? '').replaceAll('"', '""')}"`;
+    const lines = [columns, ...assessmentMarks.map(mark => [
+      mark.students?.profiles?.full_name || '', assignedSubjects.find(item => item.subject_id === mark.quizzes?.subject_id)?.name || '',
+      mark.quizzes?.unit_title || '', mark.quizzes?.title || '', mark.quizzes?.assessment_type || 'quiz', mark.score,
+      mark.total_points, mark.total_points ? Math.round(Number(mark.score) / Number(mark.total_points) * 100) : 0,
+      mark.quizzes?.weight ?? 1, mark.attempt_number || 1, mark.taken_at, mark.needs_review ? 'Written answers pending' : 'Marked'
+    ])].map(row => row.map(escape).join(',')).join('\r\n');
+    const url = URL.createObjectURL(new Blob([`\uFEFF${lines}`], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a'); link.href = url; link.download = 'subject-assessment-results.csv'; link.click(); URL.revokeObjectURL(url);
+  }
+
   async function saveAll() {
     if (!supabase) return;
     const selected = assignedSubjects.find(a => a.id === selectedAssignId);
     const exam = exams.find(item => item.id === selectedExamId);
     if (!selected || !exam) return;
+    if (exam.subject_id && exam.subject_id !== selected.subject_id) return toast.error('Choose an exam for this subject.');
+    if (exam.class_id && exam.class_id !== selected.class_id) return toast.error('Choose an exam for this class.');
     const enteredMarks = Object.entries(marks).filter(([, mark]) => mark.score !== '' && mark.score !== null && mark.score !== undefined);
     if (!enteredMarks.length) return toast.error('Enter at least one mark before saving.');
     const maxScore = Number(exam.max_score) || 100;
@@ -127,6 +165,7 @@ export default function Gradebook() {
         .gb-table td { padding: 12px 20px; border-bottom: 1px solid var(--line); }
         .gradebook-controls { display:flex; gap:20px; margin-bottom:30px; }
         .gradebook-controls select { min-width:0; }
+        @media print { .gb-header,.security-banner,.gradebook-controls,.save-bar,.assessment-export-actions,button { display:none !important; }.gradebook-page { max-width:none;padding:0; }.glass-card { box-shadow:none;break-inside:avoid; } }
         @media(max-width:700px) {
           .gradebook-page { padding:20px 12px; }
           .gb-header { align-items:flex-start; gap:12px; }
@@ -156,11 +195,14 @@ export default function Gradebook() {
         </select>
         <select style={{width:'200px'}} value={selectedExamId} onChange={e => setSelectedExamId(e.target.value)}>
           <option value="">-- Select Exam --</option>
-          {exams.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
+          {exams.filter(e => {
+            const selected = assignedSubjects.find(item => item.id === selectedAssignId);
+            return selected && e.subject_id === selected.subject_id && (!e.class_id || e.class_id === selected.class_id);
+          }).map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
         </select>
       </div>
 
-      {students.length > 0 && (
+      {students.length > 0 && selectedExamId && (
         <div className="table-wrap">
           <table className="gb-table">
             <thead><tr><th>Student</th><th>Adm No</th><th>Marks</th><th>Remarks</th></tr></thead>
@@ -180,6 +222,15 @@ export default function Gradebook() {
             <button className="button blue-button tactile-btn" onClick={saveAll} disabled={saving}>{saving ? 'Saving...' : 'Save and publish grades'}</button>
           </div>
         </div>
+      )}
+      {assessmentMarks.length > 0 && (
+        <section className="glass-card" style={{ marginTop: 24, padding: 20 }}>
+          <p className="eyebrow">CATs · tests · quizzes · exams</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}><h2>Subject assessment results</h2><div className="assessment-export-actions" style={{ display: 'flex', gap: 8 }}><button className="button outline-button" onClick={exportAssessmentCsv}>Export CSV</button><button className="button outline-button" onClick={() => window.print()}>Print / Save PDF</button></div></div>
+          <p style={{ color: 'var(--muted)' }}>Scores are grouped by the selected subject and class. MCQs are automatically marked when students submit.</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, margin: '16px 0' }}>{assessmentAverages.map(item => <div key={item.type} className="glass-card" style={{ padding: '12px 16px' }}><b>{item.type.toUpperCase()}</b><div>{item.average === null ? 'Not weighted' : `${item.average}% weighted class average`}</div><small>{item.count} latest learner result(s)</small></div>)}</div>
+          <div className="table-wrap"><table className="gb-table"><thead><tr><th>Student</th><th>Assessment</th><th>Unit</th><th>Type</th><th>Score</th><th>Weight</th><th>Attempt</th><th>Review</th></tr></thead><tbody>{assessmentMarks.map(mark => <tr key={mark.id}><td data-label="Student">{mark.students?.profiles?.full_name || 'Student'}</td><td data-label="Assessment">{mark.quizzes?.title}</td><td data-label="Unit">{mark.quizzes?.unit_title || '—'}</td><td data-label="Type">{(mark.quizzes?.assessment_type || 'quiz').toUpperCase()}</td><td data-label="Score">{mark.score}/{mark.total_points} · {mark.total_points ? Math.round((Number(mark.score) / Number(mark.total_points)) * 100) : 0}%</td><td data-label="Weight">{mark.quizzes?.weight ?? 1}</td><td data-label="Attempt">{mark.attempt_number || 1}</td><td data-label="Review">{mark.needs_review ? 'Written answers pending' : 'Marked'}</td></tr>)}</tbody></table></div>
+        </section>
       )}
     </div>
   );
