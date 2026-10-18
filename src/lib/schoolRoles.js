@@ -6,10 +6,10 @@ export const SCHOOL_STAFF_ROLES = [
   { key: 'registrar', label: 'Registrar', description: 'Admissions and student records.' },
   { key: 'librarian', label: 'Librarian', description: 'Library resources and inventory.' },
   { key: 'inventory_manager', label: 'Inventory manager', description: 'School asset and stock records.' },
-  { key: 'nurse', label: 'Nurse', description: 'Restricted student health records.' },
-  { key: 'counsellor', label: 'Counsellor', description: 'Restricted student wellbeing records.' },
-  { key: 'transport_manager', label: 'Transport manager', description: 'School routes, vehicles, and transport operations.' },
-  { key: 'staff_member', label: 'Staff member', description: 'Basic staff access without management permissions.' }
+  { key: 'nurse', label: 'Nurse', description: 'Health portal is not available yet.', available: false },
+  { key: 'counsellor', label: 'Counsellor', description: 'Counselling portal is not available yet.', available: false },
+  { key: 'transport_manager', label: 'Transport manager', description: 'Transport portal is not available yet.', available: false },
+  { key: 'staff_member', label: 'Staff member', description: 'Staff member portal is not available yet.', available: false }
 ]
 
 export const ROLE_PERMISSIONS = {

@@ -349,6 +349,7 @@ input:focus, select:focus, textarea:focus {
 .login-demo-access .demo-hr-preview b { font-size: .82rem; }
 .login-demo-access .demo-hr-preview small { color: var(--muted); font-size: .73rem; }
 .login-demo-access .demo-hr-preview strong { flex: 0 0 auto; color: var(--green); font-size: .76rem; }
+.staff-role-note { padding: 10px 12px; border-left: 3px solid var(--school-accent, var(--green)); border-radius: 6px; background: var(--bg); color: var(--muted); font-size: .82rem; }
 
 @media (max-width: 1024px) {
   .auth-container { grid-template-columns: 1fr; max-width: 550px; }
