@@ -15,10 +15,13 @@ export default function Login(){
   const [forgotEmail,setForgotEmail]=useState('')
   const [forgotLoading,setForgotLoading]=useState(false)
 
-  const {login,loginDemo,resetPassword,session,profile,staffRoles,loading:authLoading}=useAuth(),navigate=useNavigate(),{portalRole}=useParams();
+  const {login,loginDemo,resetPassword,logout,session,profile,staffRoles,loading:authLoading}=useAuth(),navigate=useNavigate(),{portalRole}=useParams();
   const roleLabels={school_admin:'School Admin',teacher:'Teacher',student:'Student',parent:'Parent',hr:'HR & Payroll',finance:'Finance'};
   const requestedRole=roleLabels[portalRole] ? portalRole : null;
   const specialistPermission = requestedRole === 'hr' ? 'school.hr.portal.view' : requestedRole === 'finance' ? 'school.finance.portal.view' : null;
+  const sessionMatchesRequestedRole = !requestedRole || (specialistPermission
+    ? hasSchoolPermission(profile?.role, staffRoles, specialistPermission)
+    : requestedRole === profile?.role);
   const portalDestination = (account, assignedRoles) => {
     if (!specialistPermission || !hasSchoolPermission(account?.role, assignedRoles, specialistPermission)) return roleRoute(account?.role);
     return requestedRole === 'hr' ? '/hr-payroll' : '/finance-operations';
@@ -86,7 +89,8 @@ export default function Login(){
   }
 
   if(authLoading) return <div className="portal-loading"><div className="spinner"/><p>Loading your account...</p></div>;
-  if(session&&profile) return <Navigate to={portalDestination(profile, staffRoles)} replace/>;
+  if(session&&profile&&sessionMatchesRequestedRole) return <Navigate to={portalDestination(profile, staffRoles)} replace/>;
+  if(session&&profile) return <main className="portal-loading"><section><p className="eyebrow">PORTAL ACCESS</p><h1>You are signed in to a different portal</h1><p>This account is assigned to the {roleLabels[profile.role] || 'current'} portal. To open {roleLabels[requestedRole] || 'the selected'} portal, sign out and sign in with an account that has that role.</p><button className="button blue-button" type="button" onClick={() => void logout()}>Sign out and switch account</button><Link className="outline-button" to={roleRoute(profile.role)}>Return to your portal</Link></section></main>;
 
   return (
     <div className="auth page-transition login-page" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'radial-gradient(circle at 50% 20%, rgba(35, 117, 225, 0.12) 0%, transparent 60%)' }}>

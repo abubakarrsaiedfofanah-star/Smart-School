@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import PublicHeader from '../components/PublicHeader'
 import PublicFooter from '../components/PublicFooter'
 
-const portalPaths = { 'School Admin': '/school-admin', Teacher: '/teacher', Student: '/student', Parent: '/parent', 'HR & Payroll': '/login/hr', Finance: '/login/finance' }
+const portalPaths = { 'School Admin': '/login/school_admin', Teacher: '/login/teacher', Student: '/login/student', Parent: '/login/parent', 'HR & Payroll': '/login/hr', Finance: '/login/finance' }
 
 const pages = {
   features: ['School tools', 'Everyday school work, organised in one place.', [['Academic operations', 'Plan classes, share assignments and manage assessments.'], ['People and attendance', 'Keep student records and daily attendance connected.'], ['Finance and billing', 'Organise fee schedules, payment records and invoices.'], ['Communication', 'Share announcements and school updates with your community.']]],

@@ -36,7 +36,7 @@ export default function PortalLayout({ children, portal = null }) {
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
-  const role = profile?.role || 'school_admin'
+  const role = profile?.role || 'unknown'
   const assignedRoles = staffRoles || []
   const specialistItems = []
   if (assignedRoles.some(item => ['principal', 'deputy_principal', 'hr_admin'].includes(item))) specialistItems.push(['Staff attendance', '\u2713', '/staff-attendance'])
@@ -64,7 +64,7 @@ export default function PortalLayout({ children, portal = null }) {
       ? items.filter(([label]) => ['Dashboard', 'Staff records', 'Recruitment', 'Contracts', 'Attendance & leave', 'Salary settings', 'Payroll', 'Approvals', 'Payslips', 'Security & reports'].includes(label))
       : items]) : role === 'teacher'
     ? [...navigation.teacher, ['Staff portals', [['Portal hub', '\u25c8', '/staff-portals'], ...specialistItems]]]
-    : navigation[role] || navigation.school_admin
+    : navigation[role] || []
   const home = portal === 'hr' ? '/hr-payroll' : portal === 'finance' ? '/finance-operations' : roleRoute(role)
   const accent = normalizeBrandColor(school?.primary_color)
   const title = portal ? (new URLSearchParams(location.search).get('module') || (portal === 'hr' ? 'HR & Payroll' : 'Finance dashboard')) : location.pathname === home ? (new URLSearchParams(location.search).get('module') || 'Dashboard') : (pageNames[location.pathname] || 'School workspace')

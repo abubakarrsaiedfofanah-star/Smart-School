@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import PortalLayout from './PortalLayout'
 import { hasSchoolPermission } from '../lib/schoolRoles'
+import { roleRoute } from '../lib/roleRoute'
 
 export default function ProtectedRoute({ roles, permission, children, shell = true, portal = null }) {
   const { session, profile, school, staffRoles, loading, logout } = useAuth()
@@ -27,8 +28,11 @@ export default function ProtectedRoute({ roles, permission, children, shell = tr
 
   if (loading) return <div className="portal-loading" role="status"><div className="spinner" /><p>Verifying secure session…</p></div>
   if (!session) return <Navigate to={roles?.length === 1 ? `/login/${roles[0]}` : '/login'} replace state={{ from: location }} />
-  if (roles?.length && (!profile || !roles.includes(profile.role))) return <Navigate to="/portal" replace />
-  if (permission && profile?.role !== 'super_admin' && !hasSchoolPermission(profile?.role, staffRoles, permission)) return <Navigate to="/portal" replace />
+  if (roles?.length && (!profile || !roles.includes(profile.role))) {
+    const roleNames = { super_admin: 'Platform administrator', school_admin: 'School administrator', teacher: 'Teacher', student: 'Student', parent: 'Parent' }
+    return <main className="portal-loading"><section><p className="eyebrow">PORTAL ACCESS</p><h1>This portal belongs to another account</h1><p>You are signed in as {roleNames[profile?.role] || 'an account without a portal role'}. Sign out, then use the account assigned to this portal.</p><Link className="button blue-button" to={profile?.role ? roleRoute(profile.role) : '/login'}>Return to your portal</Link><button className="outline-button" onClick={logout}>Sign out and switch account</button></section></main>
+  }
+  if (permission && profile?.role !== 'super_admin' && !hasSchoolPermission(profile?.role, staffRoles, permission)) return <main className="portal-loading"><section><p className="eyebrow">PORTAL ACCESS</p><h1>This specialist portal is not assigned to your account</h1><p>Ask your school administrator to grant the required role before opening this workspace.</p><Link className="button blue-button" to={roleRoute(profile?.role || '')}>Return to your portal</Link></section></main>
   if (profile?.role !== 'super_admin' && !profile?.school_id) return <main className="portal-loading"><section><p className="eyebrow">SCHOOL WORKSPACE ACCESS</p><h1>School access is not assigned</h1><p>This account is not linked to a school workspace. Ask your school administrator to invite you, or sign out and use the correct account.</p><button className="outline-button" onClick={logout}>Sign out</button></section></main>
 
   const schoolAdmin = profile?.role === 'school_admin'
