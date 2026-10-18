@@ -8,9 +8,38 @@ const steps = ['School', 'Level', 'Accounts', 'Admin', 'Review', 'Plan', 'Done']
 const countryDefaults = { KE: { currency: 'KES', timezone: 'Africa/Nairobi', label: 'Kenya' }, SL: { currency: 'SLE', timezone: 'Africa/Freetown', label: 'Sierra Leone' }, UG: { currency: 'UGX', timezone: 'Africa/Kampala', label: 'Uganda' }, TZ: { currency: 'TZS', timezone: 'Africa/Dar_es_Salaam', label: 'Tanzania' }, GH: { currency: 'GHS', timezone: 'Africa/Accra', label: 'Ghana' }, NG: { currency: 'NGN', timezone: 'Africa/Lagos', label: 'Nigeria' }, RW: { currency: 'RWF', timezone: 'Africa/Kigali', label: 'Rwanda' }, ZM: { currency: 'ZMW', timezone: 'Africa/Lusaka', label: 'Zambia' }, MW: { currency: 'MWK', timezone: 'Africa/Blantyre', label: 'Malawi' }, ZA: { currency: 'ZAR', timezone: 'Africa/Johannesburg', label: 'South Africa' }, LR: { currency: 'LRD', timezone: 'Africa/Monrovia', label: 'Liberia' }, GM: { currency: 'GMD', timezone: 'Africa/Banjul', label: 'The Gambia' }, SN: { currency: 'XOF', timezone: 'Africa/Dakar', label: 'Senegal' }, CI: { currency: 'XOF', timezone: 'Africa/Abidjan', label: 'Côte d’Ivoire' }, CM: { currency: 'XAF', timezone: 'Africa/Douala', label: 'Cameroon' }, ET: { currency: 'ETB', timezone: 'Africa/Addis_Ababa', label: 'Ethiopia' }, EG: { currency: 'EGP', timezone: 'Africa/Cairo', label: 'Egypt' }, US: { currency: 'USD', timezone: 'America/New_York', label: 'United States' }, GB: { currency: 'GBP', timezone: 'Europe/London', label: 'United Kingdom' }, OTHER: { currency: 'USD', timezone: 'UTC', label: 'Other country' } }
 const currencyOptions = [...new Set([...Object.values(countryDefaults).map(country => country.currency), 'KES','SLE','UGX','TZS','GHS','NGN','USD'])]
 const initial = { schoolName: '', email: '', phone: '', address: '', countryCode: 'KE', customCountryCode: '', currencyCode: 'KES', timezone: 'Africa/Nairobi', level: 'Primary school', mobileProvider: 'M-Pesa', mobileMoneyNumber: '', mobileMoneyAccountName: '', mpesaPaybill: '', mpesaTill: '', bankName: '', bankAccountName: '', bankAccountNumber: '', adminName: '', adminEmail: '', adminPhone: '', password: '', confirmPassword: '', plan: 'Starter' }
+const draftTtl = 24 * 60 * 60 * 1000
 const persistDraft = values => {
-  const { password, confirmPassword, ...safeDraft } = values
-  localStorage.setItem('smartschool_reg_draft', JSON.stringify(safeDraft))
+  const { password, confirmPassword, mobileMoneyNumber, mobileMoneyAccountName, mpesaPaybill, mpesaTill, bankName, bankAccountName, bankAccountNumber, ...safeDraft } = values
+  try { localStorage.setItem('smartschool_reg_draft', JSON.stringify({ savedAt: Date.now(), values: safeDraft })) } catch { /* Keep registration usable when browser storage is unavailable. */ }
+}
+const loadDraft = () => {
+  try {
+    const saved = localStorage.getItem('smartschool_reg_draft')
+    if (!saved) return initial
+    const parsed = JSON.parse(saved)
+    const savedAt = Number(parsed.savedAt)
+    if (Number.isFinite(savedAt) && (Date.now() - savedAt > draftTtl || savedAt > Date.now())) {
+      localStorage.removeItem('smartschool_reg_draft')
+      localStorage.removeItem('smartschool_reg_step')
+      return initial
+    }
+    const draft = { ...initial, ...(parsed.values || parsed), password: '', confirmPassword: '' }
+    persistDraft(draft)
+    return draft
+  } catch {
+    try { localStorage.removeItem('smartschool_reg_draft') } catch { /* Ignore unavailable browser storage. */ }
+    return initial
+  }
+}
+const loadDraftStep = () => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem('smartschool_reg_draft') || 'null')
+    const savedAt = Number(parsed?.savedAt)
+    if (Number.isFinite(savedAt) && (Date.now() - savedAt > draftTtl || savedAt > Date.now())) return 0
+    const savedStep = Number(localStorage.getItem('smartschool_reg_step'))
+    return Number.isInteger(savedStep) && savedStep >= 0 && savedStep < steps.length ? savedStep : 0
+  } catch { return 0 }
 }
 
 const getPasswordStrength = (password) => {
@@ -32,22 +61,10 @@ const getPasswordStrength = (password) => {
 
 export default function RegisterSchool(){
   const navigate = useNavigate();
-  const [step,setStep]=useState(()=>{
-    const savedStep = localStorage.getItem('smartschool_reg_step');
-    return savedStep ? parseInt(savedStep, 10) : 0;
-  });
+  const [step,setStep]=useState(loadDraftStep);
 
   const [form,setForm]=useState(()=>{
-    const saved = localStorage.getItem('smartschool_reg_draft');
-    if (!saved) return initial
-    try {
-      const draft = { ...initial, ...JSON.parse(saved), password: '', confirmPassword: '' }
-      persistDraft(draft)
-      return draft
-    } catch {
-      localStorage.removeItem('smartschool_reg_draft')
-      return initial
-    }
+    return loadDraft()
   });
 
   const [saving,setSaving]=useState(false);
@@ -64,12 +81,11 @@ export default function RegisterSchool(){
   });
 
   useEffect(()=>{
-    localStorage.setItem('smartschool_reg_step', step.toString());
+    try { localStorage.setItem('smartschool_reg_step', step.toString()) } catch { /* Keep registration usable when browser storage is unavailable. */ }
   },[step]);
 
   const clearDraft = () => {
-    localStorage.removeItem('smartschool_reg_draft');
-    localStorage.removeItem('smartschool_reg_step');
+    try { localStorage.removeItem('smartschool_reg_draft'); localStorage.removeItem('smartschool_reg_step') } catch { /* Ignore unavailable browser storage. */ }
     setForm(initial);
     setStep(0);
     toast.success('Registration draft cleared.');

@@ -12,7 +12,7 @@
 
 ## Deployment steps
 
-1. Apply migrations `034_notification_delivery_outbox.sql` through `042_workflow_access_and_delivery.sql` in numerical order.
+1. Apply migrations `034_notification_delivery_outbox.sql` through `043_role_access_and_admissions_hardening.sql` in numerical order.
 2. Set the Supabase Edge Function secret. Example: `supabase secrets set SMARTSCHOOL_ALLOWED_ORIGINS="https://school.example,https://www.school.example"`. Add `http://localhost:5173` only in a development project. Add `capacitor://localhost` only when using that native origin.
 3. Set `NOTIFICATION_WORKER_SECRET`, `NOTIFICATION_DELIVERY_WEBHOOK_URL` (HTTPS), and `NOTIFICATION_DELIVERY_WEBHOOK_SECRET` as Edge Function secrets. Deploy with `supabase functions deploy deliver-notifications`. Its `config.toml` disables Supabase JWT verification for that function; the worker verifies its own high-entropy bearer secret.
 4. Configure the trusted webhook adapter. It receives a JSON `smartschool.notification` event and an `X-SmartSchool-Timestamp` plus `X-SmartSchool-Signature: v1=<hex>` HMAC-SHA256 signature over `<timestamp>.<raw request body>`. Verify the signature in constant time, reject stale timestamps (for example, older than five minutes), use `delivery_id` as the provider idempotency key, and return 2xx only after the provider accepted the message. Do not log payload bodies, recipient addresses, tokens, or message content. Protect the adapter endpoint with provider-specific quotas and alerting.

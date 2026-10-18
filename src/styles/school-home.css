@@ -144,6 +144,13 @@
 .school-nav nav a.header-register { padding: 12px 14px; border: 0; background: #fff; color: #123d68; }
 .school-nav nav a.header-register:hover { background: #e8f0f7; color: #123d68; }
 .school-nav nav a.header-login { padding: 10px 0; }
+/* Keep the full registration action visible on mid-size desktop screens. */
+@media (min-width: 1081px) and (max-width: 1500px) {
+  .school-nav { padding-right: 24px; padding-left: 24px; }
+  .school-nav nav { gap: clamp(8px, 1.2vw, 16px); padding-left: 16px; }
+  .school-nav nav a.header-register,
+  .school-nav nav a.header-register b { color: #123d68; }
+}
 .school-public-page { min-height: 100vh; }
 .school-public-content { width: min(1160px, calc(100% - 48px)); min-height: 66vh; margin: 0 auto; padding: clamp(56px, 9vw, 110px) 0 90px; }
 .school-public-intro { max-width: 780px; margin-bottom: 48px; }

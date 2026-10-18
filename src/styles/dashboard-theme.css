@@ -8,6 +8,32 @@
   position: relative;
 }
 
+/* Role dashboards use the shared PortalLayout shell for navigation. */
+.portal.portal-embedded {
+  display: block;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  background: transparent;
+}
+.portal-embedded > .side,
+.portal-embedded > .mobile-bottom-nav,
+.portal-embedded > .menu-scrim,
+.portal-embedded > .portal-main > .main-header {
+  display: none !important;
+}
+.portal-embedded > .portal-main {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  padding: 0;
+  gap: 0;
+  background: none;
+}
+.portal-embedded > .portal-main > .content-area {
+  padding: 0;
+}
+
 /* --- Sidebar System --- */
 .side {
   width: 280px;

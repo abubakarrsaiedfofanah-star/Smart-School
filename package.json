@@ -29,5 +29,9 @@
     "@vitejs/plugin-react": "^4.4.1",
     "typescript": "^7.0.2",
     "vite": "^6.2.0"
+  },
+  "overrides": {
+    "source-map-js": "^1.2.2",
+    "tar": "^7.5.22"
   }
 }
