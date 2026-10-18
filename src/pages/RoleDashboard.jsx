@@ -68,12 +68,12 @@ export default function RoleDashboard({role}){const {logout,profile,school,setPr
           values = [data.schools, data.active_schools, data.pending_schools, data.suspended_schools, data.students, data.teachers, data.active_subscriptions, data.expiring_soon];
         } else if (role === 'school_admin') {
           const today = new Intl.DateTimeFormat('en-CA', { timeZone: school?.timezone || 'Africa/Nairobi' }).format(new Date());
-          const [students, teachers, classes, subjects, present, late, assignments, exams, pendingPayments] = await Promise.all([
+          const [students, teachers, classes, subjects, present, late, attendanceRecords, assignments, exams, pendingPayments] = await Promise.all([
             count('students', schoolFilter), count('profiles', [...schoolFilter, ['role', 'eq', 'teacher']]), count('classes', schoolFilter), count('subjects', schoolFilter),
-            count('attendance', [...schoolFilter, ['attendance_date', 'eq', today], ['status', 'eq', 'present']]), count('attendance', [...schoolFilter, ['attendance_date', 'eq', today], ['status', 'eq', 'late']]), count('assignments', [...schoolFilter, ['due_date', 'gte', today]]),
+            count('attendance', [...schoolFilter, ['attendance_date', 'eq', today], ['status', 'eq', 'present']]), count('attendance', [...schoolFilter, ['attendance_date', 'eq', today], ['status', 'eq', 'late']]), count('attendance', [...schoolFilter, ['attendance_date', 'eq', today]]), count('assignments', [...schoolFilter, ['due_date', 'gte', today]]),
             count('exams', [...schoolFilter, ['exam_date', 'gte', today]]), sum('payments', 'amount', [...schoolFilter, ['status', 'eq', 'pending']])
           ]);
-          const attendanceRate = students ? `${(((present + late) / students) * 100).toFixed(1)}%` : '—';
+          const attendanceRate = attendanceRecords ? `${(((present + late) / attendanceRecords) * 100).toFixed(1)}%` : '—';
           values = [students, teachers, classes, subjects, attendanceRate, assignments, exams, money(pendingPayments)];
         } else if (role === 'teacher') {
           const today = new Intl.DateTimeFormat('en-CA', { timeZone: school?.timezone || 'Africa/Nairobi' }).format(new Date());
@@ -259,6 +259,7 @@ return <div className="portal" style={{'--school-accent':accent,'--school-accent
           )}
           {statsState === 'demo' && <div className="dashboard-data-note" role="status">Demo workspace · figures shown are sample data.</div>}
           {statsState === 'error' && <div className="dashboard-data-note dashboard-data-note-error" role="status">Dashboard figures could not load. Refresh the page or check your connection.</div>}
+          <DashboardIntro role={role} name={profile?.full_name} schoolName={school?.name} timezone={school?.timezone || 'Africa/Nairobi'} />
           <section className={`stats-grid ${statsState === 'loading' ? 'stats-loading' : ''}`} aria-label="Dashboard overview" aria-busy={statsState === 'loading'}>
             {liveStats.map(([label, value]) => (
               <article key={label} className="stat-card glass-card neumorph-flat">
@@ -272,7 +273,8 @@ return <div className="portal" style={{'--school-accent':accent,'--school-accent
                 <Link to={`/report-card/${studentId}`} className="button blue-button tactile-btn">View Report Card </Link>
             </div>
           )}
-          <DashboardHighlights role={role} profile={profile} t={t} />
+          <DashboardQuickActions role={role} studentId={studentId} onSelect={choose} />
+          <DashboardHighlights role={role} profile={profile} timezone={school?.timezone || 'Africa/Nairobi'} />
           {role === 'super_admin' && <SuperAdminOverview />}
         </>
       ) : (
@@ -285,19 +287,52 @@ return <div className="portal" style={{'--school-accent':accent,'--school-accent
   <NotificationHub isOpen={notifOpen} onClose={() => setNotifOpen(false)} />
 </div>}
 
-function DashboardHighlights({ role, profile, t }) {
-  const [items, setItems] = useState([])
-  const [pulse, setPulse] = useState('--')
+function DashboardIntro({ role, name, schoolName, timezone }) {
+  const firstName = name?.trim().split(/\s+/)[0] || 'there'
+  const titles = {
+    super_admin: 'Platform overview', school_admin: 'School overview',
+    student: 'Your learning at a glance', parent: 'Your family’s school update'
+  }
+  const descriptions = {
+    super_admin: 'Keep track of schools, subscriptions, and platform health.',
+    school_admin: 'Review today’s school activity and jump into common tasks.',
+    student: 'See what is coming up and get to your learning tools quickly.',
+    parent: 'Follow your learner’s progress, school updates, and upcoming work.'
+  }
+  const date = new Intl.DateTimeFormat(undefined, { weekday: 'long', day: 'numeric', month: 'long', timeZone: timezone }).format(new Date())
+  return <section className="dashboard-intro">
+    <div><p className="eyebrow">{schoolName || (role === 'super_admin' ? 'SMARTSCHOOL PLATFORM' : 'SCHOOL PORTAL')}</p><h2>{role === 'super_admin' ? titles[role] : `Good day, ${firstName}`}</h2><p>{descriptions[role] || 'Your school workspace, all in one place.'}</p></div>
+    <div className="dashboard-intro-date"><span aria-hidden="true">◷</span><div><small>TODAY</small><b>{date}</b></div></div>
+  </section>
+}
+
+function DashboardQuickActions({ role, studentId, onSelect }) {
+  const actions = {
+    super_admin: [['Schools', 'Manage school accounts', '▦', 'select'], ['School approvals', 'Review new applications', '✓', 'select'], ['Analytics', 'Explore platform trends', '↗', 'select'], ['Security', 'Review access settings', '◇', '/security']],
+    school_admin: [['Students', 'Open learner records', '♧', 'select'], ['Teachers', 'Manage staff accounts', '♙', 'select'], ['Timetable', 'View or edit the schedule', '◷', '/timetable'], ['School accounts', 'Manage school access', '＋', '/school-accounts']],
+    student: [['Timetable', 'See your lessons', '◷', '/timetable'], ['Assignments', 'Open classwork', '✎', 'select'], ['Quizzes', 'Practice and revise', '◇', '/quizzes'], ['My results', 'View your report card', '▤', studentId ? `/report-card/${studentId}` : 'select']],
+    parent: [['Timetable', 'See your learner’s schedule', '◷', '/timetable'], ['Meetings', 'Connect with school staff', '▣', '/meetings'], ['Messages', 'Open school messages', '✉', '/chat'], ['Child fees', 'Review payments and balances', '¤', 'select']]
+  }
+  return <section className="dashboard-actions-section"><div className="dashboard-section-heading"><div><p className="eyebrow">SHORTCUTS</p><h2>Quick actions</h2></div></div><div className="dashboard-quick-actions">
+    {(actions[role] || []).map(([title, description, icon, target]) => target === 'select' ? <button type="button" className="dashboard-action-card" key={title} onClick={() => onSelect(title)}><i>{icon}</i><span><b>{title}</b><small>{description}</small></span><em aria-hidden="true">↗</em></button> : <Link className="dashboard-action-card" key={title} to={target}><i>{icon}</i><span><b>{title}</b><small>{description}</small></span><em aria-hidden="true">↗</em></Link>)}
+  </div></section>
+}
+
+function DashboardHighlights({ role, profile, timezone }) {
+  const [notices, setNotices] = useState([])
+  const [assignments, setAssignments] = useState([])
+  const [pulse, setPulse] = useState('—')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let cancelled = false
     const load = async () => {
       if (!supabase || !profile?.school_id || role === 'super_admin') { setLoading(false); return }
+      setLoading(true)
       try {
         const schoolId = profile.school_id
-        const today = new Date().toISOString().slice(0, 10)
-        const { data: notices } = await supabase.from('announcements').select('id,title,created_at').eq('school_id', schoolId).order('created_at', { ascending: false }).limit(3)
+        const today = new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date())
+        const noticeRequest = supabase.from('announcements').select('id,title,created_at').eq('school_id', schoolId).order('created_at', { ascending: false }).limit(3)
         let classIds = []
         let studentIds = []
         if (role === 'student') {
@@ -305,49 +340,51 @@ function DashboardHighlights({ role, profile, t }) {
           if (data) { studentIds = [data.id]; classIds = data.class_id ? [data.class_id] : [] }
         } else if (role === 'parent') {
           const { data: links } = await supabase.from('student_guardians').select('student_id').eq('guardian_id', profile.id)
-          studentIds = (links || []).map(row => row.student_id)
-          if (studentIds.length) {
-            const { data: children } = await supabase.from('students').select('id,class_id').eq('school_id', schoolId).in('id', studentIds)
+          const linkedIds = (links || []).map(row => row.student_id)
+          if (linkedIds.length) {
+            const { data: children } = await supabase.from('students').select('id,class_id').eq('school_id', schoolId).in('id', linkedIds)
             studentIds = (children || []).map(row => row.id)
             classIds = [...new Set((children || []).map(row => row.class_id).filter(Boolean))]
           }
-        } else if (role === 'teacher') {
-          const { data } = await supabase.from('classes').select('id').eq('school_id', schoolId).eq('teacher_id', profile.id)
-          classIds = (data || []).map(row => row.id)
         }
-        let assignmentQuery = supabase.from('assignments').select('id,title,due_date').eq('school_id', schoolId).order('due_date', { ascending: true }).limit(5)
-        if (role === 'teacher') assignmentQuery = assignmentQuery.eq('created_by', profile.id)
-        if ((role === 'student' || role === 'parent') && classIds.length) assignmentQuery = assignmentQuery.in('class_id', classIds)
-        if ((role === 'student' || role === 'parent') && !classIds.length) assignmentQuery = null
-        let attendanceQuery = supabase.from('attendance').select('status').eq('school_id', schoolId).eq('attendance_date', today)
-        if (role === 'teacher') attendanceQuery = attendanceQuery.eq('recorded_by', profile.id)
-        if (role === 'student' && studentIds.length) attendanceQuery = attendanceQuery.eq('student_id', studentIds[0])
-        if (role === 'parent' && studentIds.length) attendanceQuery = attendanceQuery.in('student_id', studentIds)
-        if ((role === 'student' || role === 'parent') && !studentIds.length) attendanceQuery = null
-        const [assignmentResult, attendanceResult] = await Promise.all([
-          assignmentQuery ? assignmentQuery : Promise.resolve({ data: [] }),
-          attendanceQuery ? attendanceQuery : Promise.resolve({ data: [] })
+        let assignmentRequest = supabase.from('assignments').select('id,title,due_date').eq('school_id', schoolId).gte('due_date', today).order('due_date', { ascending: true }).limit(4)
+        if ((role === 'student' || role === 'parent') && classIds.length) assignmentRequest = assignmentRequest.in('class_id', classIds)
+        if ((role === 'student' || role === 'parent') && !classIds.length) assignmentRequest = null
+        let attendanceRequest = supabase.from('attendance').select('status').eq('school_id', schoolId).eq('attendance_date', today)
+        if (role === 'student' && studentIds.length) attendanceRequest = attendanceRequest.eq('student_id', studentIds[0])
+        if (role === 'parent' && studentIds.length) attendanceRequest = attendanceRequest.in('student_id', studentIds)
+        if ((role === 'student' || role === 'parent') && !studentIds.length) attendanceRequest = null
+        const [noticeResult, assignmentResult, attendanceResult] = await Promise.all([
+          noticeRequest, assignmentRequest || Promise.resolve({ data: [] }), attendanceRequest || Promise.resolve({ data: [] })
         ])
-        const noticeItems = (notices || []).map(row => ({ id: `notice-${row.id}`, type: 'School notice', title: row.title, date: row.created_at }))
-        const assignmentItems = (assignmentResult.data || []).map(row => ({ id: `assignment-${row.id}`, type: 'Assignment', title: row.title, date: row.due_date }))
-        const nextItems = [...noticeItems, ...assignmentItems].sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0)).slice(0, 4)
+        if (noticeResult.error) throw noticeResult.error
+        if (assignmentResult.error) throw assignmentResult.error
+        if (attendanceResult.error) throw attendanceResult.error
         const attendanceRows = attendanceResult.data || []
-        const present = attendanceRows.filter(row => row.status === 'present').length
-        if (!cancelled) { setItems(nextItems); setPulse(attendanceRows.length ? `${Math.round((present / attendanceRows.length) * 100)}%` : '--') }
+        const present = attendanceRows.filter(row => row.status === 'present' || row.status === 'late').length
+        if (!cancelled) {
+          setNotices(noticeResult.data || [])
+          setAssignments(assignmentResult.data || [])
+          setPulse(attendanceRows.length ? `${Math.round((present / attendanceRows.length) * 100)}%` : '—')
+        }
       } catch (error) {
         console.error('Could not load school dashboard activity:', error.message)
-        if (!cancelled) { setItems([]); setPulse('--') }
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
+        if (!cancelled) { setNotices([]); setAssignments([]); setPulse('—') }
+      } finally { if (!cancelled) setLoading(false) }
     }
-    load()
+    void load()
     return () => { cancelled = true }
-  }, [role, profile?.id, profile?.school_id])
+  }, [role, profile?.id, profile?.school_id, timezone])
 
   if (role === 'super_admin') return null
+  const formatDate = value => new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', timeZone: timezone }).format(new Date(value))
   return <section className="dashboard-highlights">
-    <div className="panel highlight-card glass-card neumorph-flat"><p className="eyebrow blue-eyebrow">SCHOOL ACTIVITY</p><h2>Notices and classwork</h2>{loading ? <p style={{ color: 'var(--muted)' }}>Loading school activity...</p> : items.length ? items.map(item => <div className="highlight-row" key={item.id}><i>{item.type === 'Assignment' ? 'A' : 'N'}</i><span><small>{item.type}</small>{item.title}</span><b>{'>'}</b></div>) : <p style={{ color: 'var(--muted)' }}>No recent school updates or classwork.</p>}</div>
-    <div className="panel pulse-card glass-card neumorph-flat"><p className="eyebrow blue-eyebrow">ATTENDANCE</p><h2>Recorded today</h2><div className="pulse-ring">{pulse}</div><p>{pulse === '--' ? 'No attendance entries found for today.' : 'Present among the records visible to your role.'}</p></div>
+    <div className="panel highlight-card glass-card neumorph-flat"><div className="dashboard-panel-title"><div><p className="eyebrow blue-eyebrow">SCHOOL FEED</p><h2>Updates & upcoming work</h2></div><span className="dashboard-panel-mark" aria-hidden="true">↗</span></div>
+      {loading ? <p className="dashboard-empty-state">Loading your latest updates…</p> : notices.length || assignments.length ? <>
+        {notices.map(row => <div className="highlight-row" key={`notice-${row.id}`}><i>N</i><span><small>School notice</small>{row.title}</span><time>{formatDate(row.created_at)}</time></div>)}
+        {assignments.map(row => <div className="highlight-row" key={`assignment-${row.id}`}><i>A</i><span><small>Due {formatDate(row.due_date)}</small>{row.title}</span><time>Work</time></div>)}
+      </> : <p className="dashboard-empty-state">There are no recent notices or upcoming class assignments.</p>}
+    </div>
+    <div className="panel pulse-card glass-card neumorph-flat"><p className="eyebrow blue-eyebrow">ATTENDANCE TODAY</p><h2>{role === 'parent' ? 'Learner attendance' : role === 'student' ? 'Your attendance' : 'Attendance activity'}</h2><div className="pulse-ring">{loading ? '…' : pulse}</div><p>{pulse === '—' ? 'No attendance records have been entered today.' : 'Present or late, among the attendance records visible to your account.'}</p></div>
   </section>
 }

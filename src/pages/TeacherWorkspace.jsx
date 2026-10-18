@@ -33,9 +33,12 @@ export default function TeacherWorkspace() {
       setLoading(true)
       try {
         const today = new Intl.DateTimeFormat('en-CA', { timeZone: school?.timezone || 'Africa/Nairobi' }).format(new Date())
-        const { data: classes, error: classError } = await supabase.from('classes').select('id').eq('school_id', profile.school_id).eq('teacher_id', profile.id)
-        if (classError) throw classError
-        const classIds = [...new Set((classes || []).map(row => row.id))]
+        const [classResult, subjectResult] = await Promise.all([
+          supabase.from('classes').select('id').eq('school_id', profile.school_id).eq('teacher_id', profile.id),
+          supabase.from('teacher_subject_assignments').select('class_id').eq('school_id', profile.school_id).eq('teacher_id', profile.id)
+        ])
+        if (classResult.error || subjectResult.error) throw classResult.error || subjectResult.error
+        const classIds = [...new Set([...(classResult.data || []).map(row => row.id), ...(subjectResult.data || []).map(row => row.class_id)])]
         const [students, assignments, attendance] = await Promise.all([
           classIds.length ? supabase.from('students').select('id', { count: 'exact', head: true }).eq('school_id', profile.school_id).in('class_id', classIds) : Promise.resolve({ count: 0 }),
           supabase.from('assignments').select('id', { count: 'exact', head: true }).eq('school_id', profile.school_id).eq('created_by', profile.id),

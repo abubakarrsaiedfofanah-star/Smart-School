@@ -356,6 +356,54 @@
   color: #9c412c;
 }
 
+.dashboard-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: clamp(22px, 3vw, 34px);
+  border: 1px solid color-mix(in srgb, var(--school-accent, #2375e1) 20%, #e4edf7);
+  border-radius: 22px;
+  background: radial-gradient(ellipse at 100% 0%, color-mix(in srgb, var(--school-accent, #2375e1) 12%, white), transparent 46%), linear-gradient(115deg, #fff, #f7faff);
+  box-shadow: 0 12px 30px rgba(25, 61, 98, .055);
+}
+.dashboard-intro .eyebrow { margin: 0 0 7px; color: var(--school-accent-strong, var(--green)); font-size: .68rem; font-weight: 800; letter-spacing: .15em; }
+.dashboard-intro h2 { margin: 0; color: var(--ink); font-size: clamp(1.6rem, 3vw, 2.15rem); letter-spacing: -.04em; }
+.dashboard-intro p:last-child { max-width: 640px; margin: 8px 0 0; color: var(--muted); font-size: .96rem; line-height: 1.55; }
+.dashboard-intro-date { display: flex; align-items: center; gap: 11px; flex: 0 0 auto; padding: 12px 16px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.8); }
+.dashboard-intro-date > span { color: var(--school-accent-strong, var(--green)); font-size: 1.35rem; }
+.dashboard-intro-date small, .dashboard-intro-date b { display: block; }
+.dashboard-intro-date small { color: var(--muted); font-size: .62rem; font-weight: 800; letter-spacing: .12em; }
+.dashboard-intro-date b { margin-top: 3px; color: var(--ink); font-size: .83rem; }
+.dashboard-actions-section { display: grid; gap: 14px; }
+.dashboard-section-heading { display: flex; align-items: end; justify-content: space-between; }
+.dashboard-section-heading .eyebrow { margin: 0 0 4px; color: var(--school-accent-strong, var(--green)); font-size: .65rem; font-weight: 800; letter-spacing: .14em; }
+.dashboard-section-heading h2 { margin: 0; color: var(--ink); font-size: 1.25rem; letter-spacing: -.02em; }
+.dashboard-quick-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.dashboard-action-card { display: flex; align-items: flex-start; gap: 12px; min-width: 0; min-height: 102px; padding: 17px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); color: inherit; text-align: left; text-decoration: none; box-shadow: 0 6px 18px rgba(23, 52, 82, .035); cursor: pointer; transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease; }
+.dashboard-action-card:hover, .dashboard-action-card:focus-visible { transform: translateY(-2px); border-color: color-mix(in srgb, var(--school-accent, #2375e1) 38%, var(--line)); box-shadow: 0 12px 24px rgba(23, 52, 82, .09); outline: none; }
+.dashboard-action-card > i { display: grid; flex: 0 0 36px; width: 36px; height: 36px; place-items: center; border-radius: 11px; background: color-mix(in srgb, var(--school-accent, #2375e1) 10%, white); color: var(--school-accent-strong, var(--green)); font-size: 1.05rem; font-style: normal; font-weight: 800; }
+.dashboard-action-card > span { display: grid; min-width: 0; gap: 6px; }
+.dashboard-action-card b { color: var(--ink); font-size: .86rem; }
+.dashboard-action-card small { color: var(--muted); font-size: .75rem; line-height: 1.45; }
+.dashboard-action-card em { margin-left: auto; color: var(--muted); font-size: .85rem; font-style: normal; }
+.dashboard-highlights { align-items: stretch; }
+.highlight-card { padding: 23px; }
+.dashboard-panel-title { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.dashboard-panel-title .eyebrow { margin: 0 0 4px; }
+.dashboard-panel-title h2 { margin: 0; color: var(--ink); font-size: 1.15rem; }
+.dashboard-panel-mark { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 10px; background: color-mix(in srgb, var(--school-accent, #2375e1) 9%, white); color: var(--school-accent-strong, var(--green)); }
+.highlight-row { min-width: 0; gap: 12px; border-bottom-color: var(--line); }
+.highlight-row > span { min-width: 0; display: grid; gap: 3px; overflow-wrap: anywhere; }
+.highlight-row > span small { color: var(--muted); font-size: .7rem; }
+.highlight-row > i { display: grid; flex: 0 0 28px; width: 28px; height: 28px; place-items: center; border-radius: 9px; background: color-mix(in srgb, var(--school-accent, #2375e1) 9%, white); color: var(--school-accent-strong, var(--green)); opacity: 1; }
+.highlight-row time { margin-left: auto; flex: 0 0 auto; color: var(--muted); font-size: .69rem; }
+.dashboard-empty-state { padding: 15px 0; color: var(--muted); font-size: .86rem; line-height: 1.5; }
+.pulse-card { padding: 23px; }
+.pulse-card h2 { margin: 0; color: var(--ink); font-size: 1.15rem; }
+.pulse-card > p:last-child { color: var(--muted); font-size: .81rem; line-height: 1.5; }
+.pulse-ring { border-color: color-mix(in srgb, var(--school-accent, #2375e1) 10%, white); border-top-color: var(--school-accent-strong, var(--green)); }
+
 .stat-card {
   padding: 24px;
   border-radius: 24px;
@@ -453,6 +501,22 @@
   .stat-card strong { font-size: clamp(1.25rem, 5vw, 1.8rem); overflow-wrap: anywhere; }
   .demo-role-switcher { flex-direction: column; align-items: flex-start; padding: 20px; border-radius: 20px; }
   .app-install-button { right: 14px; bottom: 103px; }
+}
+
+@media (max-width: 1050px) {
+  .dashboard-quick-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .dashboard-intro { align-items: flex-start; flex-direction: column; padding: 20px; border-radius: 17px; }
+  .dashboard-intro-date { padding: 9px 12px; }
+  .dashboard-intro-date b { font-size: .75rem; }
+  .dashboard-quick-actions { gap: 8px; }
+  .dashboard-action-card { min-height: 95px; gap: 9px; padding: 12px; border-radius: 13px; }
+  .dashboard-action-card > i { flex-basis: 30px; width: 30px; height: 30px; font-size: .9rem; }
+  .dashboard-action-card b { font-size: .76rem; }
+  .dashboard-action-card small { font-size: .68rem; }
+  .highlight-card, .pulse-card { padding: 17px; }
+  .highlight-row { gap: 8px; padding: 12px 0; font-size: .82rem; }
 }
 
 @media (max-width: 480px) {
