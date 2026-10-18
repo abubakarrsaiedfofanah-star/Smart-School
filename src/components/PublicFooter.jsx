@@ -10,7 +10,7 @@ export default function PublicFooter() {
       </div>
       <div className="footer-column"><h4>School system</h4><Link to="/features">School tools</Link><Link to="/portals">Role portals</Link><Link to="/#how-it-works">How it works</Link></div>
       <div className="footer-column"><h4>Get started</h4><Link to="/register">Register school</Link><Link to="/pricing">Plans</Link><Link to="/contact">Contact</Link></div>
-      <div className="footer-column"><h4>Portal access</h4><Link to="/super-admin">Platform Admin</Link><Link to="/school-admin">School Admin</Link><Link to="/teacher">Teacher</Link><Link to="/student">Student</Link><Link to="/parent">Parent</Link></div>
+      <div className="footer-column"><h4>Portal access</h4><Link to="/school-admin">School Admin</Link><Link to="/teacher">Teacher</Link><Link to="/student">Student</Link><Link to="/parent">Parent</Link><Link to="/login/hr">HR & Payroll</Link><Link to="/login/finance">Finance</Link></div>
     </div>
     <div className="footer-bottom"><span>© {new Date().getFullYear()} SmartSchool</span><span>School operations, connected.</span></div>
   </footer>

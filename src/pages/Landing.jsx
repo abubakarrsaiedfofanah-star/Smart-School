@@ -11,11 +11,12 @@ const workflows = [
 ]
 
 const roles = [
-  ['Platform Admin', 'Manage school registrations and platform subscriptions.', '◆'],
-  ['School Admin', 'Oversee school records, people and daily operations.', '⌂'],
-  ['Teacher', 'Manage classes, attendance, lessons and student work.', '▤'],
-  ['Student', 'Keep up with assignments, timetables and results.', '✦'],
-  ['Parent', 'Follow school updates and your learner’s progress.', '♡'],
+  ['School Admin', 'Oversee school records, people and daily operations.', '⌂', '/school-admin'],
+  ['Teacher', 'Manage classes, attendance, lessons and student work.', '▤', '/teacher'],
+  ['Student', 'Keep up with assignments, timetables and results.', '✦', '/student'],
+  ['Parent', 'Follow school updates and your learner’s progress.', '♡', '/parent'],
+  ['HR & Payroll', 'Manage staff records and payroll workflows.', '♙', '/login/hr'],
+  ['Finance', 'Manage school expenses and payment reconciliation.', '$', '/login/finance'],
 ]
 
 const tools = [
@@ -63,11 +64,11 @@ export default function Landing() {
     <main>
       <section id="home" className="sky-hero screenshot-hero school-hero">
         <div className="hero-product-backdrop"><div/><div/><div/><div/></div><div className="video-wash"/><div className="ambient-grid"/><div className="ambient-ring ring-one"/><div className="ambient-ring ring-two"/>
-        <div className="hero-copy"><p className="eyebrow blue-eyebrow">A PRACTICAL HOME FOR YOUR SCHOOL</p><h1>Run your school.<br/>Keep learning<br/><span>moving.</span></h1><p>Manage the school day, support teaching and keep families connected from one shared system.</p><div className="actions"><Link className="button blue-button" to="/register">Set up your school <b>→</b></Link><Link className="button outline-hero" to="/login">Sign in to your portal</Link></div><div className="hero-role-note"><span>One system</span><i/>School Admin <i/> Teacher <i/> Student <i/> Parent</div></div>
+        <div className="hero-copy"><p className="eyebrow blue-eyebrow">A PRACTICAL HOME FOR YOUR SCHOOL</p><h1>Run your school.<br/>Keep learning<br/><span>moving.</span></h1><p>Manage the school day, support teaching and keep families connected from one shared system.</p><div className="actions"><Link className="button blue-button" to="/register">Set up your school <b>→</b></Link><Link className="button outline-hero" to="/login">Sign in to your portal</Link></div><div className="hero-role-note"><span>One system</span><i/>School Admin <i/> Teacher <i/> Student <i/> Parent <i/> HR <i/> Finance</div></div>
         <DashboardPreview/>
       </section>
 
-      <div className="hero-portals school-portal-shortcuts">{roles.map(([name, text, icon], index) => <Link className={`hero-portal portal-tone-${index}`} to={['/super-admin','/school-admin','/teacher','/student','/parent'][index]} key={name}><span className="portal-icon">{icon}</span><b>{name}</b><small>{text}</small><span className="portal-link">Open portal →</span></Link>)}</div>
+      <div className="hero-portals school-portal-shortcuts">{roles.map(([name, text, icon, href], index) => <Link className={`hero-portal portal-tone-${index}`} to={href} key={name}><span className="portal-icon">{icon}</span><b>{name}</b><small>{text}</small><span className="portal-link">Open portal →</span></Link>)}</div>
 
       <Reveal><section className="section school-day-section" id="how-it-works"><div className="section-heading"><div><p className="eyebrow blue-eyebrow">A SCHOOL DAY, STEP BY STEP</p><h2>From the first register<br/>to the last update.</h2></div><p className="section-note">Keep the work of running a school connected throughout the day.</p></div>
         <div className="school-workflow"><div className="workflow-tabs" role="tablist" aria-label="School workflows">{workflows.map((item, index) => <button className={activeWorkflow === index ? 'active' : ''} key={item.number} role="tab" aria-selected={activeWorkflow === index} type="button" onClick={() => setActiveWorkflow(index)}><span>{item.number}</span><b>{item.label}</b><i>↗</i></button>)}</div>

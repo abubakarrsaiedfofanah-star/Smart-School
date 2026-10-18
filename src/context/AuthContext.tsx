@@ -19,7 +19,7 @@ interface AuthContextValue {
   setProfile: Dispatch<SetStateAction<UserProfile | null>>
   loading: boolean
   demo: boolean
-  login: (email: string, password: string) => Promise<{ profile: UserProfile }>
+  login: (email: string, password: string) => Promise<{ profile: UserProfile; staffRoles: string[] }>
   loginDemo: (role: PortalRole) => { profile: UserProfile }
   logout: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
@@ -122,7 +122,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     return () => subscription.unsubscribe()
   }, [])
 
-  const login = async (email: string, password: string): Promise<{ profile: UserProfile }> => {
+  const login = async (email: string, password: string): Promise<{ profile: UserProfile; staffRoles: string[] }> => {
     if (demo) throw new Error('Sign out of demo mode before signing in to a real account.')
     if (!supabase) throw new Error('School sign in is unavailable until the platform is connected.')
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
@@ -132,12 +132,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
     if (!nextProfileData) throw new Error('Your account is active but has no school profile yet. Contact an administrator.')
     const nextProfile = nextProfileData as UserProfile
     setProfile(nextProfile)
-    await loadStaffRoles(nextProfile)
+    const [assigned, legacy] = nextProfile.school_id && nextProfile.role === 'teacher' ? await Promise.all([
+      supabase.from('school_staff_role_assignments').select('role_key').eq('school_id', nextProfile.school_id).eq('profile_id', nextProfile.id),
+      supabase.from('school_hr_roles').select('hr_role').eq('school_id', nextProfile.school_id).eq('profile_id', nextProfile.id).maybeSingle()
+    ]) : [{ data: [] }, { data: null }]
+    const nextStaffRoles = [...new Set([...(assigned.data || []).map((row: { role_key: string }) => row.role_key), legacy.data?.hr_role].filter(Boolean))]
+    setStaffRoles(nextStaffRoles)
     if (nextProfile.school_id) {
       const { data: nextSchool } = await supabase.from('schools').select('*').eq('id', nextProfile.school_id).maybeSingle()
       setSchool(nextSchool as SchoolWorkspace | null)
     } else setSchool(null)
-    return { profile: nextProfile }
+    return { profile: nextProfile, staffRoles: nextStaffRoles }
   }
 
   const resetPassword = async (email: string): Promise<void> => {

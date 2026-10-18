@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { roleRoute } from '../lib/roleRoute'
+import { hasSchoolPermission } from '../lib/schoolRoles'
 import toast from 'react-hot-toast'
 
 export default function Login(){
@@ -14,9 +15,14 @@ export default function Login(){
   const [forgotEmail,setForgotEmail]=useState('')
   const [forgotLoading,setForgotLoading]=useState(false)
 
-  const {login,loginDemo,resetPassword,session,profile,loading:authLoading}=useAuth(),navigate=useNavigate(),{portalRole}=useParams();
-  const roleLabels={school_admin:'School Admin',teacher:'Teacher',student:'Student',parent:'Parent',super_admin:'Platform Admin'};
+  const {login,loginDemo,resetPassword,session,profile,staffRoles,loading:authLoading}=useAuth(),navigate=useNavigate(),{portalRole}=useParams();
+  const roleLabels={school_admin:'School Admin',teacher:'Teacher',student:'Student',parent:'Parent',hr:'HR & Payroll',finance:'Finance'};
   const requestedRole=roleLabels[portalRole] ? portalRole : null;
+  const specialistPermission = requestedRole === 'hr' ? 'school.hr.portal.view' : requestedRole === 'finance' ? 'school.finance.portal.view' : null;
+  const portalDestination = (account, assignedRoles) => {
+    if (!specialistPermission || !hasSchoolPermission(account?.role, assignedRoles, specialistPermission)) return roleRoute(account?.role);
+    return requestedRole === 'hr' ? '/hr-payroll' : '/finance-operations';
+  };
 
   useEffect(() => {
     if (remember && email) {
@@ -31,10 +37,15 @@ export default function Login(){
     setLoading(true);
     const id = toast.loading('Signing in to SmartSchool...');
     try{
-      const {profile}=await login(email,password);
-      if(requestedRole&&profile.role!==requestedRole) toast('This account belongs to the '+(roleLabels[profile.role]||'assigned')+' portal. Opening that portal instead.',{id});
+      const {profile,staffRoles:assignedRoles}=await login(email,password);
+      if (specialistPermission && !hasSchoolPermission(profile.role, assignedRoles, specialistPermission)) {
+        toast.error(`This account has not been assigned the ${roleLabels[requestedRole]} portal. Ask your school administrator to grant access.`, { id });
+        navigate(roleRoute(profile.role), { replace: true });
+        return;
+      }
+      if(requestedRole&&!specialistPermission&&profile.role!==requestedRole) toast('This account belongs to the '+(roleLabels[profile.role]||'assigned')+' portal. Opening that portal instead.',{id});
       else toast.success('Signed in successfully!', {id});
-      navigate(roleRoute(profile.role));
+      navigate(portalDestination(profile, assignedRoles));
     }catch(e){
       toast.error(e.message||'Could not sign in. Please check your credentials.', {id});
     }finally{
@@ -70,7 +81,7 @@ export default function Login(){
   }
 
   if(authLoading) return <div className="portal-loading"><div className="spinner"/><p>Loading your account...</p></div>;
-  if(session&&profile) return <Navigate to={roleRoute(profile.role)} replace/>;
+  if(session&&profile) return <Navigate to={portalDestination(profile, staffRoles)} replace/>;
 
   return (
     <div className="auth page-transition" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'radial-gradient(circle at 50% 20%, rgba(35, 117, 225, 0.12) 0%, transparent 60%)' }}>
@@ -147,13 +158,13 @@ export default function Login(){
             <h3 id="demo-access-title">Explore with a demo account</h3>
             <p>Demo workspace uses sample data saved only in this browser session.</p>
             <div className="demo-grid">
-              {Object.entries(roleLabels).map(([role,label])=><button type="button" key={role} onClick={()=>openDemo(role)}>{label}<span>Open demo →</span></button>)}
+              {Object.entries(roleLabels).filter(([role]) => ['school_admin','teacher','student','parent'].includes(role)).map(([role,label])=><button type="button" key={role} onClick={()=>openDemo(role)}>{label}<span>Open demo →</span></button>)}
             </div>
             <button type="button" className="demo-hr-preview" onClick={openHrDemo}><span><b>HR & Payroll preview</b><small>View sample staff and payroll activity</small></span><strong>Open preview →</strong></button>
-            <p className="demo-specialist-note"><b>HR, finance, admissions, and other staff portals</b> are specialist permissions managed by the school administrator. Use the preview above for sample HR activity, or ask your administrator to assign a staff portal to your account.</p>
+            <p className="demo-specialist-note"><b>HR & Finance access</b> is assigned by your school administrator. Sign in with your school staff account; access is checked before the workspace opens. The HR preview above uses demo data.</p>
           </section>
 
-          <nav className="login-portals" aria-label="Choose a role portal"><span>Choose a portal</span><div>{[['school_admin','School Admin'],['teacher','Teacher'],['student','Student'],['parent','Parent']].map(([role,label])=><Link className={requestedRole===role?'active':''} to={'/login/'+role} key={role}>{label}</Link>)}</div></nav>
+          <nav className="login-portals" aria-label="Choose a role portal"><span>Choose a portal</span><div>{[['school_admin','School Admin'],['teacher','Teacher'],['student','Student'],['parent','Parent'],['hr','HR & Payroll'],['finance','Finance']].map(([role,label])=><Link className={requestedRole===role?'active':''} to={'/login/'+role} key={role}>{label}</Link>)}</div></nav>
           <div style={{ marginTop: '25px', textAlign: 'center', fontSize: '0.9rem', borderTop: '1px solid var(--line)', paddingTop: '20px' }}>
             <span style={{ color: 'var(--muted)' }}>New educational institution? </span>
             <Link to="/register" className="text-link" style={{ fontWeight: 700, color: 'var(--green)' }}>Register your school →</Link>

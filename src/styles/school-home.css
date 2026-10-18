@@ -32,7 +32,7 @@
 .school-hero .dash-list { font-size: .62rem; }
 .hero-role-note { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin-top: 20px; color: #c4d5e2; font-size: .63rem; }
 .hero-role-note span { color: #fff; font-weight: 800; }.hero-role-note i { width: 3px; height: 3px; border-radius: 50%; background: #8bcfff; }
-.school-portal-shortcuts { position: relative; z-index: 4; left: auto; right: auto; bottom: auto; grid-template-columns: repeat(5, minmax(0,1fr)); width: min(1180px, calc(100% - 48px)); margin: -36px auto 0; }
+.school-portal-shortcuts { position: relative; z-index: 4; left: auto; right: auto; bottom: auto; grid-template-columns: repeat(3, minmax(0,1fr)); width: min(1180px, calc(100% - 48px)); margin: -36px auto 0; }
 .school-portal-shortcuts .hero-portal { min-height: 172px; background: #14202bf5; }
 .school-portal-shortcuts .hero-portal small { max-width: 220px; }
 .school-portal-shortcuts .portal-icon { flex: 0 0 46px; width: 46px; height: 46px; }
