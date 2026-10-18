@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
@@ -11,10 +11,12 @@ const sections = [
 ]
 const tableBySection = { Recruitment: 'job_vacancies', 'Staff Records': 'hr_employees', Contracts: 'employment_contracts', 'Attendance & Leave': 'hr_leave_requests', 'Salary Settings': 'salary_structures', Payroll: 'payroll_runs', Approvals: 'payroll_approvals', Payments: 'payment_transactions' }
 
-export default function HrPayrollPortal() {
+export default function HrPayrollPortal({ portalMode = false }) {
   const { profile, school, staffRoles, demo } = useAuth()
   const navigate = useNavigate()
-  const [section, setSection] = useState('Dashboard')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const requestedSection = sections.some(([name]) => name === searchParams.get('module')) ? searchParams.get('module') : 'Dashboard'
+  const [section, setSection] = useState(requestedSection)
   const [accessRole, setAccessRole] = useState('')
   const [rows, setRows] = useState([])
   const [stats, setStats] = useState({ staff: 0, payroll: 0, approvals: 0, recruitment: 0 })
@@ -51,7 +53,14 @@ export default function HrPayrollPortal() {
     catch { return `${currencyCode} ${Number(value || 0).toLocaleString()}` }
   }
 
+  useEffect(() => { setSection(requestedSection); setMessage('') }, [requestedSection])
   useEffect(() => { if (profile) load() }, [profile, section, demo])
+
+  function selectSection(name) {
+    setSection(name)
+    setSearchParams({ module: name })
+    setMessage('')
+  }
 
   async function load() {
     if (demo) {
@@ -261,7 +270,7 @@ export default function HrPayrollPortal() {
   return <main className="hr-page"><style>{`.hr-page{min-height:100vh;background:var(--bg);color:var(--ink);padding:24px}.hr-shell{max-width:1400px;margin:auto}.hr-head{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:24px}.hr-head h1{margin:0;color:var(--green);font-size:2rem}.hr-head p{margin:5px 0;color:var(--muted)}.hr-layout{display:grid;grid-template-columns:230px 1fr;gap:22px}.hr-nav,.hr-card{background:var(--panel);border:1px solid var(--line);border-radius:14px}.hr-nav{padding:10px;height:max-content}.hr-nav button{width:100%;display:block;text-align:left;padding:11px;border:0;background:transparent;color:var(--ink);border-radius:8px;cursor:pointer}.hr-nav button.active{background:var(--green);color:white}.hr-main{min-width:0}.hr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:14px;margin-bottom:18px}.hr-card{padding:18px}.hr-stat small,.hr-muted{color:var(--muted)}.hr-stat strong{display:block;font-size:1.8rem;margin-top:6px}.hr-table-wrap{overflow:auto}.hr-table{width:100%;border-collapse:collapse}.hr-table td,.hr-table th{text-align:left;padding:12px;border-bottom:1px solid var(--line);white-space:nowrap}.hr-table th{color:var(--muted);font-size:.83rem}.hr-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:0 0 18px}.hr-form input,.hr-form textarea,.hr-form select{width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}.hr-form textarea{grid-column:1/-1;min-height:75px}.hr-button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:9px 13px;cursor:pointer}.hr-button.primary{background:var(--green);color:#fff;border-color:var(--green)}.hr-alert{padding:13px;background:var(--cream);border-radius:10px;margin-bottom:16px}.hr-pill{display:inline-block;border-radius:99px;padding:4px 9px;background:var(--cream);font-size:.8rem}.hr-access{display:flex;align-items:center;gap:10px}.hr-access select{padding:7px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}@media(max-width:850px){.hr-layout{grid-template-columns:1fr}.hr-nav{display:flex;overflow:auto;gap:5px}.hr-nav button{white-space:nowrap;width:auto}.hr-head{align-items:flex-start;flex-direction:column}}`}</style>
     <div className="hr-shell">
       <header className="hr-head"><div><h1>School HR & Payroll</h1><p>Centralized management portal · {title}</p>{demo && <span className="hr-pill">Read-only demo · sample data</span>}</div><button className="hr-button" onClick={() => navigate('/portal')}>← Back to school portal</button></header>
-      <div className="hr-layout"><nav className="hr-nav" aria-label="HR and payroll modules">{visibleSections.map(([name]) => <button key={name} disabled={demo && !['Dashboard','Staff Records'].includes(name)} className={section === name ? 'active' : ''} onClick={() => { if (demo && !['Dashboard','Staff Records'].includes(name)) return; setSection(name); setMessage(demo && name !== 'Dashboard' ? 'Sample employee directory. Employee records can be managed when signed in to a connected school account.' : '') }}>{name}</button>)}</nav>
+      <div className="hr-layout" style={portalMode ? { gridTemplateColumns: 'minmax(0, 1fr)' } : undefined}>{!portalMode && <nav className="hr-nav" aria-label="HR and payroll modules">{visibleSections.map(([name]) => <button key={name} disabled={demo && !['Dashboard','Staff Records'].includes(name)} className={section === name ? 'active' : ''} onClick={() => { if (demo && !['Dashboard','Staff Records'].includes(name)) return; selectSection(name); setMessage(demo && name !== 'Dashboard' ? 'Sample employee directory. Employee records can be managed when signed in to a connected school account.' : '') }}>{name}</button>)}</nav>}
         <section className="hr-main">
           {message && <div className="hr-alert" role="status">{message}</div>}
           {section === 'Dashboard' && !message && <><div className="hr-grid">{[['Active staff', stats.staff], ['Payroll runs', stats.payroll], ['Awaiting approval', stats.approvals], ['Applications', stats.recruitment]].map(([label, value]) => <article className="hr-card hr-stat" key={label}><small>{label}</small><strong>{value}</strong></article>)}</div><article className="hr-card"><h2>Recent payroll runs</h2><p className="hr-muted">{demo ? 'Sample payroll activity for preview only. No real staff or salary records are shown.' : 'Prepare salaries from effective salary records, then submit for principal approval.'}</p><div className="hr-table-wrap"><table className="hr-table"><thead><tr><th>Pay period</th><th>Status</th>{!demo && <th>Action</th>}</tr></thead><tbody>{rows.map(run => <tr key={run.id}><td>{run.pay_period}</td><td><span className="hr-pill">{run.status}</span></td>{!demo && <td>{canPreparePayroll && run.status === 'draft' && <button className="hr-button" onClick={() => submitPayroll(run)}>Submit for approval</button>}{canApprove && run.status === 'submitted' && <><button className="hr-button primary" onClick={() => approvePayroll(run, 'approved')}>Approve</button> <button className="hr-button" onClick={() => approvePayroll(run, 'rejected')}>Return</button></>}</td>}</tr>)}</tbody></table></div>{canPreparePayroll && !demo && <button className="hr-button primary" disabled={busy} onClick={preparePayroll}>＋ Prepare monthly payroll</button>}</article></>}

@@ -108,7 +108,7 @@ export default function Login(){
                 placeholder="name@school.edu"
                 required
                 autoComplete="email"
-                style={{ borderRadius: '12px', padding: '14px 16px' }}
+                style={{ boxSizing: 'border-box', width: '100%', borderRadius: '12px', padding: '14px 16px', border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)', outlineColor: 'var(--green)' }}
               />
             </label>
 
@@ -122,7 +122,7 @@ export default function Login(){
                   placeholder="••••••••"
                   required
                   autoComplete="current-password"
-                  style={{ borderRadius: '12px', padding: '14px 16px', width: '100%', paddingRight: '70px' }}
+                  style={{ boxSizing: 'border-box', border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)', outlineColor: 'var(--green)', borderRadius: '12px', padding: '14px 16px', width: '100%', paddingRight: '70px' }}
                 />
                 <button
                   type="button"

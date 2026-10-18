@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import PortalLayout from './PortalLayout'
 import { hasSchoolPermission } from '../lib/schoolRoles'
 
-export default function ProtectedRoute({ roles, permission, children, shell = true }) {
+export default function ProtectedRoute({ roles, permission, children, shell = true, portal = null }) {
   const { session, profile, school, staffRoles, loading, logout } = useAuth()
   const location = useLocation()
   const [mfaState, setMfaState] = useState('checking')
@@ -39,7 +39,7 @@ export default function ProtectedRoute({ roles, permission, children, shell = tr
   }
 
   if (!mfaPolicy.checked) return <div className="portal-loading" role="status"><div className="spinner" /><p>Checking account security requirements…</p></div>
-  return mfaState === 'verified' ? (shell ? <PortalLayout>{children}</PortalLayout> : children) : <MfaGate required={mfaPolicy.required} onVerified={() => setMfaState('verified')} />
+  return mfaState === 'verified' ? (shell ? <PortalLayout portal={portal}>{children}</PortalLayout> : children) : <MfaGate required={mfaPolicy.required} onVerified={() => setMfaState('verified')} />
 }
 
 function MfaGate({ onVerified, required }) {
