@@ -41,8 +41,8 @@ export default function PortalLayout({ children }) {
   if (assignedRoles.some(item => ['principal', 'deputy_principal', 'hr_admin'].includes(item))) specialistItems.push(['Staff attendance', '\u2713', '/staff-attendance'])
   if (assignedRoles.some(item => ['principal', 'hr_admin', 'finance_officer'].includes(item))) specialistItems.push(['HR & Payroll', '\u25a4', '/hr-payroll'])
   if (assignedRoles.some(item => ['principal', 'finance_officer'].includes(item))) specialistItems.push(['Finance operations', '$', '/finance-operations'])
-  if (assignedRoles.some(item => ['principal', 'registrar'].includes(item))) specialistItems.push(['Admissions', '\u2197', '/admissions'])
-  if (assignedRoles.some(item => ['principal', 'inventory_manager', 'librarian'].includes(item))) specialistItems.push(['Inventory & assets', '\u25a7', '/inventory'])
+  if (assignedRoles.some(item => ['principal', 'deputy_principal', 'registrar'].includes(item))) specialistItems.push(['Admissions', '\u2197', '/admissions'])
+  if (assignedRoles.some(item => ['principal', 'deputy_principal', 'inventory_manager', 'librarian'].includes(item))) specialistItems.push(['Inventory & assets', '\u25a7', '/inventory'])
   if (assignedRoles.some(item => ['principal', 'librarian'].includes(item))) specialistItems.push(['Library', '\u25a8', '/library'])
   const groups = role === 'teacher'
     ? [...navigation.teacher, ['Staff portals', [['Portal hub', '\u25c8', '/staff-portals'], ...specialistItems]]]

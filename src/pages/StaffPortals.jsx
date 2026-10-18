@@ -6,9 +6,9 @@ const portals = [
   { title: 'Academic leadership', icon: '▦', roles: ['principal', 'deputy_principal'], description: 'Oversee timetable planning, staff attendance, and academic delivery.', links: [['Timetable', '/timetable'], ['Staff attendance', '/staff-attendance']] },
   { title: 'Human resources', icon: '♙', roles: ['principal', 'hr_admin'], description: 'Manage staff records, recruitment, contracts, leave, and payroll approvals.', links: [['HR & Payroll', '/hr-payroll'], ['Staff attendance', '/staff-attendance']] },
   { title: 'Finance operations', icon: '¤', roles: ['principal', 'finance_officer'], description: 'Record expenses, review school payments, and reconcile provider statements.', links: [['Finance operations', '/finance-operations'], ['Payroll', '/hr-payroll']] },
-  { title: 'Admissions', icon: '↗', roles: ['principal', 'registrar'], description: 'Review applications and manage new student admissions.', links: [['Admissions workspace', '/admissions']] },
+  { title: 'Admissions', icon: '↗', roles: ['principal', 'deputy_principal', 'registrar'], description: 'Review applications and manage new student admissions.', links: [['Admissions workspace', '/admissions']] },
   { title: 'Library services', icon: '▤', roles: ['principal', 'librarian'], description: 'Manage learning resources and library access.', links: [['Open library', '/library']] },
-  { title: 'Inventory & assets', icon: '▧', roles: ['principal', 'inventory_manager', 'librarian'], description: 'Track school equipment, assignments, condition, and value.', links: [['Manage inventory', '/inventory']] }
+  { title: 'Inventory & assets', icon: '▧', roles: ['principal', 'deputy_principal', 'inventory_manager', 'librarian'], description: 'View school equipment, assignments, condition, and value. Inventory managers maintain records.', links: [['Open inventory', '/inventory']] }
 ]
 
 const plannedPortals = [

@@ -13,10 +13,10 @@ export const SCHOOL_STAFF_ROLES = [
 ]
 
 export const ROLE_PERMISSIONS = {
-  principal: ['school.timetable.manage', 'school.attendance.manage', 'school.staff_attendance.manage', 'school.inventory.manage', 'school.expenses.manage', 'school.finance.reconcile', 'school.hr.manage', 'school.admissions.manage', 'school.library.manage', 'school.health.manage', 'school.wellbeing.manage', 'school.transport.manage', 'school.reports.view'],
+  principal: ['school.timetable.manage', 'school.attendance.manage', 'school.staff_attendance.manage', 'school.inventory.manage', 'school.inventory.view', 'school.expenses.manage', 'school.finance.reconcile', 'school.finance.portal.view', 'school.hr.manage', 'school.hr.payroll', 'school.hr.portal.view', 'school.admissions.manage', 'school.library.manage', 'school.health.manage', 'school.wellbeing.manage', 'school.transport.manage', 'school.reports.view'],
   deputy_principal: ['school.timetable.manage', 'school.attendance.manage', 'school.staff_attendance.manage', 'school.inventory.view', 'school.admissions.manage', 'school.reports.view'],
-  hr_admin: ['school.staff_attendance.manage', 'school.hr.manage'],
-  finance_officer: ['school.expenses.manage', 'school.finance.reconcile', 'school.hr.payroll'],
+  hr_admin: ['school.staff_attendance.manage', 'school.hr.manage', 'school.hr.payroll', 'school.hr.portal.view'],
+  finance_officer: ['school.expenses.manage', 'school.finance.reconcile', 'school.finance.portal.view', 'school.hr.payroll', 'school.hr.portal.view'],
   registrar: ['school.admissions.manage', 'school.students.manage'],
   librarian: ['school.library.manage', 'school.inventory.view'],
   inventory_manager: ['school.inventory.manage', 'school.inventory.view'],

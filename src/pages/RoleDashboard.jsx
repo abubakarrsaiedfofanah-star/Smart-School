@@ -36,11 +36,11 @@ export default function RoleDashboard({role}){const {logout,profile,school,setPr
   }
   const bottomNavLabel = item => item === 'School approvals' ? 'Approvals' : item === 'School administrators' ? 'School admins' : displayLabel(item)
   const specialistLabels = [...new Set([
-    ...(staffRoles.some(item => ['principal', 'deputy_principal'].includes(item)) ? ['Staff attendance'] : []),
+    ...(staffRoles.some(item => ['principal', 'deputy_principal', 'hr_admin'].includes(item)) ? ['Staff attendance'] : []),
     ...(staffRoles.some(item => ['principal', 'hr_admin', 'finance_officer'].includes(item)) ? ['HR & Payroll'] : []),
     ...(staffRoles.some(item => ['principal', 'finance_officer'].includes(item)) ? ['Finance operations'] : []),
-    ...(staffRoles.some(item => ['principal', 'registrar'].includes(item)) ? ['Admissions'] : []),
-    ...(staffRoles.some(item => ['principal', 'inventory_manager', 'librarian'].includes(item)) ? ['Inventory & assets'] : [])
+    ...(staffRoles.some(item => ['principal', 'deputy_principal', 'registrar'].includes(item)) ? ['Admissions'] : []),
+    ...(staffRoles.some(item => ['principal', 'deputy_principal', 'inventory_manager', 'librarian'].includes(item)) ? ['Inventory & assets'] : [])
   ])]
   const navGroups = role === 'teacher'
     ? settings.groups.map(([group, items]) => group === 'Work' ? [group, [...items, 'Staff portals', ...specialistLabels]] : [group, items])

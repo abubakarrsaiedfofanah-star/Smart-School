@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 
 const AdmissionsPortal = () => {
+  const { schoolSlug } = useParams();
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [formData, setFormData] = useState({
@@ -21,6 +23,11 @@ const AdmissionsPortal = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const targetSchoolSlug = schoolSlug || formData.schoolSlug;
+    if (!targetSchoolSlug?.trim()) {
+      toast.error('Open your school’s application link or enter its school code.');
+      return;
+    }
     setLoading(true);
 
     try {
@@ -32,18 +39,16 @@ const AdmissionsPortal = () => {
         return;
       }
 
-      const { error } = await supabase
-        .from('applications')
-        .insert([{
-          student_first_name: formData.studentFirstName,
-          student_last_name: formData.studentLastName,
-          date_of_birth: formData.dob,
-          grade_level: formData.gradeLevel,
-          parent_name: formData.parentName,
-          parent_email: formData.email,
-          parent_phone: formData.phone,
-          status: 'Pending'
-        }]);
+      const { error } = await supabase.rpc('submit_school_application', {
+        target_school_slug: targetSchoolSlug.trim(),
+        applicant_first_name: formData.studentFirstName,
+        applicant_last_name: formData.studentLastName,
+        applicant_date_of_birth: formData.dob,
+        applicant_grade_level: formData.gradeLevel,
+        guardian_full_name: formData.parentName,
+        guardian_email: formData.email,
+        guardian_phone: formData.phone || null
+      });
 
       if (error) throw error;
 
@@ -66,7 +71,7 @@ const AdmissionsPortal = () => {
             </svg>
           </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-2">Application Received!</h2>
-          <p className="text-gray-600 mb-8">Thank you for choosing our school. We've sent a confirmation email to {formData.email}. Our admissions team will contact you shortly.</p>
+          <p className="text-gray-600 mb-8">Thank you for applying. The school’s admissions team will contact you using {formData.email}.</p>
           <button
             onClick={() => setSubmitted(false)}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-200"
@@ -88,6 +93,10 @@ const AdmissionsPortal = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="py-10 px-8 space-y-6">
+            {schoolSlug ? <div className="rounded-xl bg-blue-50 px-4 py-3 text-sm text-blue-800">Applying to school code <b>{schoolSlug}</b></div> : <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">School code</label>
+              <input required type="text" name="schoolSlug" value={formData.schoolSlug || ''} onChange={handleChange} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" placeholder="Enter the school code from its application link" />
+            </div>}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Student First Name</label>

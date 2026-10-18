@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
@@ -25,7 +25,7 @@ export default function HrPayrollPortal() {
   const [auditRows, setAuditRows] = useState([])
   const [message, setMessage] = useState('Loading HR workspace…')
   const [busy, setBusy] = useState(false)
-  const [staffForm, setStaffForm] = useState({ staff_number: '', full_name: '', job_title: '', department: '', email: '', phone: '', hire_date: '' })
+  const [staffForm, setStaffForm] = useState({ staff_number: '', full_name: '', job_title: '', department: '', email: '', phone: '', hire_date: '', profile_id: '' })
   const [vacancyForm, setVacancyForm] = useState({ title: '', department: '', description: '' })
   const [salaryForm, setSalaryForm] = useState({ employee_id: '', basic_salary: '', allowance: '0', deduction: '0', payment_method: 'bank', effective_from: new Date().toISOString().slice(0, 10) })
   const [contractForm, setContractForm] = useState({ employee_id: '', contract_type: 'Permanent', start_date: new Date().toISOString().slice(0, 10), end_date: '' })
@@ -38,6 +38,13 @@ export default function HrPayrollPortal() {
   const canApprove = isSchoolAdmin || accessRole === 'principal'
   const canPay = isSchoolAdmin || ['principal', 'finance_officer'].includes(accessRole)
   const canEditPayout = isSchoolAdmin || accessRole === 'principal'
+  const visibleSections = isSchoolAdmin || accessRole === 'principal'
+    ? sections
+    : accessRole === 'hr_admin'
+      ? sections.filter(([name]) => ['Dashboard', 'Recruitment', 'Staff Records', 'Contracts', 'Attendance & Leave', 'Salary Settings', 'Payroll', 'Approvals', 'Payslips', 'Security & Reports'].includes(name))
+      : accessRole === 'finance_officer'
+        ? sections.filter(([name]) => ['Dashboard', 'Payroll', 'Payments', 'Payslips'].includes(name))
+        : sections.filter(([name]) => name === 'Dashboard')
   const currencyCode = /^[A-Z]{3}$/.test(school?.currency_code || '') ? school.currency_code : 'KES'
   const money = value => {
     try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: currencyCode, maximumFractionDigits: 0 }).format(Number(value || 0)) }
@@ -76,15 +83,21 @@ export default function HrPayrollPortal() {
       const effectiveRole = ['principal','hr_admin','finance_officer'].find(role => effectiveRoles.includes(role)) || ''
       setAccessRole(effectiveRole)
       if (!isSchoolAdmin && !effectiveRole) { setMessage('You do not have an HR portal role. Ask your school administrator to grant access.'); return }
+      const staffManagementAccess = isSchoolAdmin || ['principal', 'hr_admin'].includes(effectiveRole)
       const [staffRes, payrollRes, vacanciesRes, applicationRes] = await Promise.all([
         supabase.from('hr_employees').select('id,employment_status').eq('school_id', profile.school_id),
         supabase.from('payroll_runs').select('id,status,pay_period').eq('school_id', profile.school_id).order('pay_period', { ascending: false }).limit(12),
-        supabase.from('job_vacancies').select('id,status').eq('school_id', profile.school_id),
-        supabase.from('job_applications').select('id,status').eq('school_id', profile.school_id)
+        staffManagementAccess ? supabase.from('job_vacancies').select('id,status').eq('school_id', profile.school_id) : Promise.resolve({ data: [], error: null }),
+        staffManagementAccess ? supabase.from('job_applications').select('id,status').eq('school_id', profile.school_id) : Promise.resolve({ data: [], error: null })
       ])
       for (const result of [staffRes, payrollRes, vacanciesRes, applicationRes]) if (result.error && result.error.code !== '42P01') throw result.error
       setStats({ staff: staffRes.data?.filter(x => x.employment_status === 'active').length || 0, payroll: payrollRes.data?.length || 0, approvals: payrollRes.data?.filter(x => x.status === 'submitted').length || 0, recruitment: applicationRes.data?.length || 0 })
       if (section === 'Dashboard') setRows(payrollRes.data || [])
+      if (section === 'Staff Records') {
+        const { data, error } = await supabase.from('profiles').select('id,full_name,email').eq('school_id', profile.school_id).eq('role', 'teacher').order('full_name')
+        if (error) throw error
+        setPeople(data || [])
+      }
       if (section === 'Payslips') {
         const { data: items, error } = await supabase.from('payroll_items').select('*, payroll_runs!inner(pay_period,status), hr_employees!inner(profile_id,full_name)').eq('school_id', profile.school_id).eq('hr_employees.profile_id', profile.id).in('payroll_runs.status', ['approved','paying','paid','closed']).order('created_at', { ascending: false })
         if (error) throw error
@@ -117,14 +130,14 @@ export default function HrPayrollPortal() {
       }
       if (section === 'Security & Reports' && isSchoolAdmin) {
         const [profilesRes, grantsRes] = await Promise.all([
-          supabase.from('profiles').select('id,full_name,email,role').eq('school_id', profile.school_id).order('full_name'),
-          supabase.from('school_hr_roles').select('id,profile_id,hr_role').eq('school_id', profile.school_id)
+          supabase.from('profiles').select('id,full_name,email,role').eq('school_id', profile.school_id).eq('role', 'teacher').order('full_name'),
+          supabase.from('school_staff_role_assignments').select('id,profile_id,role_key').eq('school_id', profile.school_id)
         ])
         if (profilesRes.error) throw profilesRes.error
         if (grantsRes.error) throw grantsRes.error
         setPeople(profilesRes.data || []); setGrants(grantsRes.data || [])
       }
-      if (section === 'Security & Reports' && (isSchoolAdmin || ['principal','hr_admin'].includes(roleRows?.hr_role))) {
+      if (section === 'Security & Reports' && (isSchoolAdmin || effectiveRoles.some(role => ['principal','hr_admin'].includes(role)))) {
         const { data, error } = await supabase.from('hr_audit_events').select('created_at,actor_id,action,entity_type,entity_id,details').eq('school_id', profile.school_id).order('created_at', { ascending: false }).limit(200)
         if (error) throw error
         setAuditRows(data || [])
@@ -134,9 +147,9 @@ export default function HrPayrollPortal() {
 
   async function createEmployee(event) {
     event.preventDefault(); setBusy(true); setMessage('')
-    const { error } = await supabase.from('hr_employees').insert({ ...staffForm, hire_date: staffForm.hire_date || null, profile_id: null, school_id: profile.school_id, created_by: profile.id })
+    const { error } = await supabase.from('hr_employees').insert({ ...staffForm, staff_number: staffForm.staff_number.trim(), full_name: staffForm.full_name.trim(), job_title: staffForm.job_title.trim(), department: staffForm.department.trim() || null, email: staffForm.email.trim() || null, phone: staffForm.phone.trim() || null, hire_date: staffForm.hire_date || null, profile_id: staffForm.profile_id || null, school_id: profile.school_id, created_by: profile.id })
     setBusy(false)
-    if (error) setMessage(error.message); else { setStaffForm({ staff_number: '', full_name: '', job_title: '', department: '', email: '', phone: '', hire_date: '' }); await load() }
+    if (error) setMessage(error.message); else { setStaffForm({ staff_number: '', full_name: '', job_title: '', department: '', email: '', phone: '', hire_date: '', profile_id: '' }); await load() }
   }
 
   async function createVacancy(event) {
@@ -235,14 +248,6 @@ export default function HrPayrollPortal() {
     if (error) setMessage(error.message); else { setMessage('Payroll decision recorded with the payroll version and MFA assurance.'); await load() }
   }
 
-  async function assignHrRole(personId, role) {
-    const existing = grants.find(x => x.profile_id === personId)
-    const result = role
-      ? existing ? await supabase.from('school_hr_roles').update({ hr_role: role, assigned_by: profile.id }).eq('id', existing.id) : await supabase.from('school_hr_roles').insert({ school_id: profile.school_id, profile_id: personId, hr_role: role, assigned_by: profile.id })
-      : existing ? await supabase.from('school_hr_roles').delete().eq('id', existing.id) : { error: null }
-    if (result.error) setMessage(result.error.message); else await load()
-  }
-
   function exportCsv(name, data) {
     if (!data?.length) { setMessage('There are no records to export.'); return }
     const columns = Object.keys(data[0])
@@ -256,7 +261,7 @@ export default function HrPayrollPortal() {
   return <main className="hr-page"><style>{`.hr-page{min-height:100vh;background:var(--bg);color:var(--ink);padding:24px}.hr-shell{max-width:1400px;margin:auto}.hr-head{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:24px}.hr-head h1{margin:0;color:var(--green);font-size:2rem}.hr-head p{margin:5px 0;color:var(--muted)}.hr-layout{display:grid;grid-template-columns:230px 1fr;gap:22px}.hr-nav,.hr-card{background:var(--panel);border:1px solid var(--line);border-radius:14px}.hr-nav{padding:10px;height:max-content}.hr-nav button{width:100%;display:block;text-align:left;padding:11px;border:0;background:transparent;color:var(--ink);border-radius:8px;cursor:pointer}.hr-nav button.active{background:var(--green);color:white}.hr-main{min-width:0}.hr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:14px;margin-bottom:18px}.hr-card{padding:18px}.hr-stat small,.hr-muted{color:var(--muted)}.hr-stat strong{display:block;font-size:1.8rem;margin-top:6px}.hr-table-wrap{overflow:auto}.hr-table{width:100%;border-collapse:collapse}.hr-table td,.hr-table th{text-align:left;padding:12px;border-bottom:1px solid var(--line);white-space:nowrap}.hr-table th{color:var(--muted);font-size:.83rem}.hr-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:0 0 18px}.hr-form input,.hr-form textarea,.hr-form select{width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}.hr-form textarea{grid-column:1/-1;min-height:75px}.hr-button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:9px 13px;cursor:pointer}.hr-button.primary{background:var(--green);color:#fff;border-color:var(--green)}.hr-alert{padding:13px;background:var(--cream);border-radius:10px;margin-bottom:16px}.hr-pill{display:inline-block;border-radius:99px;padding:4px 9px;background:var(--cream);font-size:.8rem}.hr-access{display:flex;align-items:center;gap:10px}.hr-access select{padding:7px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}@media(max-width:850px){.hr-layout{grid-template-columns:1fr}.hr-nav{display:flex;overflow:auto;gap:5px}.hr-nav button{white-space:nowrap;width:auto}.hr-head{align-items:flex-start;flex-direction:column}}`}</style>
     <div className="hr-shell">
       <header className="hr-head"><div><h1>School HR & Payroll</h1><p>Centralized management portal · {title}</p>{demo && <span className="hr-pill">Read-only demo · sample data</span>}</div><button className="hr-button" onClick={() => navigate('/portal')}>← Back to school portal</button></header>
-      <div className="hr-layout"><nav className="hr-nav" aria-label="HR and payroll modules">{sections.map(([name]) => <button key={name} disabled={demo && !['Dashboard','Staff Records'].includes(name)} className={section === name ? 'active' : ''} onClick={() => { if (demo && !['Dashboard','Staff Records'].includes(name)) return; setSection(name); setMessage(demo && name !== 'Dashboard' ? 'Sample employee directory. Employee records can be managed when signed in to a connected school account.' : '') }}>{name}</button>)}</nav>
+      <div className="hr-layout"><nav className="hr-nav" aria-label="HR and payroll modules">{visibleSections.map(([name]) => <button key={name} disabled={demo && !['Dashboard','Staff Records'].includes(name)} className={section === name ? 'active' : ''} onClick={() => { if (demo && !['Dashboard','Staff Records'].includes(name)) return; setSection(name); setMessage(demo && name !== 'Dashboard' ? 'Sample employee directory. Employee records can be managed when signed in to a connected school account.' : '') }}>{name}</button>)}</nav>
         <section className="hr-main">
           {message && <div className="hr-alert" role="status">{message}</div>}
           {section === 'Dashboard' && !message && <><div className="hr-grid">{[['Active staff', stats.staff], ['Payroll runs', stats.payroll], ['Awaiting approval', stats.approvals], ['Applications', stats.recruitment]].map(([label, value]) => <article className="hr-card hr-stat" key={label}><small>{label}</small><strong>{value}</strong></article>)}</div><article className="hr-card"><h2>Recent payroll runs</h2><p className="hr-muted">{demo ? 'Sample payroll activity for preview only. No real staff or salary records are shown.' : 'Prepare salaries from effective salary records, then submit for principal approval.'}</p><div className="hr-table-wrap"><table className="hr-table"><thead><tr><th>Pay period</th><th>Status</th>{!demo && <th>Action</th>}</tr></thead><tbody>{rows.map(run => <tr key={run.id}><td>{run.pay_period}</td><td><span className="hr-pill">{run.status}</span></td>{!demo && <td>{canPreparePayroll && run.status === 'draft' && <button className="hr-button" onClick={() => submitPayroll(run)}>Submit for approval</button>}{canApprove && run.status === 'submitted' && <><button className="hr-button primary" onClick={() => approvePayroll(run, 'approved')}>Approve</button> <button className="hr-button" onClick={() => approvePayroll(run, 'rejected')}>Return</button></>}</td>}</tr>)}</tbody></table></div>{canPreparePayroll && !demo && <button className="hr-button primary" disabled={busy} onClick={preparePayroll}>＋ Prepare monthly payroll</button>}</article></>}
@@ -267,12 +272,13 @@ export default function HrPayrollPortal() {
             <input placeholder="Department" value={staffForm.department} onChange={e => setStaffForm({ ...staffForm, department: e.target.value })}/>
             <input type="email" placeholder="Email (optional)" value={staffForm.email} onChange={e => setStaffForm({ ...staffForm, email: e.target.value })}/>
             <input type="tel" placeholder="Phone (optional)" value={staffForm.phone} onChange={e => setStaffForm({ ...staffForm, phone: e.target.value })}/>
+            <select aria-label="Optional teacher portal account" value={staffForm.profile_id} onChange={e => setStaffForm({ ...staffForm, profile_id: e.target.value })}><option value="">No portal account (cleaner, security, etc.)</option>{people.filter(person => !rows.some(row => row.profile_id === person.id) || person.id === staffForm.profile_id).map(person => <option key={person.id} value={person.id}>{person.full_name || person.email}</option>)}</select>
             <label className="hr-muted">Hire date <input type="date" value={staffForm.hire_date} onChange={e => setStaffForm({ ...staffForm, hire_date: e.target.value })}/></label>
             <button className="hr-button primary" disabled={busy}>Add employee</button>
-          </form>}<div className="hr-table-wrap"><table className="hr-table"><thead><tr><th>Staff ID</th><th>Name</th><th>Job title</th><th>Department</th><th>Status</th></tr></thead><tbody>{rows.map(x => <tr key={x.id}><td>{x.staff_number}</td><td>{x.full_name}</td><td>{x.job_title}</td><td>{x.department || '?'}</td><td>{x.employment_status}</td></tr>)}{!rows.length && <tr><td className="hr-muted" colSpan="5">No employees have been added to this school yet.</td></tr>}</tbody></table></div></article>}
+          </form>}<div className="hr-table-wrap"><table className="hr-table"><thead><tr><th>Staff ID</th><th>Name</th><th>Job title</th><th>Department</th><th>Status</th></tr></thead><tbody>{rows.map(x => <tr key={x.id}><td>{x.staff_number}</td><td>{x.full_name}</td><td>{x.job_title}</td><td>{x.department || 'Unassigned'}</td><td>{x.employment_status}</td></tr>)}{!rows.length && <tr><td className="hr-muted" colSpan="5">No employees have been added to this school yet.</td></tr>}</tbody></table></div></article>}
           {section === 'Recruitment' && <article className="hr-card"><h2>Recruitment</h2>{canManageStaff && <form className="hr-form" onSubmit={createVacancy}><input required placeholder="Vacancy title" value={vacancyForm.title} onChange={e => setVacancyForm({ ...vacancyForm, title: e.target.value })}/><input placeholder="Department" value={vacancyForm.department} onChange={e => setVacancyForm({ ...vacancyForm, department: e.target.value })}/><textarea placeholder="Role description and requirements" value={vacancyForm.description} onChange={e => setVacancyForm({ ...vacancyForm, description: e.target.value })}/><button className="hr-button primary" disabled={busy}>Save draft vacancy</button></form>}<div className="hr-table-wrap"><table className="hr-table"><thead><tr><th>Position</th><th>Department</th><th>Status</th><th>Closes</th></tr></thead><tbody>{rows.map(x => <tr key={x.id}><td>{x.title}</td><td>{x.department || '—'}</td><td>{x.status}</td><td>{x.closes_at || '—'}</td></tr>)}</tbody></table></div></article>}
           {section === 'Payslips' && <article className="hr-card"><h2>My payslips & salary history</h2><p className="hr-muted">Your payroll records are only visible to your account and authorized school payroll staff.</p><div className="hr-table-wrap"><table className="hr-table"><thead><tr><th>Period</th><th>Gross</th><th>Deductions</th><th>Net</th><th>Payroll status</th></tr></thead><tbody>{rows.map(x => <tr key={x.id}><td>{x.payroll_runs?.pay_period || '—'}</td><td>{money(x.gross_pay)}</td><td>{money(x.total_deductions)}</td><td>{money(x.net_pay)}</td><td>{x.payroll_runs?.status}</td></tr>)}</tbody></table></div></article>}
-          {section === 'Security & Reports' && <><article className="hr-card"><h2>Portal access</h2><p className="hr-muted">School administrators grant HR roles. Platform super administrators do not receive payroll access by default.</p>{isSchoolAdmin ? <div className="hr-table-wrap"><table className="hr-table"><thead><tr><th>Account</th><th>School login role</th><th>HR portal role</th></tr></thead><tbody>{people.map(person => <tr key={person.id}><td>{person.full_name || person.email}</td><td>{person.role}</td><td><div className="hr-access"><select value={grants.find(x => x.profile_id === person.id)?.hr_role || ''} onChange={e => assignHrRole(person.id, e.target.value)}><option value="">No HR access</option><option value="principal">Principal</option><option value="hr_admin">HR / Administrator</option><option value="finance_officer">Finance Officer</option><option value="staff_member">Staff Member</option></select></div></td></tr>)}</tbody></table></div> : <p>Your access role: <b>{accessRole || profile?.role}</b></p>}</article><article className="hr-card"><h2>Sensitive activity log</h2><button className="hr-button" onClick={() => exportCsv('hr-audit-events', auditRows)}>Export audit CSV</button><div className="hr-table-wrap"><table className="hr-table"><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Record type</th><th>Record ID</th></tr></thead><tbody>{auditRows.map(row => <tr key={`${row.created_at}-${row.entity_id}`}><td>{new Date(row.created_at).toLocaleString()}</td><td>{row.actor_id || 'System'}</td><td>{row.action}</td><td>{row.entity_type}</td><td>{row.entity_id}</td></tr>)}</tbody></table></div></article></>}
+          {section === 'Security & Reports' && <><article className="hr-card"><h2>Staff portal access</h2><p className="hr-muted">Specialist roles are managed in one place. Employee records for cleaners, security, catering, and other non-portal staff are managed under Staff Records.</p>{isSchoolAdmin ? <><p><Link className="hr-button" to="/staff-roles">Manage staff roles & access</Link></p><div className="hr-table-wrap"><table className="hr-table"><thead><tr><th>Account</th><th>School login role</th><th>Additional responsibilities</th></tr></thead><tbody>{people.map(person => <tr key={person.id}><td>{person.full_name || person.email}</td><td>{person.role}</td><td>{grants.filter(row => row.profile_id === person.id).map(row => row.role_key.replaceAll('_', ' ')).join(', ') || 'No additional access'}</td></tr>)}</tbody></table></div></> : <p>Your access role: <b>{accessRole || profile?.role}</b></p>}</article><article className="hr-card"><h2>Sensitive activity log</h2><button className="hr-button" onClick={() => exportCsv('hr-audit-events', auditRows)}>Export audit CSV</button><div className="hr-table-wrap"><table className="hr-table"><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Record type</th><th>Record ID</th></tr></thead><tbody>{auditRows.map(row => <tr key={`${row.created_at}-${row.entity_id}`}><td>{new Date(row.created_at).toLocaleString()}</td><td>{row.actor_id || 'System'}</td><td>{row.action}</td><td>{row.entity_type}</td><td>{row.entity_id}</td></tr>)}</tbody></table></div></article></>}
           {tableBySection[section] && !['Staff Records','Recruitment'].includes(section) && <article className="hr-card"><h2>{section}</h2><p className="hr-muted">Records are restricted by school role and employee relationship.</p>
             {section === 'Salary Settings' && canManageStaff && <form className="hr-form" onSubmit={saveSalary}><select required value={salaryForm.employee_id} onChange={e => setSalaryForm({ ...salaryForm, employee_id: e.target.value })}><option value="">Select employee</option>{employees.map(e => <option key={e.id} value={e.id}>{e.full_name} · {e.staff_number}</option>)}</select><input required type="number" min="0" step="0.01" placeholder={`Basic salary (${currencyCode})`} value={salaryForm.basic_salary} onChange={e => setSalaryForm({ ...salaryForm, basic_salary: e.target.value })}/><input type="number" min="0" step="0.01" placeholder={`Monthly allowance (${currencyCode})`} value={salaryForm.allowance} onChange={e => setSalaryForm({ ...salaryForm, allowance: e.target.value })}/><input type="number" min="0" step="0.01" placeholder={`Monthly deduction (${currencyCode})`} value={salaryForm.deduction} onChange={e => setSalaryForm({ ...salaryForm, deduction: e.target.value })}/><input required type="date" value={salaryForm.effective_from} onChange={e => setSalaryForm({ ...salaryForm, effective_from: e.target.value })}/><select value={salaryForm.payment_method} onChange={e => setSalaryForm({ ...salaryForm, payment_method: e.target.value })}><option value="bank">Bank</option><option value="mobile_money">{school?.mobile_money_provider || 'Mobile money'}</option><option value="cash">Cash</option><option value="other">Other</option></select><button className="hr-button primary" disabled={busy}>Save salary structure</button></form>}
             {section === 'Contracts' && canManageStaff && <form className="hr-form" onSubmit={saveContract}><select required value={contractForm.employee_id} onChange={e => setContractForm({ ...contractForm, employee_id: e.target.value })}><option value="">Select employee</option>{employees.map(e => <option key={e.id} value={e.id}>{e.full_name} · {e.staff_number}</option>)}</select><input required placeholder="Contract type" value={contractForm.contract_type} onChange={e => setContractForm({ ...contractForm, contract_type: e.target.value })}/><input required type="date" value={contractForm.start_date} onChange={e => setContractForm({ ...contractForm, start_date: e.target.value })}/><input type="date" value={contractForm.end_date} onChange={e => setContractForm({ ...contractForm, end_date: e.target.value })}/><button className="hr-button primary" disabled={busy}>Create contract record</button></form>}
