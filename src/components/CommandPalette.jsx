@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 const actions = [
-  ['Dashboard', 'Open your dashboard', role => role === 'super_admin' ? '/super-admin' : `/${role.replace('_', '-')}`],
+  ['Dashboard', 'Open your dashboard', role => role === 'super_admin' ? '/super-admin' : role ? `/${role.replace('_', '-')}` : '/'],
   ['Record attendance', 'Open the attendance workspace', role => role === 'teacher' ? '/teacher?module=Take%20attendance' : '/school-admin?module=Attendance'],
   ['Gradebook', 'Review grades and assessment marks', () => '/gradebook'],
   ['Calendar', 'View school events and reminders', () => '/calendar'],
