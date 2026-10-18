@@ -8,7 +8,7 @@ import { accessibleBrandColor, normalizeBrandColor } from '../lib/brandColor';
 import { formatCurrency } from '../lib/formatters';
 const TeacherAttendance = lazy(() => import('./TeacherAttendance'))
 const cfg={super_admin:{groups:[['Platform',['Dashboard','Schools','School approvals','School administrators','Users','Library','Quizzes','Courses']],['Billing',['Subscriptions','Payments','Revenue reports']],['Insights',['Analytics','Audit Trail','School reports','Student statistics','Teacher statistics','Subscription reports']],['System',['Plans & settings','System announcements']]],tables:{Dashboard:'schools',Schools:'schools','School approvals':'schools','School administrators':'profiles',Users:'profiles',Subscriptions:'subscriptions',Payments:'payments','Revenue reports':'payments','School reports':'schools','Student statistics':'students','Teacher statistics':'profiles','Subscription reports':'subscriptions','Plans & settings':'subscriptions','System announcements':'announcements',Quizzes:'quizzes','Audit Trail':'audit_logs',Courses:'courses'},stats:[['Total schools','12'],['Active schools','9'],['Pending schools','2'],['Suspended schools','1'],['Total students','4,826'],['Total teachers','318'],['Active subscriptions','8'],['Expiring soon','2']]},school_admin:{groups:[['Admin features',['Dashboard','Analytics','Audit Trail']],['People',['Students','Student guardians','Teachers','Portal accounts']],['Academics',['Classes','Subjects','Timetable','Class performance','Assignments','Exams','Results & report cards','Library','Quizzes','Courses']],['Operations',['Attendance','Behavior Log','Fees','Payments','Announcements','Messages','Events']]],tables:{Dashboard:'students',Students:'students','Student guardians':'student_guardians',Teachers:'profiles','Portal accounts':'profiles',Classes:'classes',Subjects:'subjects',Timetable:'timetable','Class performance':'results',Assignments:'assignments',Exams:'exams','Results & report cards':'results',Attendance:'attendance','Behavior Log':'behavior_records',Fees:'fees',Payments:'payments',Announcements:'announcements',Messages:'messages',Events:'events',Settings:'schools',Quizzes:'quizzes','Audit Trail':'audit_logs',Courses:'courses'},stats:[['Total students','1,248'],['Total teachers','86'],['Total classes','34'],['Total subjects','18'],["Attendance entries today",'94.2%'],['Pending assignments','12'],['Upcoming exams','6'],['Pending payments','KSh 185k']]},teacher:{groups:[['Teaching',['Dashboard','My classes','My subjects','Timetable','Gradebook','Lesson Plans','Students','Class performance','Library','Quizzes','Course Builder']],['Work',['Take attendance','Behavior Log','Assignments','Submissions','Exams','Results','Meetings']],['Communication',['Messages','Announcements','Broadcast']]],tables:{Dashboard:'classes','My classes':'classes','My subjects':'subjects',Timetable:'timetable',Gradebook:'results','Lesson Plans':'lesson_plans',Students:'students','Class performance':'results','Take attendance':'attendance','Behavior Log':'behavior_records',Assignments:'assignments',Submissions:'submissions',Exams:'exams',Results:'results',Meetings:'meetings',Messages:'messages',Announcements:'announcements',Quizzes:'quizzes',Broadcast:'broadcasts','Course Builder':'courses'},stats:[['Classes taught','--'],['Subjects taught','--'],['Students in my classes','--'],["Attendance entries today",'3'],['Assignments created','--'],['Upcoming exams','2'],['Messages for me','--']]},student:{groups:[['My learning',['Dashboard','My profile','My subjects','Lesson Plans','Timetable','Assignments','My submissions','Exams','My results','Library','Quizzes','My Courses']],['My school',['Attendance','Fees & payments','Announcements','Messages','Events']]],tables:{Dashboard:'assignments','My profile':'profiles','My subjects':'subjects','Lesson Plans':'lesson_plans',Timetable:'timetable',Assignments:'assignments','My submissions':'submissions',Exams:'exams','My results':'results',Attendance:'attendance','Fees & payments':'payments',Announcements:'announcements',Messages:'messages',Events:'events',Quizzes:'quizzes','My Courses':'courses'},stats:[['Attendance','85%'],['Results posted','B+'],['Pending assignments','3'],['Upcoming exams','2'],['Pending payments','KSh 15k']]},parent:{groups:[['Family',['Dashboard','My children','Child subjects','Child attendance','Child assignments','Child exams','Child results','Child fees','Meetings','Library']],['Communication',['Announcements','Messages','Events']]],tables:{Dashboard:'students','My children':'students','Child subjects':'subjects','Child attendance':'attendance','Child assignments':'assignments','Child exams':'exams','Child results':'results','Child fees':'payments',Meetings:'meetings',Announcements:'announcements',Messages:'messages',Events:'events'},stats:[['Children','--'],['Attendance entries','--'],['Results posted','B'],['Class assignments','--'],['Pending payments','KSh 15k']]}}
-export default function RoleDashboard({role}){const {logout,profile,school,setProfile,demo}=useAuth(),{lang, setLang, t}=useLanguage(),navigate=useNavigate(),settings=cfg[role],first=settings.groups[0][1][0],[searchParams,setSearchParams]=useSearchParams(),[selected,setSelected]=useState(()=>searchParams.get("module")||first),[mobileOpen,setMobileOpen]=useState(false),[liveStats,setLiveStats]=useState(()=>settings.stats.map(([label])=>[label,'—'])),[statsState,setStatsState]=useState(demo?'demo':'loading'),table=settings.tables[selected],canCreate=['school_admin','teacher','super_admin'].includes(role),[studentId,setStudentId]=useState(null),[parentChildren,setParentChildren]=useState([]),[notifOpen, setNotifOpen]=useState(false),[sidebarCollapsed, setSidebarCollapsed]=useState(false);
+export default function RoleDashboard({role}){const {logout,profile,school,setProfile,demo}=useAuth(),{lang, setLang, t}=useLanguage(),navigate=useNavigate(),settings=cfg[role],first=settings.groups[0][1][0],[searchParams,setSearchParams]=useSearchParams(),[selected,setSelected]=useState(()=>searchParams.get("module")||first),[mobileOpen,setMobileOpen]=useState(false),[liveStats,setLiveStats]=useState(()=>settings.stats.map(([label])=>[label,'—'])),[statsState,setStatsState]=useState(demo?'demo':'loading'),table=settings.tables[selected],canCreate=['school_admin','teacher','super_admin'].includes(role),[studentId,setStudentId]=useState(null),[parentChildren,setParentChildren]=useState([]),[notifOpen, setNotifOpen]=useState(false),[sidebarCollapsed,setSidebarCollapsed]=useState(false);
 
   useEffect(() => {
     const closeMenu = event => { if (event.key === 'Escape') setMobileOpen(false) };
@@ -26,7 +26,7 @@ export default function RoleDashboard({role}){const {logout,profile,school,setPr
     'My children': '\u263a', 'Child subjects': '\u25a4', 'Child attendance': '\u2713', 'Child assignments': '\u25a4',
     'Child exams': '\u25a4', 'Child results': '\u25a5', 'Child fees': '$', 'My classes': '\u25a6',
     'My subjects': '\u25a4', 'Take attendance': '\u2713', Submissions: '\u25a4', 'My profile': '\u263a',
-    'My submissions': '\u25a4', 'My results': '\u25a5', 'Fees & payments': '$', 'Lesson Plans': '\u25a4'
+    'My submissions': '\u25a4', 'My results': '\u25a5', 'Fees & payments': '$', 'Lesson Plans': '\u25a4', 'Staff portals': '\u25c8', 'Staff portal hub': '\u25c8', 'HR & Payroll': '\u25a4'
   };
 
   const displayLabel = value => {
@@ -35,6 +35,11 @@ export default function RoleDashboard({role}){const {logout,profile,school,setPr
     return translated === key ? value : translated
   }
   const bottomNavLabel = item => item === 'School approvals' ? 'Approvals' : item === 'School administrators' ? 'School admins' : displayLabel(item)
+  const navGroups = role === 'teacher'
+    ? settings.groups.map(([group, items]) => group === 'Work' ? [group, [...items, 'Staff portals']] : [group, items])
+    : role === 'school_admin'
+      ? settings.groups.map(([group, items]) => group === 'Operations' ? [group, [...items, 'HR & Payroll', 'Staff portal hub']] : [group, items])
+      : settings.groups
   const mainNavItems = role === 'super_admin' ? ['Dashboard', 'Schools', 'School approvals'] : settings.groups[0][1].slice(0, 3)
   const settingsDestination = role === 'school_admin' ? '/settings' : role === 'super_admin' ? '/security' : '/profile';
 
@@ -77,13 +82,18 @@ export default function RoleDashboard({role}){const {logout,profile,school,setPr
           values = [students, teachers, classes, subjects, attendanceRate, assignments, exams, money(pendingPayments)];
         } else if (role === 'teacher') {
           const today = new Intl.DateTimeFormat('en-CA', { timeZone: school?.timezone || 'Africa/Nairobi' }).format(new Date());
-          const { data: assignedClasses, error: classError } = await supabase.from('classes').select('id').eq('school_id', profile.school_id).eq('teacher_id', profile.id);
-          if (classError) throw classError;
-          const classIds = (assignedClasses || []).map(item => item.id);
+          const [classResult, subjectResult] = await Promise.all([
+            supabase.from('classes').select('id').eq('school_id', profile.school_id).eq('teacher_id', profile.id),
+            supabase.from('teacher_subject_assignments').select('class_id,subject_id').eq('school_id', profile.school_id).eq('teacher_id', profile.id)
+          ]);
+          if (classResult.error || subjectResult.error) throw classResult.error || subjectResult.error;
+          const assignedRows = subjectResult.data || [];
+          const classIds = [...new Set([...(classResult.data || []).map(item => item.id), ...assignedRows.map(item => item.class_id)])];
+          const subjectsTaught = new Set(assignedRows.map(item => item.subject_id).filter(Boolean)).size;
           const [assignments, attendance, subjects, students, exams, messages] = await Promise.all([
             count('assignments', [...schoolFilter, ['created_by', 'eq', profile.id]]),
             count('attendance', [...schoolFilter, ['recorded_by', 'eq', profile.id], ['attendance_date', 'eq', today]]),
-            count('class_subjects', [['teacher_id', 'eq', profile.id]]),
+            Promise.resolve(subjectsTaught),
             classIds.length ? count('students', [...schoolFilter, ['class_id', 'in', classIds]]) : Promise.resolve(0),
             count('exams', [...schoolFilter, ['exam_date', 'gte', today]]),
             count('messages', [...schoolFilter, ['recipient_id', 'eq', profile.id]])
@@ -181,7 +191,7 @@ export default function RoleDashboard({role}){const {logout,profile,school,setPr
 
   const openPage = path => { setMobileOpen(false); navigate(path); };
   const choose=item=>{
-    const destinations = {'Messages':'/chat','Portal accounts':'/school-accounts','Events':'/calendar','Timetable':'/timetable','Gradebook':'/gradebook','Meetings':'/meetings','Broadcast':'/broadcast','Library':'/library','Lesson Plans':'/lessons','Course Builder':'/course-builder','My Courses':'/course-builder','Courses':'/course-builder','Quizzes':'/quizzes','Settings':'/settings','Security':'/security','My Profile':'/profile','Behavior Log':'/behavior-log','Audit Trail':'/audit-trail'};
+    const destinations = {'Messages':'/chat','Portal accounts':'/school-accounts','Events':'/calendar','Timetable':'/timetable','Gradebook':'/gradebook','Meetings':'/meetings','Broadcast':'/broadcast','Library':'/library','Lesson Plans':'/lessons','Course Builder':'/course-builder','My Courses':'/course-builder','Courses':'/course-builder','Quizzes':'/quizzes','Settings':'/settings','Security':'/security','My Profile':'/profile','Behavior Log':'/behavior-log','Audit Trail':'/audit-trail','Staff portals':'/staff-portals','Staff portal hub':'/staff-portals','HR & Payroll':'/hr-payroll'};
     if (destinations[item]) return openPage(destinations[item]);
     setSelected(item);setSearchParams(item==="Dashboard"?{}:{module:item});setMobileOpen(false)
   };
@@ -199,7 +209,7 @@ return <div className="portal" style={{'--school-accent':accent,'--school-accent
       <p className="portal-label">{portalTitle}</p>
     </div>
     <div className="side-content">
-      {settings.groups.map(([group,items])=><div className="nav-group" key={group}><small>{displayLabel(group)}</small>{items.map(item=><button className={item===selected?'active':''} onClick={()=>choose(item)} key={item} title={sidebarCollapsed ? displayLabel(item) : ''}>
+      {navGroups.map(([group,items])=><div className="nav-group" key={group}><small>{displayLabel(group)}</small>{items.map(item=><button className={item===selected?'active':''} onClick={()=>choose(item)} key={item} title={sidebarCollapsed ? displayLabel(item) : ''}>
         <i className="nav-icon">{icons[item] || '\u25a6'}</i> <span>{displayLabel(item)}</span>
       </button>)}</div>)}
     </div>
@@ -309,7 +319,8 @@ function DashboardIntro({ role, name, schoolName, timezone }) {
 function DashboardQuickActions({ role, studentId, onSelect }) {
   const actions = {
     super_admin: [['Schools', 'Manage school accounts', '▦', 'select'], ['School approvals', 'Review new applications', '✓', 'select'], ['Analytics', 'Explore platform trends', '↗', 'select'], ['Security', 'Review access settings', '◇', '/security']],
-    school_admin: [['Students', 'Open learner records', '♧', 'select'], ['Teachers', 'Manage staff accounts', '♙', 'select'], ['Timetable', 'View or edit the schedule', '◷', '/timetable'], ['School accounts', 'Manage school access', '＋', '/school-accounts']],
+    school_admin: [['Students', 'Open learner records', '♧', 'select'], ['Teachers', 'Manage staff accounts', '♙', 'select'], ['Timetable', 'View or edit the schedule', '◷', '/timetable'], ['School accounts', 'Manage school access', '＋', '/school-accounts'], ['HR & Payroll', 'Open staff and payroll management', '▤', '/hr-payroll'], ['Staff portal hub', 'Open specialist school services', '◈', '/staff-portals']],
+    teacher: [['My classes', 'Open your assigned classes', '▦', 'select'], ['Take attendance', 'Record today’s attendance', '✓', 'select'], ['Assignments', 'Create work and review submissions', '✎', '/teacher-assignments'], ['Staff portals', 'Open specialist tools assigned to you', '◈', '/staff-portals']],
     student: [['Timetable', 'See your lessons', '◷', '/timetable'], ['Assignments', 'Open classwork', '✎', 'select'], ['Quizzes', 'Practice and revise', '◇', '/quizzes'], ['My results', 'View your report card', '▤', studentId ? `/report-card/${studentId}` : 'select']],
     parent: [['Timetable', 'See your learner’s schedule', '◷', '/timetable'], ['Meetings', 'Connect with school staff', '▣', '/meetings'], ['Messages', 'Open school messages', '✉', '/chat'], ['Child fees', 'Review payments and balances', '¤', 'select']]
   }
@@ -346,11 +357,20 @@ function DashboardHighlights({ role, profile, timezone }) {
             studentIds = (children || []).map(row => row.id)
             classIds = [...new Set((children || []).map(row => row.class_id).filter(Boolean))]
           }
+        } else if (role === 'teacher') {
+          const [classes, subjectClasses] = await Promise.all([
+            supabase.from('classes').select('id').eq('school_id', schoolId).eq('teacher_id', profile.id),
+            supabase.from('teacher_subject_assignments').select('class_id').eq('school_id', schoolId).eq('teacher_id', profile.id)
+          ])
+          if (classes.error || subjectClasses.error) throw classes.error || subjectClasses.error
+          classIds = [...new Set([...(classes.data || []).map(row => row.id), ...(subjectClasses.data || []).map(row => row.class_id)])]
         }
         let assignmentRequest = supabase.from('assignments').select('id,title,due_date').eq('school_id', schoolId).gte('due_date', today).order('due_date', { ascending: true }).limit(4)
+        if (role === 'teacher') assignmentRequest = assignmentRequest.eq('created_by', profile.id)
         if ((role === 'student' || role === 'parent') && classIds.length) assignmentRequest = assignmentRequest.in('class_id', classIds)
         if ((role === 'student' || role === 'parent') && !classIds.length) assignmentRequest = null
         let attendanceRequest = supabase.from('attendance').select('status').eq('school_id', schoolId).eq('attendance_date', today)
+        if (role === 'teacher') attendanceRequest = attendanceRequest.eq('recorded_by', profile.id)
         if (role === 'student' && studentIds.length) attendanceRequest = attendanceRequest.eq('student_id', studentIds[0])
         if (role === 'parent' && studentIds.length) attendanceRequest = attendanceRequest.in('student_id', studentIds)
         if ((role === 'student' || role === 'parent') && !studentIds.length) attendanceRequest = null

@@ -64,6 +64,11 @@ export default function Login(){
     navigate(roleRoute(role), { replace: true })
   }
 
+  function openHrDemo(){
+    loginDemo('school_admin')
+    navigate('/hr-payroll', { replace: true })
+  }
+
   if(authLoading) return <div className="portal-loading"><div className="spinner"/><p>Loading your account...</p></div>;
   if(session&&profile) return <Navigate to={roleRoute(profile.role)} replace/>;
 
@@ -144,6 +149,8 @@ export default function Login(){
             <div className="demo-grid">
               {Object.entries(roleLabels).map(([role,label])=><button type="button" key={role} onClick={()=>openDemo(role)}>{label}<span>Open demo →</span></button>)}
             </div>
+            <button type="button" className="demo-hr-preview" onClick={openHrDemo}><span><b>HR & Payroll preview</b><small>View sample staff and payroll activity</small></span><strong>Open preview →</strong></button>
+            <p className="demo-specialist-note"><b>HR, finance, admissions, and other staff portals</b> are specialist permissions managed by the school administrator. Use the preview above for sample HR activity, or ask your administrator to assign a staff portal to your account.</p>
           </section>
 
           <nav className="login-portals" aria-label="Choose a role portal"><span>Choose a portal</span><div>{[['school_admin','School Admin'],['teacher','Teacher'],['student','Student'],['parent','Parent']].map(([role,label])=><Link className={requestedRole===role?'active':''} to={'/login/'+role} key={role}>{label}</Link>)}</div></nav>

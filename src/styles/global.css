@@ -342,6 +342,13 @@ input:focus, select:focus, textarea:focus {
 .login-demo-access .demo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
 .login-demo-access .demo-grid button { display: grid; gap: 4px; padding: 12px; font-size: .82rem; }
 .login-demo-access .demo-grid button span { color: var(--green); font-size: .72rem; font-weight: 600; }
+.login-demo-access .demo-specialist-note { margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: .76rem; line-height: 1.5; }
+.login-demo-access .demo-specialist-note b { color: var(--ink); }
+.login-demo-access .demo-hr-preview { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; padding: 12px; border: 1px solid color-mix(in srgb, var(--green) 28%, var(--line)); border-radius: 12px; background: color-mix(in srgb, var(--green) 5%, white); color: var(--ink); text-align: left; cursor: pointer; }
+.login-demo-access .demo-hr-preview span { display: grid; gap: 3px; }
+.login-demo-access .demo-hr-preview b { font-size: .82rem; }
+.login-demo-access .demo-hr-preview small { color: var(--muted); font-size: .73rem; }
+.login-demo-access .demo-hr-preview strong { flex: 0 0 auto; color: var(--green); font-size: .76rem; }
 
 @media (max-width: 1024px) {
   .auth-container { grid-template-columns: 1fr; max-width: 550px; }
