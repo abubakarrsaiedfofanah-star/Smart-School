@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import VideoGuide from '../components/VideoGuide'
 import toast from 'react-hot-toast'
 
 const steps = ['School', 'Level', 'Accounts', 'Admin', 'Review', 'Plan', 'Done']
@@ -74,7 +73,6 @@ export default function RegisterSchool(){
   const [saving,setSaving]=useState(false);
   const [showPassword,setShowPassword]=useState(false);
   const [showConfirmPassword,setShowConfirmPassword]=useState(false);
-  const [showVideoGuide,setShowVideoGuide]=useState(false);
   const [showHelpModal,setShowHelpModal]=useState(false);
   const [helpTopic,setHelpTopic]=useState('');
 
@@ -338,11 +336,7 @@ export default function RegisterSchool(){
         {step < 6 && <>
           <div className="register-top-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <p className="step-indicator" style={{ margin: 0, fontWeight: 700, fontSize: '0.8rem', color: 'var(--green)', letterSpacing: '1px' }}>STEP {step + 1} OF 6 <span aria-hidden="true">·</span> {steps[step]}</p>
-            <button type="button" className="button outline-button small" onClick={()=>setShowVideoGuide(!showVideoGuide)} style={{ padding: '6px 14px', fontSize: '0.8rem', background: 'var(--cream)', borderRadius: '8px', border: '1px solid var(--line)', cursor: 'pointer', fontWeight: 600 }}>
-              {showVideoGuide ? 'Hide video guide' : 'Watch setup guide'}
-            </button>
           </div>
-          {showVideoGuide && <div style={{ marginBottom: '20px' }}><VideoGuide /></div>}
           <div className="progress-bar-wrapper" role="progressbar" aria-label="School registration progress" aria-valuemin="1" aria-valuemax="6" aria-valuenow={step + 1} style={{ height: '6px', background: 'var(--line)', borderRadius: '3px', marginBottom: '30px', overflow: 'hidden' }}>
             <div className="progress" style={{ height: '100%', background: 'var(--green)', width: `${((step + 1) / 6) * 100}%`, transition: 'width 0.3s' }} />
           </div>

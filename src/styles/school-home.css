@@ -4,6 +4,7 @@
 .school-announcement a { color: #cfeaff; font-weight: 800; white-space: nowrap; }
 .school-nav { position: sticky; top: 0; z-index: 30; min-height: 70px; height: auto; overflow: visible; justify-content: space-between; padding: 0 max(24px, calc((100vw - 1220px)/2)); background: #07111df2 !important; }
 .school-nav .brand { flex: 0 0 auto; }
+.school-nav > .brand { margin-right: 0; }
 .school-nav .brand.school-logo { display: inline-flex; flex: 0 0 auto; align-items: center; }
 .school-nav .school-logo { padding: 3px 8px; border-radius: 6px; background: #fff; }
 .school-nav .platform-logo { display: block; width: clamp(170px, 16vw, 210px); height: 46px; object-fit: contain; }
@@ -11,8 +12,8 @@
 .school-footer .footer-platform-logo img { display: block; width: 100%; height: auto; }
 .school-nav .school-brand-mark { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: #d7edff; color: #123c63 !important; font-size: 1.25rem; font-weight: 900; line-height: 1; }
 .school-nav .school-brand-name { color: #fff; }
-.school-nav nav { display: flex; align-items: center; justify-content: flex-end; flex: 1; gap: clamp(12px, 2vw, 26px); padding-left: 24px; white-space: nowrap; }
-.school-nav nav a { color: #f4f8fb; font-size: .68rem; }
+.school-nav nav { display: flex; align-items: center; justify-content: flex-end; flex: 1; flex-wrap: nowrap; gap: clamp(10px, 1.55vw, 22px); min-width: 0; padding-left: 20px; white-space: nowrap; }
+.school-nav nav a { padding: 10px 0; color: #f4f8fb; font-size: .68rem; }
 .school-nav nav a.button { padding: 12px 14px; min-height: 40px; text-transform: none; }
 .school-nav .public-menu { display: none; }
 .school-hero { min-height: 615px; padding: 115px 46px 95px; }
