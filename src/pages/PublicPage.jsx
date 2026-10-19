@@ -43,10 +43,12 @@ export default function PublicPage({ page }) {
           <Link className="button outline-hero" to="/login">{page === 'portals' ? 'Sign in to your school' : 'Sign in'}</Link>
         </div>
       </section>
-      {page === 'portals' && <aside className="school-portal-access-note" role="note">
-        <b>Your school admin sets up your account.</b>
-        <span>Sign in to see only your assigned school workspace.</span>
-      </aside>}
+      {page === 'portals' && <section className="school-directory-section" id="schools" aria-labelledby="school-directory-title">
+        <div className="school-directory-heading"><div><p className="eyebrow">NEW TO SMARTSCHOOL?</p><h2 id="school-directory-title">Find your school</h2><p>Choose your school to request a student, parent, teacher, HR or Finance account. Your school administrator must approve the request.</p></div><Link to="/register">Register a school</Link></div>
+        {schoolsLoading ? <p className="school-directory-empty">Loading schools…</p>
+          : schools.length ? <div className="school-directory-grid">{schools.map(school => <article className="school-directory-card" key={school.id}><h3>{school.name}</h3><p>Request an account in this school</p><Link className="school-public-portal-link" to={`/join-school/${encodeURIComponent(school.slug)}`}>Choose this school <b aria-hidden="true">→</b></Link></article>)}</div>
+            : <p className="school-directory-empty">No approved schools are listed yet. A school appears here after it has been approved and activated.</p>}
+      </section>}
       <section className={`school-public-grid ${page === 'portals' ? 'school-public-portal-grid' : ''} ${page === 'pricing' ? 'school-pricing-grid' : ''}`} aria-label={page === 'portals' ? 'Choose a role portal' : `${title} information`}>
         {items.map(([label, text], index) => (
           <article className="school-public-card" key={label}>
@@ -61,12 +63,6 @@ export default function PublicPage({ page }) {
           </article>
         ))}
       </section>
-      {page === 'portals' && <section className="school-directory-section" id="schools" aria-labelledby="school-directory-title">
-        <div className="school-directory-heading"><div><p className="eyebrow">SCHOOL MEMBERS</p><h2 id="school-directory-title">Find your school</h2><p>Select your school to request a learner, parent, teacher, HR or Finance account. The school administrator reviews each request.</p></div><Link to="/register">Register a school</Link></div>
-        {schoolsLoading ? <p className="school-directory-empty">Loading schools…</p>
-          : schools.length ? <div className="school-directory-grid">{schools.map(school => <article className="school-directory-card" key={school.id}><h3>{school.name}</h3><p>School portal and account registration</p><Link className="school-public-portal-link" to={`/join-school/${encodeURIComponent(school.slug)}`}>Choose this school <b aria-hidden="true">→</b></Link></article>)}</div>
-            : <p className="school-directory-empty">No approved schools are listed yet. School names appear here after platform approval.</p>}
-      </section>}
     </main>
     <PublicFooter />
   </div>
