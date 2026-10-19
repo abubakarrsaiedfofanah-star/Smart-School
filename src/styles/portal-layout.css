@@ -1,4 +1,4 @@
-.portal-frame { --portal-side-width: 272px; display: flex; min-height: 100vh; background: #f4f7fb; color: #142b40; }
+.portal-frame { --portal-side-width: 272px; display: flex; min-height: 100vh; min-height: 100dvh; background: var(--bg, #f4f7fb); color: var(--ink, #142b40); }
 .portal-sidebar { position: sticky; top: 0; z-index: 50; display: flex; flex: 0 0 var(--portal-side-width); flex-direction: column; width: var(--portal-side-width); height: 100vh; height: 100dvh; padding: 21px 13px 14px; overflow: hidden; background: color-mix(in srgb, var(--school-accent) 34%, #10263b); color: #e7f0f8; transition: width .22s ease, flex-basis .22s ease, transform .22s ease, background .2s ease; }
 .portal-frame-collapsed { --portal-side-width: 78px; }
 .portal-sidebar-brand { display: flex; align-items: center; justify-content: space-between; min-height: 46px; padding: 0 8px 13px; border-bottom: 1px solid #ffffff1a; }
@@ -20,8 +20,8 @@
 .portal-settings-link:hover { background: #ffffff14; color: #fff; }
 .portal-settings-link + .portal-logout { margin-top: 8px; }
 .portal-workspace { display: flex; min-width: 0; max-width: 100%; flex: 1; flex-direction: column; overflow-x: clip; }
-.portal-topbar { position: sticky; top: 0; z-index: 30; display: flex; min-height: 72px; align-items: center; gap: 15px; padding: 10px clamp(20px, 3vw, 42px); border-bottom: 2px solid color-mix(in srgb, var(--school-accent) 28%, #dfe7ee); background: #ffffffed; backdrop-filter: blur(14px); }
-.portal-collapse-button, .portal-menu-button { display: grid; width: 31px; height: 31px; flex: 0 0 31px; place-items: center; border: 1px solid #dce5ec; border-radius: 6px; background: #fff; color: #526b80; font-size: 14px; cursor: pointer; }.portal-menu-button { display: none; }
+.portal-topbar { position: sticky; top: 0; z-index: 30; display: flex; min-height: 72px; align-items: center; gap: 15px; padding: 10px clamp(20px, 3vw, 42px); border-bottom: 1px solid color-mix(in srgb, var(--school-accent) 24%, var(--line, #dfe7ee)); background: color-mix(in srgb, var(--panel, #fff) 94%, transparent); backdrop-filter: blur(14px); }
+.portal-collapse-button, .portal-menu-button { display: grid; width: 38px; height: 38px; flex: 0 0 38px; place-items: center; border: 1px solid var(--line, #dce5ec); border-radius: 9px; background: var(--panel, #fff); color: var(--muted, #526b80); font-size: 15px; cursor: pointer; }.portal-menu-button { display: none; }
 .portal-breadcrumb { display: flex; min-width: 0; align-items: center; gap: 10px; color: #7b8da0; font-size: 10px; }.portal-breadcrumb span { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.portal-breadcrumb b { color: #becbd5; font-weight: 500; }.portal-breadcrumb strong { overflow: hidden; color: #193a56; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .portal-topbar-user { display: flex; align-items: center; gap: 9px; margin-left: auto; }.portal-user-avatar { display: grid; width: 34px; height: 34px; place-items: center; border: 2px solid #fff; border-radius: 50%; background: color-mix(in srgb, var(--school-accent) 17%, #eef5fb); color: var(--school-accent); font-size: 12px; font-weight: 800; }.portal-topbar-user > span:last-child { display: grid; gap: 3px; }.portal-topbar-user b { color: #2f465a; font-size: 10px; }.portal-topbar-user small { color: #8192a0; font-size: 8px; text-transform: capitalize; }
 .portal-page-content { min-width: 0; flex: 1; padding: clamp(16px, 2.5vw, 32px); }.portal-page-content > * { max-width: 1500px; margin-right: auto; margin-left: auto; }
@@ -48,6 +48,53 @@
 @media (max-width: 520px) {
   .portal-topbar { min-height: 61px; gap: 9px; padding: 8px 12px; }.portal-breadcrumb { font-size: 9px; }.portal-breadcrumb span { max-width: 110px; }.portal-topbar-user > span:last-child { display: none; }.portal-user-avatar { width: 31px; height: 31px; }.portal-page-content { padding: 13px 10px 25px; }
   .portal-page-content input, .portal-page-content select, .portal-page-content textarea { font-size: 16px; }
+}
+
+/* Keep shared pages and embedded dashboards within the available viewport. */
+.portal-frame,
+.portal-workspace,
+.portal-page-content,
+.portal-page-content > .portal,
+.portal-page-content > .portal > .portal-main,
+.portal-page-content > .portal > .portal-main > .content-area {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+.portal-frame { width: 100%; min-height: 100vh; min-height: 100dvh; overflow-x: clip; }
+.portal-page-content { width: 100%; padding: clamp(16px, 2.5vw, 32px); }
+.portal-page-content .stats-grid,
+.portal-page-content .dashboard-quick-actions {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 235px), 1fr));
+}
+.portal-page-content .stat-card,
+.portal-page-content .dashboard-action-card,
+.portal-page-content .highlight-card { min-width: 0; }
+.portal-page-content .dashboard-action-card > span { overflow-wrap: anywhere; }
+.portal-page-content .stats-grid { gap: 14px; }
+.portal-page-content .stat-card { min-height: 118px; padding: 20px; border-radius: 18px; }
+.portal-page-content .stat-card p { margin: 0 0 8px; font-size: .72rem; }
+.portal-page-content .stat-card strong { margin: 0; font-size: clamp(1.35rem, 2vw, 1.8rem); overflow-wrap: anywhere; }
+.portal-page-content .dashboard-quick-actions { gap: 12px; }
+.portal-page-content .dashboard-action-card { min-height: 88px; padding: 14px; border-radius: 14px; }
+
+@media (max-width: 900px) {
+  .portal-page-content { padding: 20px; }
+  .portal-page-content .stats-grid,
+  .portal-page-content .dashboard-quick-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .portal-page-content { padding: 14px 12px max(28px, env(safe-area-inset-bottom)); }
+  .portal-page-content .stats-grid,
+  .portal-page-content .dashboard-quick-actions { grid-template-columns: minmax(0, 1fr); }
+  .portal-page-content .stat-card { display: flex; min-height: 76px; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; }
+  .portal-page-content .stat-card p { margin: 0; }
+  .portal-page-content .stat-card strong { font-size: 1.2rem; }
+  .portal-page-content .dashboard-action-card { min-height: 74px; }
+  .portal-topbar { gap: 9px; padding-inline: 12px; }
+  .portal-breadcrumb { min-width: 0; flex: 1; gap: 6px; }
+  .portal-breadcrumb span { max-width: 34vw; }
+  .portal-topbar-user { flex: 0 0 auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {

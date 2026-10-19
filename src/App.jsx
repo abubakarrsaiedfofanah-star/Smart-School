@@ -138,7 +138,7 @@ export default function App(){
         <Route path="/staff-portals" element={<ProtectedRoute roles={['school_admin', 'teacher']}><Navigate to="/portal" replace /></ProtectedRoute>} />
         <Route path="/portal" element={<Guard/>}/>
         {roleRoutes.map(([path,role])=>(
-          <Route key={path} path={'/'+path} element={<ProtectedRoute roles={[role]} shell={role === 'staff'}>{role === 'teacher' ? <TeacherWorkspace /> : role === 'staff' ? <StaffWorkspace /> : <RoleDashboard role={role} embedded />}</ProtectedRoute>}/>
+          <Route key={path} path={'/'+path} element={<ProtectedRoute roles={[role]}>{role === 'teacher' ? <TeacherWorkspace /> : role === 'staff' ? <StaffWorkspace /> : <RoleDashboard role={role} embedded />}</ProtectedRoute>}/>
         ))}
         <Route path="*" element={<Navigate to="/" replace/>}/>
       </Routes>
