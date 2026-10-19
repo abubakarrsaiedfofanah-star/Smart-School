@@ -1,4 +1,7 @@
 project_id = "smartschool"
 
+[functions.register-school]
+verify_jwt = false
+
 [functions.deliver-notifications]
 verify_jwt = false

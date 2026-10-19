@@ -5,7 +5,7 @@ React + Vite school-management platform, ready for Supabase and Vercel.
 1. Copy `.env.example` to `.env` and add your Supabase URL and anon key.
 2. Run `npm install`, then `npm run dev`.
 3. Apply `supabase/schema.sql`, then the historical numbered SQL migrations in order (`002` through `068`) in the Supabase SQL Editor.
-4. Set `SMARTSCHOOL_ALLOWED_ORIGINS` as a Supabase Edge Function secret to a comma-separated list of exact app origins, then deploy registration and invitation functions with `supabase functions deploy register-school` and `supabase functions deploy manage-school-user`. Include local origins only for development. These functions use the service-role secret only server-side; never add that secret to frontend environment variables.
+4. Set `SMARTSCHOOL_ALLOWED_ORIGINS` as a Supabase Edge Function secret to a comma-separated list of exact app origins (for production, include `https://smart-school-blue.vercel.app`), then deploy `register-school` and `manage-school-user` with `supabase functions deploy register-school` and `supabase functions deploy manage-school-user`. The public `register-school` endpoint has JWT verification disabled in `supabase/config.toml`; it uses the origin allowlist and database rate limit instead. These functions use the service-role secret only server-side; never add that secret to frontend environment variables. Setting Vercel's Supabase URL and anon key does not deploy these functions.
 5. Enable email confirmation and configure the Auth email templates and redirect URL for your local and production app URLs.
 6. Add the frontend environment variables in Vercel and deploy.
 
