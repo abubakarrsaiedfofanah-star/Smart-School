@@ -72,7 +72,7 @@ export default function StaffWorkspace() {
 
   return <main className="staff-workspace">
     <header className="staff-workspace-hero">
-      <div><p className="staff-workspace-eyebrow">{school?.name || 'SCHOOL'} · STAFF SELF-SERVICE</p><h1>Hello, {profile?.full_name?.split(' ')[0] || 'there'}</h1><p>Your personal staff workspace for payslips, leave requests, and employment details.</p></div>
+      <div><p className="staff-workspace-eyebrow">{school?.name || 'SCHOOL'} · STAFF SELF-SERVICE</p><h1>Hello, {profile?.full_name?.split(' ')[0] || 'there'}</h1></div>
       <div className="staff-workspace-badge"><span>{(profile?.full_name || 'S').trim().charAt(0).toUpperCase()}</span><div><b>{profile?.full_name || 'Staff member'}</b><small>{employee?.job_title || 'Staff account'}</small></div></div>
     </header>
 
@@ -82,8 +82,8 @@ export default function StaffWorkspace() {
       {section === 'Overview' && <>
         <section className="staff-workspace-stats" aria-label="Personal summary">
           <article><span>Latest approved payslip</span><strong>{latestPayslip ? money(latestPayslip.net_pay, latestPayslip.currency_code) : '—'}</strong><small>{latestPayslip?.pay_period ? `${new Date(`${latestPayslip.pay_period}T00:00:00`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })} · ${payoutLabel(latestPayslip)}` : 'No payslip available yet'}</small></article>
-          <article><span>Leave requests awaiting review</span><strong>{pendingLeave}</strong><small>Updates appear here after HR review</small></article>
-          <article><span>Employment status</span><strong className="staff-status-value">{statusLabel(employee?.employment_status || 'unlinked')}</strong><small>{employee?.staff_number ? `Staff number ${employee.staff_number}` : 'Contact your school office if this looks wrong'}</small></article>
+          <article><span>Leave requests awaiting review</span><strong>{pendingLeave}</strong></article>
+          <article><span>Employment status</span><strong className="staff-status-value">{statusLabel(employee?.employment_status || 'unlinked')}</strong>{employee?.staff_number && <small>Staff number {employee.staff_number}</small>}</article>
         </section>
         <section className="staff-workspace-panel"><div className="staff-workspace-panel-head"><div><p className="staff-workspace-eyebrow">PAY HISTORY</p><h2>Recent payslips</h2></div><button type="button" onClick={() => selectSection('My payslips')}>View all</button></div>
           {payslips.length ? <div className="staff-payslip-list">{payslips.slice(0, 3).map(row => <article key={row.id}><div><b>{new Date(`${row.pay_period}T00:00:00`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</b><small>Net pay · {row.currency_code || currency} · {payoutLabel(row)}{row.payout_reference ? ` · Ref ${row.payout_reference}` : ''}</small></div><strong>{money(row.net_pay, row.currency_code)}</strong></article>)}</div> : <p className="staff-workspace-empty">Approved payslips will appear here once payroll is released.</p>}

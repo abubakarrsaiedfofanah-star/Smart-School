@@ -9,7 +9,7 @@ const navigation = {
     ['Platform', [['Dashboard', '\u2302', ''], ['Schools', '\u25a3', '?module=Schools'], ['Approvals', '\u2713', '?module=School approvals'], ['Subscriptions', '\u25c7', '?module=Subscriptions'], ['Payments', '$', '?module=Payments'], ['Analytics', '\u25ce', '?module=Analytics'], ['Audit trail', '\u2261', '?module=Audit Trail']]]
   ],
   school_admin: [
-    ['School', [['Dashboard', '\u2302', ''], ['Students', '\u25c9', '?module=Students'], ['Teachers', '\u25c8', '?module=Teachers'], ['Teacher subject assignments', '\u25a4', '/teacher-loads'], ['Portal accounts', '\u2637', '/school-accounts'], ['Staff roles & access', '\u2659', '/staff-roles'], ['Classes', '\u25a6', '?module=Classes'], ['Attendance', '\u2713', '?module=Attendance'], ['Staff attendance', '\u2713', '/staff-attendance'], ['Fees & payments', '$', '?module=Fees'], ['Finance portal', '$', '/finance-operations'], ['Inventory & assets', '\u25a7', '/inventory'], ['HR & Payroll portal', '\u25a4', '/hr-payroll'], ['Admissions', '\u2197', '/admissions'], ['School settings', '\u2699', '/settings'], ['Plan & billing', '\u25c7', '/subscription']]],
+    ['School', [['Dashboard', '\u2302', ''], ['Students', '\u25c9', '?module=Students'], ['Teachers', '\u25c8', '?module=Teachers'], ['Teacher subject assignments', '\u25a4', '/teacher-loads'], ['Portal accounts', '\u2637', '/school-accounts'], ['Staff roles & access', '\u2659', '/staff-roles'], ['Classes', '\u25a6', '?module=Classes'], ['Attendance', '\u2713', '?module=Attendance'], ['Staff attendance', '\u2713', '/staff-attendance'], ['Fees & payments', '$', '?module=Fees'], ['Inventory & assets', '\u25a7', '/inventory'], ['Admissions', '\u2197', '/admissions'], ['School settings', '\u2699', '/settings'], ['Plan & billing', '\u25c7', '/subscription']]],
     ['Learning', [['Timetable', '\u25f7', '/timetable'], ['Assignments', '\u25a4', '?module=Assignments'], ['Gradebook', '\u25a5', '/gradebook'], ['Library', '\u25a7', '/library'], ['Quizzes', '\u270e', '/quizzes']]],
     ['Community', [['Calendar & events', '\u25a6', '/calendar'], ['Messages', '\u2709', '/chat'], ['Announcements', '\u25c9', '?module=Announcements'], ['Audit trail', '\u2261', '/audit-trail']]]
   ],
@@ -41,17 +41,6 @@ export default function PortalLayout({ children, portal = null }) {
   const closeMenuRef = useRef(null)
   const role = profile?.role || 'unknown'
   const assignedRoles = staffRoles || []
-  const academicLeadership = assignedRoles.some(item => ['principal', 'deputy_principal', 'head_of_department'].includes(item))
-  const specialistOnly = role === 'teacher'
-    && assignedRoles.some(item => ['hr_admin', 'finance_officer', 'registrar', 'librarian', 'inventory_manager', 'nurse', 'counsellor', 'transport_manager'].includes(item))
-    && !academicLeadership
-  const specialistItems = []
-  if (assignedRoles.some(item => ['principal', 'deputy_principal', 'hr_admin'].includes(item))) specialistItems.push(['Staff attendance', '\u2713', '/staff-attendance'])
-  if (assignedRoles.some(item => ['principal', 'hr_admin'].includes(item))) specialistItems.push(['HR & Payroll portal', '\u25a4', '/hr-payroll'])
-  if (assignedRoles.some(item => ['principal', 'finance_officer'].includes(item))) specialistItems.push(['Finance portal', '$', '/finance-operations'])
-  if (assignedRoles.some(item => ['principal', 'deputy_principal', 'registrar'].includes(item))) specialistItems.push(['Admissions', '\u2197', '/admissions'])
-  if (assignedRoles.some(item => ['principal', 'deputy_principal', 'inventory_manager', 'librarian'].includes(item))) specialistItems.push(['Inventory & assets', '\u25a7', '/inventory'])
-  if (assignedRoles.some(item => ['principal', 'librarian'].includes(item))) specialistItems.push(['Library', '\u25a8', '/library'])
   const specialistNavigation = {
     hr: [['Human resources', [
       ['Dashboard', '\u2302', '?module=Dashboard'], ['Staff records', '\u263a', '?module=Staff Records'],
@@ -66,16 +55,14 @@ export default function PortalLayout({ children, portal = null }) {
       ['Expenses', '\u25a7', '?module=Expenses'], ['Payment reconciliation', '\u2713', '?module=Reconciliation']
     ]]]
   }
-  const hrOnly = role === 'teacher' && assignedRoles.includes('hr_admin') && !assignedRoles.includes('principal')
-  const financePayoutAccess = role === 'school_admin' || assignedRoles.some(item => ['principal', 'finance_officer'].includes(item))
+  const hrOnly = ['teacher', 'staff'].includes(role) && assignedRoles.includes('hr_admin')
+  const financePayoutAccess = ['teacher', 'staff'].includes(role) && assignedRoles.includes('finance_officer')
   const groups = portal ? specialistNavigation[portal].map(([group, items]) => [group, portal === 'finance' && financePayoutAccess
       ? [...items, ['Salary payments', '$', '?module=Salary payments']]
       : portal === 'hr' && hrOnly
       ? items.filter(([label]) => ['Dashboard', 'Staff records', 'Recruitment', 'Contracts', 'Attendance & leave', 'Salary settings', 'Payroll', 'Approvals', 'Payslips', 'Security & reports'].includes(label))
-      : items]) : role === 'teacher' && specialistOnly
-    ? [['Assigned workspaces', specialistItems.length ? specialistItems : [['My details', '\u263a', '/profile']]]]
-    : role === 'teacher'
-    ? [...navigation.teacher, ...(specialistItems.length ? [['Assigned workspaces', specialistItems]] : [])]
+      : items]) : role === 'teacher'
+    ? navigation.teacher
     : navigation[role] || []
   const home = portal === 'hr' ? '/hr-payroll' : portal === 'finance' ? '/finance-operations' : roleRoute(role)
   const accent = normalizeBrandColor(school?.primary_color)
@@ -134,7 +121,7 @@ export default function PortalLayout({ children, portal = null }) {
       <div className="portal-sidebar-brand"><Link to={home} className="tenant-brand">{role !== 'super_admin' && school?.logo_url ? <img src={school.logo_url} alt={`${school.name} logo`} /> : <span className="tenant-mark">{role === 'super_admin' ? 'S' : (school?.name || 'S').slice(0, 1).toUpperCase()}</span>}<span className="tenant-brand-copy"><b>{role === 'super_admin' ? 'SmartSchool' : (school?.name || 'Your school')}</b><small>{portal ? (portal === 'hr' ? 'HR & PAYROLL PORTAL' : 'FINANCE PORTAL') : role === 'staff' ? 'STAFF SELF-SERVICE' : role === 'super_admin' ? 'PLATFORM ADMIN' : 'SCHOOL PORTAL'}</small></span></Link><button ref={closeMenuRef} className="portal-sidebar-close" onClick={() => setMobileOpen(false)} aria-label="Close menu">{'\u00d7'}</button></div>
       <div className="portal-tenant-chip"><span className="tenant-status-dot" />{portal ? `${portal === 'hr' ? 'HR & Payroll' : 'Finance'} workspace` : role === 'staff' ? 'Personal staff workspace' : role === 'super_admin' ? 'Platform workspace' : (school?.school_level || 'School workspace')}</div>
       <nav className="portal-navigation" aria-label="Portal navigation">{groups.map(([group, items]) => <section className="portal-nav-group" key={group}><h2>{group}</h2>{items.map(([label, icon, suffix]) => <button type="button" key={label} className={activeFor(suffix) ? 'active' : ''} aria-current={activeFor(suffix) ? 'page' : undefined} title={collapsed ? label : undefined} onClick={() => navigate(destination(suffix))}><span className="portal-nav-icon" aria-hidden="true">{icon}</span><span className="portal-nav-label">{label}</span>{activeFor(suffix) && <i className="portal-nav-active-mark" />}</button>)}</section>)}</nav>
-      {role !== 'super_admin' && !portal && <Link className="portal-upgrade-link" to="/subscription"><span>{'\u2197'}</span><span><b>School account</b><small>View plan and billing</small></span></Link>}
+      {role === 'school_admin' && !portal && <Link className="portal-upgrade-link" to="/subscription"><span>{'\u2197'}</span><span><b>School account</b><small>Plan and billing</small></span></Link>}
       <button className="portal-settings-link" type="button" onClick={() => navigate(role === 'school_admin' ? '/settings' : role === 'super_admin' ? '/security' : '/profile')}><span className="portal-nav-icon" aria-hidden="true">⚙</span><span className="portal-nav-label">Settings</span></button>
       <button className="portal-logout" onClick={logout}><span className="portal-nav-icon">{'\u21aa'}</span><span className="portal-nav-label">Sign out</span></button>
     </aside>

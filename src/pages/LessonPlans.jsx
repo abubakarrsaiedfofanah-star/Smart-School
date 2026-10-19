@@ -55,23 +55,39 @@ export default function LessonPlans() {
   async function handleSubmit(e) {
     e.preventDefault();
     if (!supabase || !formData.assignment_id) return;
+    const selected = assignedSubjects.find(s => s.assignment_id === formData.assignment_id);
+    if (!selected) return toast.error('Choose an assigned class and subject.');
     setUploading(true);
+    let uploadedPath = null;
     try {
-      const selected = assignedSubjects.find(s => s.assignment_id === formData.assignment_id);
       let filePath = null;
       if (file) {
-        const fileName = `${Date.now()}-${file.name}`;
-        const { error: uploadError } = await supabase.storage.from('resources').upload(`lessons/${fileName}`, file);
+        if (file.size > 50 * 1024 * 1024) throw new Error('Files must be 50 MB or smaller.');
+        const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+        filePath = `lessons/${profile.school_id}/${selected.class_id}/${selected.id}/${profile.id}/${fileName}`;
+        const { error: uploadError } = await supabase.storage.from('resources').upload(filePath, file);
         if (uploadError) throw uploadError;
-        const { data: { publicUrl } } = supabase.storage.from('resources').getPublicUrl(`lessons/${fileName}`);
-        filePath = publicUrl;
+        uploadedPath = filePath;
       }
       const { error } = await supabase.from('lesson_plans').insert({ title: formData.title, content: formData.content, subject_id: selected.id, class_id: selected.class_id, school_id: profile.school_id, teacher_id: profile.id, file_path: filePath });
       if (error) throw error;
       toast.success('Lesson published!');
       fetchPlans();
       setFormData({ title: '', assignment_id: '', content: '' }); setFile(null);
-    } catch (err) { toast.error(err.message); } finally { setUploading(false); }
+    } catch (err) {
+      if (uploadedPath) await supabase.storage.from('resources').remove([uploadedPath]);
+      toast.error(err.message || 'Could not publish the lesson.');
+    } finally { setUploading(false); }
+  }
+
+  async function downloadPlan(plan) {
+    const expectedPrefix = `lessons/${profile?.school_id}/`;
+    if (!supabase || !plan.file_path?.startsWith(expectedPrefix)) return toast.error('Lesson file is unavailable.');
+    try {
+      const { data, error } = await supabase.storage.from('resources').createSignedUrl(plan.file_path, 900);
+      if (error) throw error;
+      window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+    } catch { toast.error('Could not open the lesson file.'); }
   }
 
   if (loading && plans.length === 0) return <div className="portal-loading"><div className="spinner"></div><p>Opening Institutional Repository...</p></div>;
@@ -106,7 +122,7 @@ export default function LessonPlans() {
               {assignedSubjects.map(s => <option key={s.assignment_id} value={s.assignment_id}>{s.name} ({s.class_name})</option>)}
             </select>
             <textarea className="glass-textarea" style={{ minHeight: '120px' }} value={formData.content} onChange={e => setFormData({ ...formData, content: e.target.value })} placeholder="Write notes here..." required />
-            <input type="file" className="glass-input" onChange={e => setFile(e.target.files[0])} />
+            <input type="file" accept="application/pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,image/jpeg,image/png" className="glass-input" onChange={e => setFile(e.target.files[0] || null)} />
             <button className="button blue-button full tactile-btn" disabled={uploading}>{uploading ? 'Processing...' : 'Publish to Class 🚀'}</button>
           </form>
         )}
@@ -115,7 +131,7 @@ export default function LessonPlans() {
           {plans.length === 0 ? <p style={{textAlign:'center', color:'var(--muted)', padding:'40px'}}>No records found for the selected subject.</p> : plans.map(p => (
             <div key={p.id} className="plan-card glass-card neumorph-flat page-transition">
               <div style={{display:'flex', gap:'10px', marginBottom:'12px'}}><span className="badge" style={{background:'var(--cream)', color:'var(--green)', fontSize:'0.65rem'}}>{p.subjects?.name}</span><span className="badge" style={{background:'#fef3c7', color:'#92400e', fontSize:'0.65rem'}}>{p.classes?.name}</span></div>
-              {p.file_path && <button className="mini outline tactile-btn" style={{position:'absolute', top:'20px', right:'20px'}} onClick={() => window.open(p.file_path, '_blank')}>📥 Download</button>}
+              {p.file_path && <button className="mini outline tactile-btn" style={{position:'absolute', top:'20px', right:'20px'}} onClick={() => void downloadPlan(p)}>Download</button>}
               <h3>{p.title}</h3>
               <p style={{color:'var(--muted)', lineHeigh:'1.6'}}>{p.content}</p>
             </div>

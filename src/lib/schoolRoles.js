@@ -27,6 +27,12 @@ export const ROLE_PERMISSIONS = {
 }
 
 export function hasSchoolPermission(baseRole, staffRoles = [], permission) {
+  const isolatedPortalRole = permission === 'school.hr.portal.view' ? 'hr_admin'
+    : permission === 'school.finance.portal.view' ? 'finance_officer' : null
+  if (isolatedPortalRole) {
+    const otherPortalRole = isolatedPortalRole === 'hr_admin' ? 'finance_officer' : 'hr_admin'
+    return ['teacher', 'staff'].includes(baseRole) && staffRoles.includes(isolatedPortalRole) && !staffRoles.includes(otherPortalRole)
+  }
   if (baseRole === 'school_admin') return true
   return staffRoles.some(role => (ROLE_PERMISSIONS[role] || []).includes(permission))
 }

@@ -76,7 +76,7 @@ export default function Library() {
     try {
       const { data, error } = await supabase.storage.from('resources').createSignedUrl(res.file_path, 900);
       if (error) throw error;
-      window.open(data.signedUrl, '_blank');
+      window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
       toast.success('Download ready!', { id: toastId });
     } catch (err) { toast.error('Verification failed', { id: toastId }); }
   };

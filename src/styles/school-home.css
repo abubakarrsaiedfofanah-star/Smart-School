@@ -168,6 +168,10 @@
 .school-public-card p { margin: 0 0 18px; color: #62768a; font-size: .86rem; line-height: 1.65; }
 .school-public-card a { margin-top: auto; color: #35516b; font-size: .82rem; font-weight: 750; }
 .school-public-card a b { margin-left: 5px; }
+.school-pricing-grid .school-public-card { min-height: 235px; }
+.school-pricing-grid .school-public-card .school-public-portal-link { display: inline-flex; min-height: 42px; align-items: center; gap: 7px; padding: 0 13px; border: 1px solid #d2dfeb; border-radius: 8px; color: #164f87; text-decoration: none; }
+.school-pricing-grid .school-public-card .school-public-portal-link:hover { background: #1e67b9; border-color: #1e67b9; color: #fff; }
+.school-pricing-grid .school-public-card .school-public-portal-link:focus-visible { outline: 3px solid #78b7ff; outline-offset: 3px; }
 .school-home main { background: var(--page-surface); }
 .school-home main > section,
 .school-home .school-day-section,
@@ -404,6 +408,7 @@
 @media (max-width: 600px) {
   .school-portal-access-note { margin: -14px 0 18px; padding: 14px; }
   .school-public-portal-grid .school-public-card { min-height: 195px; padding: 22px; }
+  .school-pricing-grid .school-public-card { min-height: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .school-public-portal-grid .school-public-card,

@@ -14,28 +14,14 @@ const portalPermissions = {
 export default function ProtectedRoute({ roles, permission, children, shell = true, portal = null }) {
   const { session, profile, school, staffRoles, loading, logout } = useAuth()
   const location = useLocation()
-  const academicLeadership = ['principal', 'deputy_principal', 'head_of_department']
-  const specialistOnly = profile?.role === 'teacher'
-    && staffRoles.some(role => ['hr_admin', 'finance_officer', 'registrar', 'librarian', 'inventory_manager', 'nurse', 'counsellor', 'transport_manager'].includes(role))
-    && !staffRoles.some(role => academicLeadership.includes(role))
-  const specialistHome = staffRoles.includes('hr_admin') ? '/hr-payroll'
-    : staffRoles.includes('finance_officer') ? '/finance-operations'
-    : staffRoles.includes('registrar') ? '/admissions'
-    : staffRoles.includes('inventory_manager') ? '/inventory'
-    : staffRoles.includes('librarian') ? '/library'
-    : '/profile'
-  const specialistRouteRoles = {
-    '/staff-attendance': ['principal', 'deputy_principal', 'hr_admin'],
-    '/hr-payroll': ['principal', 'hr_admin'],
-    '/finance-operations': ['principal', 'finance_officer'],
-    '/admissions': ['principal', 'deputy_principal', 'registrar'],
-    '/inventory': ['principal', 'deputy_principal', 'inventory_manager', 'librarian'],
-    '/library': ['principal', 'librarian']
-  }
-  const allowedSpecialistRoute = ['/profile', '/security'].includes(location.pathname)
-    || (specialistRouteRoles[location.pathname] || []).some(role => staffRoles.includes(role))
-  const teachingToolPath = ['/teacher', '/gradebook', '/teacher-assignments', '/meetings', '/behavior-log', '/timetable', '/quizzes', '/lessons', '/course-builder'].includes(location.pathname)
-    || location.pathname.startsWith('/review/') || location.pathname.startsWith('/course/') || location.pathname.startsWith('/certificate/')
+  const assignedStaffPortal = profile?.role === 'staff' && staffRoles.includes('hr_admin') !== staffRoles.includes('finance_officer')
+    ? staffRoles.includes('hr_admin') ? 'hr' : 'finance' : null
+  const staffSpecialistOnly = Boolean(assignedStaffPortal)
+  const specialistHome = assignedStaffPortal === 'hr' ? '/hr-payroll'
+    : '/finance-operations'
+  const allowedStaffPortalRoute = ['/profile', '/security'].includes(location.pathname)
+    || (assignedStaffPortal === 'hr' && ['/hr-payroll', '/staff-attendance'].includes(location.pathname))
+    || (assignedStaffPortal === 'finance' && location.pathname === '/finance-operations')
   const [mfaState, setMfaState] = useState('checking')
   const [mfaPolicy, setMfaPolicy] = useState({ checked: false, required: false })
 
@@ -61,9 +47,9 @@ export default function ProtectedRoute({ roles, permission, children, shell = tr
     const roleNames = { super_admin: 'Platform administrator', school_admin: 'School administrator', teacher: 'Teacher', staff: 'Staff member', student: 'Student', parent: 'Parent' }
     return <main className="portal-loading"><section><p className="eyebrow">PORTAL ACCESS</p><h1>This portal belongs to another account</h1><p>You are signed in as {roleNames[profile?.role] || 'an account without a portal role'}. Sign out, then use the account assigned to this portal.</p><Link className="button blue-button" to={profile?.role ? roleRoute(profile.role) : '/login'}>Return to your portal</Link><button className="outline-button" onClick={logout}>Sign out and switch account</button></section></main>
   }
-  if (specialistOnly && !allowedSpecialistRoute) return <Navigate to={specialistHome} replace />
-  if (specialistOnly && teachingToolPath) return <Navigate to={specialistHome} replace />
+  if (staffSpecialistOnly && !allowedStaffPortalRoute) return <Navigate to={specialistHome} replace />
   const requiredPermission = portalPermissions[portal] || permission
+    || (profile?.role === 'staff' && location.pathname === '/library' ? 'school.library.manage' : null)
   if (portal && !portalPermissions[portal]) return <main className="portal-loading"><section><p className="eyebrow">PORTAL ACCESS</p><h1>This portal is not configured</h1><p>Ask your school administrator to verify this portal route.</p><Link className="button blue-button" to={roleRoute(profile?.role || '')}>Return to your portal</Link></section></main>
   if (requiredPermission && profile?.role !== 'super_admin' && !hasSchoolPermission(profile?.role, staffRoles, requiredPermission)) return <main className="portal-loading"><section><p className="eyebrow">PORTAL ACCESS</p><h1>This specialist portal is not assigned to your account</h1><p>Ask your school administrator to grant the required role before opening this workspace.</p><Link className="button blue-button" to={roleRoute(profile?.role || '')}>Return to your portal</Link></section></main>
   if (profile?.role !== 'super_admin' && !profile?.school_id) return <main className="portal-loading"><section><p className="eyebrow">SCHOOL WORKSPACE ACCESS</p><h1>School access is not assigned</h1><p>This account is not linked to a school workspace. Ask your school administrator to invite you, or sign out and use the correct account.</p><button className="outline-button" onClick={logout}>Sign out</button></section></main>
@@ -151,7 +137,7 @@ function MfaGate({ onVerified, required }) {
   if (state === 'checking') return <div className="portal-loading" role="status">Checking account verification…</div>
   return <main className="portal-loading"><form onSubmit={verify} style={{ width: 'min(420px, calc(100% - 32px))', padding: 24, background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 14 }}>
     <h1>{state === 'enroll' ? 'Set up authenticator verification' : 'Verify it’s you'}</h1>
-    <p>{state === 'error' ? 'Your account needs additional verification before continuing.' : state === 'enroll' ? 'Scan this QR code in an authenticator app, then enter its current six digit code.' : state === 'challenge' ? 'Enter the current six digit code from your authenticator app.' : 'Administrator and finance accounts must enable an authenticator before opening the school workspace.'}</p>
+    <p>{state === 'error' ? 'Your account needs verification to continue.' : state === 'enroll' ? 'Scan with an authenticator app, then enter its six digit code.' : state === 'challenge' ? 'Enter your six digit authenticator code.' : 'Set up an authenticator to continue.'}</p>
     {state === 'enroll' && setup?.totp && <><img src={setup.totp.qr_code} alt="Authenticator setup QR code" style={{ width: 220, maxWidth: '100%', padding: 8, background: 'white', borderRadius: 8 }} /><p style={{ overflowWrap: 'anywhere' }}><b>Manual setup key:</b> {setup.totp.secret}</p><label htmlFor="route-enroll-code">Authenticator code</label><input id="route-enroll-code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={event => setCode(event.target.value)} required /></>}
     {state === 'challenge' && <><label htmlFor="route-mfa-code">Authenticator code</label><input id="route-mfa-code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={event => setCode(event.target.value)} required /></>}
     {error && <p role="alert">{error}</p>}

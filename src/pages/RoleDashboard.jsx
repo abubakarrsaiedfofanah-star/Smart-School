@@ -283,7 +283,7 @@ return <div className={`portal${embedded ? ' portal-embedded' : ''}`} style={{'-
               </select>
             </div>
           )}
-          {statsState === 'demo' && <div className="dashboard-data-note" role="status">Demo workspace · figures shown are sample data.</div>}
+          {statsState === 'demo' && <div className="dashboard-data-note" role="status">Demo data</div>}
           {statsState === 'error' && <div className="dashboard-data-note dashboard-data-note-error" role="status">Dashboard figures could not load. Refresh the page or check your connection.</div>}
           <DashboardIntro role={role} name={profile?.full_name} schoolName={school?.name} timezone={school?.timezone || 'Africa/Nairobi'} />
           <section className={`stats-grid ${statsState === 'loading' ? 'stats-loading' : ''}`} aria-label="Dashboard overview" aria-busy={statsState === 'loading'}>
@@ -319,16 +319,9 @@ function DashboardIntro({ role, name, schoolName, timezone }) {
     super_admin: 'Platform overview', school_admin: 'School overview',
     student: 'Your learning at a glance', parent: 'Your family’s school update'
   }
-  const descriptions = {
-    super_admin: 'Keep track of schools, subscriptions, and platform health.',
-    school_admin: 'Review today’s school activity and jump into common tasks.',
-    student: 'See what is coming up and get to your learning tools quickly.',
-    parent: 'Follow your learner’s progress, school updates, and upcoming work.',
-    teacher: 'Your classes, attendance, and assignments are ready when you are.'
-  }
   const date = new Intl.DateTimeFormat(undefined, { weekday: 'long', day: 'numeric', month: 'long', timeZone: timezone }).format(new Date())
   return <section className={`dashboard-intro dashboard-intro-${role}`}>
-    <div><p className="eyebrow">{role === 'teacher' ? 'TEACHER WORKSPACE' : schoolName || (role === 'super_admin' ? 'SMARTSCHOOL PLATFORM' : 'SCHOOL PORTAL')}</p><h2>{role === 'super_admin' ? titles[role] : role === 'teacher' ? `Your teaching day, ${firstName}` : `Good day, ${firstName}`}</h2><p>{descriptions[role] || 'Your school workspace, all in one place.'}</p></div>
+    <div><p className="eyebrow">{role === 'teacher' ? 'TEACHER WORKSPACE' : schoolName || (role === 'super_admin' ? 'SMARTSCHOOL PLATFORM' : 'SCHOOL PORTAL')}</p><h2>{role === 'super_admin' ? titles[role] : role === 'teacher' ? `Your teaching day, ${firstName}` : `Good day, ${firstName}`}</h2></div>
     <div className="dashboard-intro-date"><span aria-hidden="true">◷</span><div><small>TODAY</small><b>{date}</b></div></div>
   </section>
 }
@@ -342,7 +335,7 @@ function DashboardQuickActions({ role, studentId, onSelect }) {
     parent: [['Timetable', 'See your learner’s schedule', '◷', '/timetable'], ['Meetings', 'Connect with school staff', '▣', '/meetings'], ['Messages', 'Open school messages', '✉', '/chat'], ['Child fees', 'Review payments and balances', '¤', 'select']]
   }
   return <section className="dashboard-actions-section"><div className="dashboard-section-heading"><div><p className="eyebrow">{role === 'teacher' ? 'YOUR CLASSROOM' : 'SHORTCUTS'}</p><h2>{role === 'teacher' ? 'Teaching tools' : 'Quick actions'}</h2></div></div><div className={`dashboard-quick-actions ${role === 'teacher' ? 'teacher-actions' : ''}`}>
-    {(actions[role] || []).map(([title, description, icon, target]) => target === 'select' ? <button type="button" className="dashboard-action-card" key={title} onClick={() => onSelect(title)}><i>{icon}</i><span><b>{title}</b><small>{description}</small></span><em aria-hidden="true">↗</em></button> : <Link className="dashboard-action-card" key={title} to={target}><i>{icon}</i><span><b>{title}</b><small>{description}</small></span><em aria-hidden="true">↗</em></Link>)}
+    {(actions[role] || []).map(([title, , icon, target]) => target === 'select' ? <button type="button" className="dashboard-action-card" key={title} onClick={() => onSelect(title)}><i>{icon}</i><span><b>{title}</b></span><em aria-hidden="true">↗</em></button> : <Link className="dashboard-action-card" key={title} to={target}><i>{icon}</i><span><b>{title}</b></span><em aria-hidden="true">↗</em></Link>)}
   </div></section>
 }
 
@@ -422,6 +415,6 @@ function DashboardHighlights({ role, profile, timezone }) {
         {assignments.map(row => <div className="highlight-row" key={`assignment-${row.id}`}><i>A</i><span><small>Due {formatDate(row.due_date)}</small>{row.title}</span><time>Work</time></div>)}
       </> : <p className="dashboard-empty-state">There are no recent notices or upcoming class assignments.</p>}
     </div>
-    <div className="panel pulse-card glass-card neumorph-flat"><p className="eyebrow blue-eyebrow">ATTENDANCE TODAY</p><h2>{role === 'parent' ? 'Learner attendance' : role === 'student' ? 'Your attendance' : 'Attendance activity'}</h2><div className="pulse-ring">{loading ? '…' : pulse}</div><p>{pulse === '—' ? 'No attendance records have been entered today.' : 'Present or late, among the attendance records visible to your account.'}</p></div>
+    <div className="panel pulse-card glass-card neumorph-flat"><p className="eyebrow blue-eyebrow">ATTENDANCE TODAY</p><h2>{role === 'parent' ? 'Learner attendance' : role === 'student' ? 'Your attendance' : 'Attendance activity'}</h2><div className="pulse-ring">{loading ? '…' : pulse}</div><p>{pulse === '—' ? 'No attendance today.' : 'Present or late today.'}</p></div>
   </section>
 }

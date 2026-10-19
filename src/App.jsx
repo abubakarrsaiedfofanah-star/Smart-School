@@ -115,10 +115,10 @@ export default function App(){
         <Route path="/review/:assignmentId" element={<ProtectedRoute roles={['teacher', 'school_admin']}><TeacherReview /></ProtectedRoute>} />
         <Route path="/calendar" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><SchoolCalendar /></ProtectedRoute>} />
         <Route path="/timetable" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><Timetable /></ProtectedRoute>} />
-        <Route path="/library" element={<ProtectedRoute roles={['school_admin', 'teacher', 'student', 'parent']}><Library /></ProtectedRoute>} />
-        <Route path="/inventory" element={<ProtectedRoute roles={['school_admin', 'teacher']} permission="school.inventory.view"><Inventory /></ProtectedRoute>} />
-        <Route path="/staff-attendance" element={<ProtectedRoute roles={['school_admin', 'teacher']} permission="school.staff_attendance.manage"><StaffAttendance /></ProtectedRoute>} />
-        <Route path="/finance-operations" element={<ProtectedRoute roles={['school_admin', 'teacher']} permission="school.finance.portal.view" portal="finance"><FinanceOperations portalMode /></ProtectedRoute>} />
+        <Route path="/library" element={<ProtectedRoute roles={['school_admin', 'teacher', 'student', 'parent', 'staff']}><Library /></ProtectedRoute>} />
+        <Route path="/inventory" element={<ProtectedRoute roles={['school_admin', 'staff']} permission="school.inventory.view"><Inventory /></ProtectedRoute>} />
+        <Route path="/staff-attendance" element={<ProtectedRoute roles={['school_admin', 'staff']} permission="school.staff_attendance.manage"><StaffAttendance /></ProtectedRoute>} />
+        <Route path="/finance-operations" element={<ProtectedRoute roles={['teacher', 'staff']} permission="school.finance.portal.view" portal="finance"><FinanceOperations portalMode /></ProtectedRoute>} />
         <Route path="/quizzes" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student']}><QuizPortal /></ProtectedRoute>} />
         <Route path="/audit-trail" element={<ProtectedRoute roles={['super_admin', 'school_admin']}><AuditTrail /></ProtectedRoute>} />
         <Route path="/security" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><SecuritySettings /></ProtectedRoute>} />
@@ -128,14 +128,14 @@ export default function App(){
         <Route path="/subscription" element={<ProtectedRoute roles={['school_admin']}><SchoolSubscription /></ProtectedRoute>} />
         <Route path="/school-accounts" element={<ProtectedRoute roles={['school_admin']}><SchoolAccounts /></ProtectedRoute>} />
         <Route path="/staff-roles" element={<ProtectedRoute roles={['school_admin']}><SchoolStaffRoles /></ProtectedRoute>} />
-        <Route path="/hr-payroll" element={<ProtectedRoute roles={['school_admin', 'teacher']} permission="school.hr.portal.view" portal="hr"><HrPayrollPortal portalMode /></ProtectedRoute>} />
+        <Route path="/hr-payroll" element={<ProtectedRoute roles={['teacher', 'staff']} permission="school.hr.portal.view" portal="hr"><HrPayrollPortal portalMode /></ProtectedRoute>} />
         <Route path="/course-builder" element={<ProtectedRoute roles={['school_admin', 'teacher']}><CourseBuilder /></ProtectedRoute>} />
         <Route path="/course/:courseId" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student']}><CourseView /></ProtectedRoute>} />
         <Route path="/certificate/:courseId" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student']}><CertificateGenerator /></ProtectedRoute>} />
         <Route path="/apply" element={<AdmissionsPortal />} />
         <Route path="/apply/:schoolSlug" element={<AdmissionsPortal />} />
-        <Route path="/admissions" element={<ProtectedRoute roles={['school_admin', 'teacher']} permission="school.admissions.manage"><AdmissionsManager /></ProtectedRoute>} />
-        <Route path="/staff-portals" element={<ProtectedRoute roles={['school_admin', 'teacher']}><Navigate to="/portal" replace /></ProtectedRoute>} />
+        <Route path="/admissions" element={<ProtectedRoute roles={['school_admin', 'staff']} permission="school.admissions.manage"><AdmissionsManager /></ProtectedRoute>} />
+        <Route path="/staff-portals" element={<ProtectedRoute roles={['school_admin', 'teacher', 'staff']}><Navigate to="/portal" replace /></ProtectedRoute>} />
         <Route path="/portal" element={<Guard/>}/>
         {roleRoutes.map(([path,role])=>(
           <Route key={path} path={'/'+path} element={<ProtectedRoute roles={[role]}>{role === 'teacher' ? <TeacherWorkspace /> : role === 'staff' ? <StaffWorkspace /> : <RoleDashboard role={role} embedded />}</ProtectedRoute>}/>

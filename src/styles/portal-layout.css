@@ -4,7 +4,7 @@
 .portal-sidebar-brand { display: flex; align-items: center; justify-content: space-between; min-height: 46px; padding: 0 8px 13px; border-bottom: 1px solid #ffffff1a; }
 .tenant-brand { display: flex; min-width: 0; align-items: center; gap: 10px; color: #fff; }
 .tenant-mark, .tenant-brand img { display: grid; width: 38px; height: 38px; flex: 0 0 38px; place-items: center; overflow: hidden; border: 1px solid #ffffff23; border-radius: 11px; background: #ffffff15; color: #fff; font-size: 17px; font-weight: 800; object-fit: contain; }
-.tenant-brand-copy { display: flex; min-width: 0; flex-direction: column; gap: 4px; }.tenant-brand-copy b { max-width: 165px; overflow: hidden; color: #fff; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }.tenant-brand-copy small { color: #a3b5c6; font-size: 8px; font-weight: 800; letter-spacing: .1em; }
+.tenant-brand-copy { display: flex; min-width: 0; flex-direction: column; gap: 4px; }.tenant-brand-copy b { max-width: 165px; overflow: hidden; color: #fff; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }.tenant-brand-copy small { color: #a3b5c6; font-size: 9px; font-weight: 800; letter-spacing: .1em; }
 .portal-sidebar-close { display: none; border: 0; background: transparent; color: #fff; font-size: 25px; cursor: pointer; }
 .portal-tenant-chip { display: flex; align-items: center; gap: 7px; min-height: 34px; margin: 12px 6px 10px; padding: 0 9px; border: 1px solid #ffffff1c; border-radius: 6px; color: #c4d1dd; font-size: 9px; }
 .tenant-status-dot { width: 6px; height: 6px; flex: 0 0 6px; border-radius: 50%; background: #9bdc88; box-shadow: 0 0 0 3px #9bdc8825; }
@@ -106,7 +106,9 @@
 .portal-nav-group h2 { margin-bottom: 7px; color: #a8bbcd; font-size: 10px; }
 .portal-nav-group button, .portal-logout { min-height: 44px; border-radius: 8px; color: #d4e0eb; }
 .portal-nav-icon { width: 26px; height: 26px; flex-basis: 26px; font-size: 15px; }
-.portal-nav-label { font-size: 12px; }
+.portal-nav-label { font-size: 14px; }
+.portal-upgrade-link b { font-size: 11px; }.portal-upgrade-link small { font-size: 10px; }
+.portal-breadcrumb { font-size: 12px; }.portal-breadcrumb strong { font-size: 13px; }
 .portal-topbar-user b { font-size: 12px; }
 .portal-topbar-user small { color: #718597; font-size: 10px; }
 .portal-nav-group button:active, .portal-settings-link:active, .portal-menu-button:active { transform: scale(.98); }

@@ -20,7 +20,7 @@ interface AuthContextValue {
   loading: boolean
   demo: boolean
   login: (email: string, password: string) => Promise<{ profile: UserProfile; staffRoles: string[] }>
-  loginDemo: (role: PortalRole) => { profile: UserProfile }
+  loginDemo: (role: PortalRole, specialistRole?: string) => { profile: UserProfile }
   logout: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
 }
@@ -38,14 +38,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [demo, setDemo] = useState(false)
 
   const loadStaffRoles = async (nextProfile: UserProfile | null) => {
-    if (!nextProfile?.school_id || !supabase || nextProfile.role !== 'teacher') { setStaffRoles([]); return }
+    if (!nextProfile?.school_id || !supabase || !['teacher', 'staff'].includes(nextProfile.role)) { setStaffRoles([]); return }
     const { data: assigned, error } = await supabase.from('school_staff_role_assignments')
       .select('role_key').eq('school_id', nextProfile.school_id).eq('profile_id', nextProfile.id)
     if (error) throw error
     setStaffRoles([...new Set((assigned || []).map(row => row.role_key).filter(Boolean))])
   }
 
-  const enterDemo = (role: PortalRole): { profile: UserProfile } => {
+  const enterDemo = (role: PortalRole, specialistRole?: string): { profile: UserProfile } => {
     const labels: Record<PortalRole, string> = {
       super_admin: 'Platform Administrator', school_admin: 'Demo School Admin', teacher: 'Demo Teacher', staff: 'Demo Staff Member', student: 'Demo Student', parent: 'Demo Parent'
     }
@@ -61,7 +61,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     sessionStorage.setItem('smartschool_demo_role', role)
     setDemo(true)
     setProfile(demoProfile)
-    setStaffRoles([])
+    setStaffRoles(role === 'staff' && specialistRole ? [specialistRole] : [])
     setSchool(role === 'super_admin' ? null : demoSchool)
     setSession({ user: { id: demoProfile.id, email: demoProfile.email! }, demo: true })
     return { profile: demoProfile }
@@ -135,7 +135,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       throw new Error('This account is disabled. Contact your school administrator.')
     }
     setProfile(nextProfile)
-    const { data: assigned, error: rolesError } = nextProfile.school_id && nextProfile.role === 'teacher'
+    const { data: assigned, error: rolesError } = nextProfile.school_id && ['teacher', 'staff'].includes(nextProfile.role)
       ? await supabase.from('school_staff_role_assignments').select('role_key').eq('school_id', nextProfile.school_id).eq('profile_id', nextProfile.id)
       : { data: [], error: null }
     if (rolesError) throw rolesError

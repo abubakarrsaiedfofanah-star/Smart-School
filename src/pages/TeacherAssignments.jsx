@@ -53,7 +53,7 @@ export default function TeacherAssignments() {
 
   return <main className="teacher-assignments-page">
     <p className="eyebrow">Teaching workspace</p><h1>Assignments & submissions</h1>
-    <p>Publish classwork for a subject you teach, track submissions, then review and grade each student’s work.</p>
+    <p>Create assignments and review submissions.</p>
     <div className="teacher-assignments-layout">
       <form className="panel" onSubmit={createAssignment} style={{ padding: 20, display: 'grid', gap: 12 }}>
         <h2 style={{ margin: 0 }}>Create assignment</h2>
@@ -63,7 +63,7 @@ export default function TeacherAssignments() {
         <label>Due date<input type="date" value={form.due_date} onChange={event => setForm({ ...form, due_date: event.target.value })} /></label>
         <label>Maximum score<input type="number" min="1" max="100000" step="0.01" required value={form.max_score} onChange={event => setForm({ ...form, max_score: event.target.value })} /></label>
         <button className="button blue-button" disabled={busy || !teaching.length}>{busy ? 'Publishing…' : 'Publish assignment'}</button>
-        {!teaching.length && <small>Your administrator must assign you to a class and subject before you can publish work.</small>}
+        {!teaching.length && <small>Ask your administrator to assign a class and subject.</small>}
       </form>
       <section className="panel" style={{ padding: 20 }}><h2 style={{ marginTop: 0 }}>Your class assignments</h2>
         {loading ? <p>Loading assignments…</p> : !assignments.length ? <p>No assignments are available for your classes yet.</p> : <div style={{ display: 'grid', gap: 12 }}>{assignments.map(item => { const submitted = item.submissions || []; const graded = submitted.filter(row => row.score !== null).length; return <article key={item.id} style={{ borderTop: '1px solid var(--line)', paddingTop: 12 }}><div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}><div><strong>{item.title}</strong><p style={{ margin: '4px 0', color: 'var(--muted)' }}>{item.classes?.name || 'Class'} · {item.subjects?.name || 'Subject'} · Max {item.max_score ?? 100}{item.due_date ? ` · Due ${item.due_date}` : ''}</p><small>{submitted.length} submitted · {graded} graded</small></div><Link className="button outline-button" to={`/review/${item.id}`}>Review submissions</Link></div></article> })}</div>}

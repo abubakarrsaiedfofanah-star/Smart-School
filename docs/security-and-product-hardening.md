@@ -12,7 +12,7 @@
 
 ## Deployment steps
 
-1. Apply migrations `034_notification_delivery_outbox.sql` through `067_academic_role_separation.sql` in numerical order.
+1. Apply migrations `034_notification_delivery_outbox.sql` through `074_subscription_trial_lifecycle.sql` in numerical order.
 2. Set the Supabase Edge Function secret. Example: `supabase secrets set SMARTSCHOOL_ALLOWED_ORIGINS="https://school.example,https://www.school.example"`. Add `http://localhost:5173` only in a development project. Add `capacitor://localhost` only when using that native origin.
 3. Set `NOTIFICATION_WORKER_SECRET`, `NOTIFICATION_DELIVERY_WEBHOOK_URL` (HTTPS), and `NOTIFICATION_DELIVERY_WEBHOOK_SECRET` as Edge Function secrets. Deploy with `supabase functions deploy deliver-notifications`. Its `config.toml` disables Supabase JWT verification for that function; the worker verifies its own high-entropy bearer secret.
 4. Configure the trusted webhook adapter. It receives a JSON `smartschool.notification` event and an `X-SmartSchool-Timestamp` plus `X-SmartSchool-Signature: v1=<hex>` HMAC-SHA256 signature over `<timestamp>.<raw request body>`. Verify the signature in constant time, reject stale timestamps (for example, older than five minutes), use `delivery_id` as the provider idempotency key, and return 2xx only after the provider accepted the message. Do not log payload bodies, recipient addresses, tokens, or message content. Protect the adapter endpoint with provider-specific quotas and alerting.
@@ -41,6 +41,8 @@ Migration 066 validates driver trip-log event types and coordinate pairs, confir
 
 Migration 067 reserves timetable changes for school administrators, principals, and assigned heads of department. Teachers, students, parents, and deputy principals retain read-only timetable access. Specialist-only accounts are routed to their assigned workspaces rather than teacher tools.
 
+Migration 068 extends staff attendance access to assigned non-teaching staff. Migration 069 supports staff role assignments. Migration 070 rate-limits public admissions submissions, and migration 071 records staff-attendance audit events. Migration 072 allows teachers and staff with one matching specialist role into HR or Finance; each account is blocked from the other portal. Migration 073 keeps lesson attachments private and scopes uploads and signed downloads to authorized school/class lessons. Migration 074 records one free trial per school and enforces its 14-day limit.
+
 ## Manual role-access verification before production
 
 Use separate accounts and two schools. Ensure each account has only the relationships listed here, then verify the action in the UI and with direct Supabase client calls (RLS must reject direct calls too):
@@ -56,6 +58,8 @@ Use separate accounts and two schools. Ensure each account has only the relation
 - A teacher without the `school.wellbeing.manage` permission cannot read reports or counselling notes. The counsellor can read/manage reports in their school and only edit notes they authored; students can read their own submitted report.
 - A notification recipient can change only `is_read`; editing title/body/recipient or school must fail. The delivery worker should cancel opted-out jobs, retry transient webhook failures, stop after bounded attempts, and deliver an idempotent event after a webhook timeout/retry.
 - Two schools cannot access one another's records or assignment files. Students cannot fetch another school's object by changing the Storage path.
+- Assigned teachers and staff can open their HR or Finance portal, but cannot open both. School administrators remain in the school admin workspace. Confirm unassigned and cross-portal direct URL attempts are rejected.
+- Lesson attachment uploads and signed downloads work only for the assigned teacher, enrolled learner viewing a published lesson, or school administrator in that school. A different class and school must be denied.
 
 Record the account IDs, migration version, date, and pass/fail per check in the deployment record. The SQL tenant-isolation script does not simulate all role combinations; these authenticated role checks are required.
 

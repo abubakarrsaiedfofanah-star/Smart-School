@@ -185,7 +185,7 @@ export default function SchoolSettings() {
 
       <p className="eyebrow blue-eyebrow">ADMINISTRATION</p>
       <h1>School Branding & Settings</h1>
-      <p>Set your school identity. We sample the logo’s most common clear color, then apply it to portal navigation and highlights. You can refine it at any time.</p>
+      <p>Set your school identity and portal accent color.</p>
 
       <form onSubmit={saveSettings} className="settings-grid">
         <div className="glass-card">
@@ -240,21 +240,21 @@ export default function SchoolSettings() {
 
         <div className="glass-card school-local-settings">
           <h3>Local school settings</h3>
-          <p style={{fontSize:'.85rem', color:'var(--muted)'}}>Set how dates and money display, define your academic terms, and configure report card grades. Currency changes formatting only; existing balances are not converted.</p>
+          <p style={{fontSize:'.85rem', color:'var(--muted)'}}>Set date, currency, academic term and grade formats. Currency changes display only.</p>
           <label>Time zone
             <input value={school.timezone || 'Africa/Nairobi'} onChange={e => setSchool({...school, timezone:e.target.value})} placeholder="IANA time zone, e.g. Africa/Freetown" />
           </label>
           <label>Currency
             <input value={school.currency_code || 'KES'} maxLength={3} pattern="[A-Z]{3}" onChange={e => setSchool({...school, currency_code:e.target.value.toUpperCase()})} placeholder="3-letter code, e.g. SLE" />
           </label>
-          <div className="grading-scale-editor"><b>Academic terms</b><p>These names are used for exams and report card filters. Existing records keep their term name.</p>
+          <div className="grading-scale-editor"><b>Academic terms</b><p>Used for exams and report cards. Existing records keep their term.</p>
             {(school.academic_terms || []).map((term, index) => <label key={`term-${index}`}>Term {index + 1}
               <input type="text" maxLength="40" value={term} onChange={event => setSchool({...school, academic_terms:school.academic_terms.map((item, itemIndex) => itemIndex === index ? event.target.value : item)})} />
             </label>)}
             {(school.academic_terms || []).length < 6 && <button type="button" className="outline-button" onClick={() => setSchool({...school, academic_terms:[...school.academic_terms, `Term ${school.academic_terms.length + 1}`]})}>Add term</button>}
             {(school.academic_terms || []).length > 2 && <button type="button" className="outline-button" onClick={() => setSchool({...school, academic_terms:school.academic_terms.slice(0, -1)})}>Remove last term</button>}
           </div>
-          <div className="grading-scale-editor"><b>Grade boundaries</b><p>Minimum percentage for each grade. Keep each boundary between 0 and 100, and include a grade starting at 0%.</p>
+          <div className="grading-scale-editor"><b>Grade boundaries</b><p>Set grade minimums from 0 to 100%. Include a grade starting at 0%.</p>
             {(school.grading_scale || []).map((band, index) => <label key={`${band.grade}-${index}`}>{band.grade} starts at
               <input type="number" min="0" max="100" value={band.min} onChange={event => setSchool({...school, grading_scale:school.grading_scale.map((item, itemIndex) => itemIndex === index ? {...item, min:Number(event.target.value)} : item)})} />%
             </label>)}

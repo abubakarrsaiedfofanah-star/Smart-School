@@ -20,7 +20,7 @@ export default function Login(){
   const requestedRole=roleLabels[portalRole] ? portalRole : null;
   const specialistPermission = requestedRole === 'hr' ? 'school.hr.portal.view' : requestedRole === 'finance' ? 'school.finance.portal.view' : null;
   const sessionMatchesRequestedRole = !requestedRole || (specialistPermission
-    ? hasSchoolPermission(profile?.role, staffRoles, specialistPermission)
+    ? profile?.role === 'staff' && hasSchoolPermission(profile?.role, staffRoles, specialistPermission)
     : requestedRole === profile?.role);
   const portalDestination = (account, assignedRoles) => {
     if (!specialistPermission || !hasSchoolPermission(account?.role, assignedRoles, specialistPermission)) return roleRoute(account?.role);
@@ -52,7 +52,7 @@ export default function Login(){
     const id = toast.loading('Signing in to SmartSchool...');
     try{
       const {profile,staffRoles:assignedRoles}=await login(email,password);
-      if (specialistPermission && !hasSchoolPermission(profile.role, assignedRoles, specialistPermission)) {
+      if (specialistPermission && (profile.role !== 'staff' || !hasSchoolPermission(profile.role, assignedRoles, specialistPermission))) {
         toast.error(`This account has not been assigned the ${roleLabels[requestedRole]} portal. Ask your school administrator to grant access.`, { id });
         navigate(roleRoute(profile.role), { replace: true });
         return;
@@ -90,12 +90,12 @@ export default function Login(){
   }
 
   function openHrDemo(){
-    loginDemo('school_admin')
+    loginDemo('staff', 'hr_admin')
     navigate('/hr-payroll', { replace: true })
   }
 
   function openFinanceDemo(){
-    loginDemo('school_admin')
+    loginDemo('staff', 'finance_officer')
     navigate('/finance-operations?module=Dashboard', { replace: true })
   }
 
@@ -155,6 +155,7 @@ export default function Login(){
                 <button
                   type="button"
                   onClick={()=>setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                   style={{ position: 'absolute', right: '12px', background: 'transparent', border: 'none', color: 'var(--muted)', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer', padding: '4px 8px' }}
                 >
                   {showPassword ? 'Hide' : 'Show'}
@@ -184,13 +185,12 @@ export default function Login(){
 
           <section className="demo-access login-demo-access" aria-labelledby="demo-access-title">
             <h3 id="demo-access-title">Explore with a demo account</h3>
-            <p>Demo workspace uses sample data saved only in this browser session.</p>
+            <p>Sample data only.</p>
             <div className="demo-grid">
               {Object.entries(roleLabels).filter(([role]) => ['school_admin','teacher','student','parent'].includes(role)).map(([role,label])=><button type="button" key={role} onClick={()=>openDemo(role)}>{label}<span>Open demo →</span></button>)}
             </div>
-            <button type="button" className="demo-hr-preview" onClick={openHrDemo}><span><b>HR & Payroll portal preview</b><small>Staff records, recruitment, and payroll</small></span><strong>Open HR →</strong></button>
-            <button type="button" className="demo-hr-preview demo-finance-preview" onClick={openFinanceDemo}><span><b>Finance portal preview</b><small>Expenses and payment reconciliation</small></span><strong>Open Finance →</strong></button>
-            <p className="demo-specialist-note"><b>HR & Finance are separate school portals.</b> Each uses its own dashboard and navigation. Live access is assigned by your school administrator; previews use read-only sample data.</p>
+            <button type="button" className="demo-hr-preview" onClick={openHrDemo}><span><b>HR & Payroll</b><small>Staff and payroll</small></span><strong>Open →</strong></button>
+            <button type="button" className="demo-hr-preview demo-finance-preview" onClick={openFinanceDemo}><span><b>Finance</b><small>Payments and expenses</small></span><strong>Open →</strong></button>
           </section>
 
           <nav className="login-portals" aria-label="Choose a role portal"><span>Choose a portal</span><div>{[['school_admin','School Admin'],['teacher','Teacher'],['staff','Staff'],['student','Student'],['parent','Parent'],['hr','HR & Payroll'],['finance','Finance']].map(([role,label])=><Link className={requestedRole===role?'active':''} to={'/login/'+role} key={role}>{label}</Link>)}</div></nav>
@@ -204,9 +204,9 @@ export default function Login(){
       {/* Forgot Password Modal */}
       {showForgotModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-          <div className="glass-card" style={{ width: '100%', maxWidth: '420px', background: 'var(--panel)', borderRadius: '24px', padding: '30px', boxShadow: 'var(--shadow)', border: '1px solid var(--line)' }}>
+          <div className="glass-card" role="dialog" aria-modal="true" aria-labelledby="reset-password-title" style={{ width: '100%', maxWidth: '420px', background: 'var(--panel)', borderRadius: '24px', padding: '30px', boxShadow: 'var(--shadow)', border: '1px solid var(--line)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Reset Password</h3>
+              <h3 id="reset-password-title" style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Reset password</h3>
               <button onClick={()=>setShowForgotModal(false)} style={{ background: 'var(--cream)', border: 'none', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', fontWeight: 700 }}>✕</button>
             </div>
             <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginBottom: '20px' }}>Enter your institutional email address and we'll send you a secure link to reset your password.</p>

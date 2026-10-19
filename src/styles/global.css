@@ -47,6 +47,12 @@
   }
 }
 
+.registration-trial-option { display: flex; align-items: center; gap: 12px; margin-top: 16px; padding: 14px; border: 1px solid #bfd8ef; border-radius: 12px; background: #f2f8fd; cursor: pointer; }
+.registration-trial-option input { width: 20px; height: 20px; flex: 0 0 20px; accent-color: var(--school-accent, #2375e1); }
+.registration-trial-option span { display: grid; gap: 3px; }
+.registration-trial-option b { color: var(--ink); font-size: .9rem; }
+.registration-trial-option small { color: var(--muted); font-size: .8rem; }
+
 a {
   text-decoration: none;
 }

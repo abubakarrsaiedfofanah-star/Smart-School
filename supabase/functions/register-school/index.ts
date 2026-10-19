@@ -41,6 +41,7 @@ Deno.serve(async request => {
   const address = clean(schoolInput.address, 300)
   const level = clean(schoolInput.school_level, 80)
   const plan = clean(schoolInput.subscription_plan, 30)
+  const trialRequested = schoolInput.trial_requested === true
   const countryCode = clean(schoolInput.country_code, 2).toUpperCase()
   const currencyCode = clean(schoolInput.currency_code, 3).toUpperCase()
   const timezone = clean(schoolInput.timezone, 80)
@@ -74,6 +75,16 @@ Deno.serve(async request => {
     region: clean(schoolInput.region, 100) || clean(schoolInput.address, 100),
   }).select('id').single()
   if (schoolError || !school) return respond({ error: schoolError?.message || 'Could not create the school request.' }, 400)
+
+  const { data: subscription, error: subscriptionError } = await admin.from('subscriptions').update({
+    requested_plan: plan,
+    request_status: trialRequested ? 'trial_requested' : 'pending',
+    requested_at: new Date().toISOString(),
+  }).eq('school_id', school.id).select('id').maybeSingle()
+  if (subscriptionError || !subscription) {
+    await admin.from('schools').delete().eq('id', school.id)
+    return respond({ error: 'Could not save the plan request. Please try again.' }, 503)
+  }
 
   const rollbackSchool = async () => {
     const { error } = await admin.from('schools').delete().eq('id', school.id)

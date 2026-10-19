@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import VideoGuide from '../components/VideoGuide'
 import toast from 'react-hot-toast'
@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 const steps = ['School', 'Level', 'Accounts', 'Admin', 'Review', 'Plan', 'Done']
 const countryDefaults = { KE: { currency: 'KES', timezone: 'Africa/Nairobi', label: 'Kenya' }, SL: { currency: 'SLE', timezone: 'Africa/Freetown', label: 'Sierra Leone' }, UG: { currency: 'UGX', timezone: 'Africa/Kampala', label: 'Uganda' }, TZ: { currency: 'TZS', timezone: 'Africa/Dar_es_Salaam', label: 'Tanzania' }, GH: { currency: 'GHS', timezone: 'Africa/Accra', label: 'Ghana' }, NG: { currency: 'NGN', timezone: 'Africa/Lagos', label: 'Nigeria' }, RW: { currency: 'RWF', timezone: 'Africa/Kigali', label: 'Rwanda' }, ZM: { currency: 'ZMW', timezone: 'Africa/Lusaka', label: 'Zambia' }, MW: { currency: 'MWK', timezone: 'Africa/Blantyre', label: 'Malawi' }, ZA: { currency: 'ZAR', timezone: 'Africa/Johannesburg', label: 'South Africa' }, LR: { currency: 'LRD', timezone: 'Africa/Monrovia', label: 'Liberia' }, GM: { currency: 'GMD', timezone: 'Africa/Banjul', label: 'The Gambia' }, SN: { currency: 'XOF', timezone: 'Africa/Dakar', label: 'Senegal' }, CI: { currency: 'XOF', timezone: 'Africa/Abidjan', label: 'Côte d’Ivoire' }, CM: { currency: 'XAF', timezone: 'Africa/Douala', label: 'Cameroon' }, ET: { currency: 'ETB', timezone: 'Africa/Addis_Ababa', label: 'Ethiopia' }, EG: { currency: 'EGP', timezone: 'Africa/Cairo', label: 'Egypt' }, US: { currency: 'USD', timezone: 'America/New_York', label: 'United States' }, GB: { currency: 'GBP', timezone: 'Europe/London', label: 'United Kingdom' }, OTHER: { currency: 'USD', timezone: 'UTC', label: 'Other country' } }
 const currencyOptions = [...new Set([...Object.values(countryDefaults).map(country => country.currency), 'KES','SLE','UGX','TZS','GHS','NGN','USD'])]
-const initial = { schoolName: '', email: '', phone: '', address: '', countryCode: 'KE', customCountryCode: '', currencyCode: 'KES', timezone: 'Africa/Nairobi', level: 'Primary school', mobileProvider: 'M-Pesa', mobileMoneyNumber: '', mobileMoneyAccountName: '', mpesaPaybill: '', mpesaTill: '', bankName: '', bankAccountName: '', bankAccountNumber: '', adminName: '', adminEmail: '', adminPhone: '', password: '', confirmPassword: '', plan: 'Starter' }
+const initial = { schoolName: '', email: '', phone: '', address: '', countryCode: 'KE', customCountryCode: '', currencyCode: 'KES', timezone: 'Africa/Nairobi', level: 'Primary school', mobileProvider: 'M-Pesa', mobileMoneyNumber: '', mobileMoneyAccountName: '', mpesaPaybill: '', mpesaTill: '', bankName: '', bankAccountName: '', bankAccountNumber: '', adminName: '', adminEmail: '', adminPhone: '', password: '', confirmPassword: '', plan: 'Starter', trialRequested: false }
 const draftTtl = 24 * 60 * 60 * 1000
 const persistDraft = values => {
   const { password, confirmPassword, mobileMoneyNumber, mobileMoneyAccountName, mpesaPaybill, mpesaTill, bankName, bankAccountName, bankAccountNumber, ...safeDraft } = values
@@ -61,10 +61,14 @@ const getPasswordStrength = (password) => {
 
 export default function RegisterSchool(){
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams()
   const [step,setStep]=useState(loadDraftStep);
 
   const [form,setForm]=useState(()=>{
-    return loadDraft()
+    const draft = loadDraft()
+    const requestedPlan = searchParams.get('plan')
+    const selectedPlan = ['Starter', 'Professional', 'Enterprise'].includes(requestedPlan) ? requestedPlan : draft.plan
+    return { ...draft, plan: selectedPlan, trialRequested: searchParams.get('trial') === '1' || draft.trialRequested }
   });
 
   const [saving,setSaving]=useState(false);
@@ -118,7 +122,7 @@ export default function RegisterSchool(){
     try{
       if(supabase){
         const { data, error } = await supabase.functions.invoke('register-school', { body: {
-          school: { name: form.schoolName, email: form.email, phone: form.phone, address: form.address, country_code: form.countryCode==='OTHER'?form.customCountryCode:form.countryCode, currency_code: form.currencyCode, timezone: form.timezone, school_level: form.level, subscription_plan: form.plan, mobile_money_provider: form.mobileProvider, mobile_money_number: form.mobileMoneyNumber, mobile_money_account_name: form.mobileMoneyAccountName, mpesa_paybill: form.mpesaPaybill, mpesa_till: form.mpesaTill, bank_name: form.bankName, bank_account_name: form.bankAccountName, bank_account_number: form.bankAccountNumber },
+          school: { name: form.schoolName, email: form.email, phone: form.phone, address: form.address, country_code: form.countryCode==='OTHER'?form.customCountryCode:form.countryCode, currency_code: form.currencyCode, timezone: form.timezone, school_level: form.level, subscription_plan: form.plan, trial_requested: form.trialRequested, mobile_money_provider: form.mobileProvider, mobile_money_number: form.mobileMoneyNumber, mobile_money_account_name: form.mobileMoneyAccountName, mpesa_paybill: form.mpesaPaybill, mpesa_till: form.mpesaTill, bank_name: form.bankName, bank_account_name: form.bankAccountName, bank_account_number: form.bankAccountNumber },
           admin: { full_name: form.adminName, email: form.adminEmail.trim().toLowerCase(), phone: form.adminPhone, password: form.password }
         } });
         if (error) {
@@ -131,7 +135,7 @@ export default function RegisterSchool(){
       }
       localStorage.removeItem('smartschool_reg_draft');
       localStorage.removeItem('smartschool_reg_step');
-      toast.success('School request submitted. Verify the administrator email if prompted. Your school portals open after platform approval.', {id});
+      toast.success(form.trialRequested ? 'Trial request submitted for review.' : 'School and plan request submitted for review.', {id});
       setStep(6)
     }catch(e){
       toast.error(e.message || 'Could not register the school. Check the details and try again.', {id});
@@ -293,7 +297,7 @@ export default function RegisterSchool(){
           <button type="button" onClick={()=>update('plan',plan)} className={'choice '+(form.plan===plan?'selected':'')} key={plan} style={{ textAlign: 'left', padding: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
               <b style={{ fontSize: '1.1rem' }}>{plan}</b>
-              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: form.plan === plan ? 'var(--green)' : 'var(--muted)' }}>{plan === 'Starter' ? 'Free / Core' : plan === 'Professional' ? 'Most Popular' : 'Advanced'}</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: form.plan === plan ? 'var(--green)' : 'var(--muted)' }}>{plan === 'Enterprise' ? 'Contact us' : 'Subscription plan'}</span>
             </div>
             <small style={{ color: 'var(--muted)', display: 'block', lineHeight: 1.4 }}>
               {plan==='Starter'?'Core attendance, gradebook, and student profiles for small schools.':plan==='Professional'?'More insight, automated fee collection, and parent portal features.':'Full school operations, custom geofence tracking, and priority support.'}
@@ -301,11 +305,12 @@ export default function RegisterSchool(){
           </button>
         ))}
       </div>
+      <label className="registration-trial-option"><input type="checkbox" checked={form.trialRequested} onChange={event => update('trialRequested', event.target.checked)} /><span><b>Request a 14-day free trial</b><small>Starts after school approval.</small></span></label>
     </>,
     <div className="confirmation" style={{ textAlign: 'center', padding: '20px 0' }}>
       <div style={{ width: '70px', height: '70px', background: 'var(--green)', color: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', fontWeight: 800, margin: '0 auto 20px', boxShadow: '0 10px 25px rgba(28, 182, 129, 0.3)' }}>OK</div>
       <h2 style={{ fontSize: '1.8rem', fontWeight: 800 }}>School request submitted</h2>
-      <p style={{ color: 'var(--muted)', maxWidth: '400px', margin: '0 auto 25px' }}>Your school and plan request are waiting for SmartSchool platform review. The school administrator can use the portal after approval. Online payment checkout is not connected yet.</p>
+      <p style={{ color: 'var(--muted)', maxWidth: '400px', margin: '0 auto 25px' }}>{form.trialRequested ? 'Your 14-day trial request is waiting for review.' : 'Your school and subscription request are waiting for review.'} The portal opens after approval.</p>
 
       <div style={{ background: 'var(--cream)', padding: '20px', borderRadius: '16px', maxWidth: '400px', margin: '0 auto 25px', textAlign: 'left', border: '1px solid var(--line)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>

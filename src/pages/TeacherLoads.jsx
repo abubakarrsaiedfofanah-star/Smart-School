@@ -40,7 +40,7 @@ export default function TeacherLoads() {
     if (error) toast.error(error.message || 'Could not remove assignment'); else { toast.success('Teaching assignment removed'); void load() }
   }
 
-  return <main style={{ maxWidth: 1040, margin: '0 auto', padding: '32px 24px' }}><p className="eyebrow">Academic setup</p><h1>Teacher class & subject assignments</h1><p>Assign each teacher the classes and subjects they teach. These assignments control their classwork, attendance, gradebook, and subject-based access.</p>
+  return <main style={{ maxWidth: 1040, margin: '0 auto', padding: '32px 24px' }}><p className="eyebrow">Academic setup</p><h1>Teacher class & subject assignments</h1>
     <form className="panel" onSubmit={addLoad} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 12, padding: 18, margin: '22px 0' }}>
       <label>Teacher<select required value={form.teacher_id} onChange={event => setForm({ ...form, teacher_id: event.target.value })}><option value="">Select teacher</option>{people.map(person => <option key={person.id} value={person.id}>{person.full_name || person.email}</option>)}</select></label>
       <label>Class<select required value={form.class_id} onChange={event => setForm({ ...form, class_id: event.target.value })}><option value="">Select class</option>{classes.map(item => <option key={item.id} value={item.id}>{item.name}{item.grade ? ` · ${item.grade}` : ''}</option>)}</select></label>

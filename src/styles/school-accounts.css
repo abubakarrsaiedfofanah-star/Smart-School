@@ -15,17 +15,19 @@
 .account-section-heading p { margin: 0; color: #8292a0; font-size: .76rem; line-height: 1.45; }
 .account-section-heading > button { margin-left: auto; padding: 7px 10px; border: 1px solid #dce6ee; border-radius: 7px; background: white; color: #536b7f; font-size: .72rem; cursor: pointer; }
 .school-account-form form { display: grid; gap: 14px; }
-.school-account-form label { display: grid; gap: 6px; color: #415a6e; font-size: .76rem; font-weight: 700; }
+.school-account-form label { display: grid; gap: 6px; color: #415a6e; font-size: .85rem; font-weight: 700; }
 .school-account-form input, .school-account-form select { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid #dce5ec; border-radius: 7px; background: #fff; color: #1c3448; font-size: .82rem; }
 .school-account-form label small { color: #9b6530; font-size: .72rem; font-weight: 500; }
 .school-account-form .button { justify-content: center; width: 100%; min-height: 43px; border: 0; border-radius: 7px; cursor: pointer; }
 .school-account-form .button:disabled { opacity: .55; cursor: not-allowed; }
 .school-account-role-note { display: grid; gap: 4px; padding: 11px 12px; border: 1px solid #e4edf5; border-radius: 8px; background: #f7fafd; }
-.school-account-role-note b { color: #284b66; font-size: .76rem; }.school-account-role-note span { color: #7a8c9c; font-size: .72rem; line-height: 1.4; }
+.school-account-role-note b { color: #284b66; font-size: .82rem; }.school-account-role-note span { color: #667d91; font-size: .8rem; line-height: 1.4; }
 .school-invite-list { display: grid; }.school-invite-list article { display: flex; min-width: 0; align-items: center; gap: 10px; padding: 12px 0; border-top: 1px solid #edf1f4; }
 .school-invite-avatar { display: grid; width: 34px; height: 34px; flex: 0 0 34px; place-items: center; border-radius: 50%; background: #eaf3fb; color: #3075b3; font-size: .8rem; font-weight: 800; }
-.school-invite-copy { display: grid; min-width: 0; flex: 1; gap: 4px; }.school-invite-copy b { overflow: hidden; color: #2f495d; font-size: .78rem; text-overflow: ellipsis; white-space: nowrap; }.school-invite-copy small { overflow: hidden; color: #8998a5; font-size: .7rem; text-overflow: ellipsis; white-space: nowrap; }
+.school-invite-copy { display: grid; min-width: 0; flex: 1; gap: 4px; }.school-invite-copy b { overflow: hidden; color: #2f495d; font-size: .84rem; text-overflow: ellipsis; white-space: nowrap; }.school-invite-copy small { overflow: hidden; color: #718597; font-size: .76rem; text-overflow: ellipsis; white-space: nowrap; }
 .school-invite-role { padding: 5px 7px; border-radius: 5px; background: #f1f5f8; color: #5d7181; font-size: .65rem; font-weight: 700; white-space: nowrap; }.school-invite-status { min-width: 67px; color: #9b7131; font-size: .64rem; font-weight: 700; text-align: right; white-space: nowrap; }.school-invite-status.accepted { color: #23815d; }
 .school-account-empty { display: grid; min-height: 130px; place-content: center; gap: 7px; border: 1px dashed #dce6ed; border-radius: 9px; color: #8797a4; font-size: .78rem; text-align: center; }.school-account-empty b { color: #536e81; }
 @media (max-width: 900px) { .school-accounts-grid { grid-template-columns: 1fr; } }
 @media (max-width: 520px) { .school-invite-list article { flex-wrap: wrap; }.school-invite-role { margin-left: 43px; }.school-invite-status { margin-left: auto; } }
+.school-account-form input:focus-visible, .school-account-form select:focus-visible, .school-accounts button:focus-visible, .login-portals a:focus-visible { outline: 2px solid var(--school-accent, #2375e1); outline-offset: 2px; }
+@media (max-width: 520px) { .school-account-form .button, .account-section-heading > button { min-height: 44px; }.school-accounts-grid { gap: 12px; }.school-account-form, .school-account-list { border-radius: 11px; } }
