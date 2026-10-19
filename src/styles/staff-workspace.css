@@ -1,0 +1,52 @@
+.staff-workspace { width: min(1120px, 100%); margin: 0 auto; padding: clamp(18px, 3vw, 34px); color: var(--ink, #173652); }
+.staff-workspace-hero { display: flex; align-items: center; justify-content: space-between; gap: 22px; padding: clamp(22px, 4vw, 34px); border: 1px solid var(--line, #dce7f1); border-radius: 20px; background: linear-gradient(120deg, #fff, #f2f7ff); box-shadow: 0 10px 26px rgba(18, 50, 81, .055); }
+.staff-workspace-eyebrow { margin: 0 0 7px; color: var(--school-accent-strong, #1c5da8); font-size: .68rem; font-weight: 800; letter-spacing: .14em; }
+.staff-workspace-hero h1 { margin: 0; color: var(--ink, #173652); font-size: clamp(1.65rem, 3.5vw, 2.25rem); letter-spacing: -.04em; }
+.staff-workspace-hero > div:first-child > p:last-child { max-width: 600px; margin: 8px 0 0; color: var(--muted, #6b7f93); line-height: 1.55; }
+.staff-workspace-badge { display: flex; min-width: 205px; align-items: center; gap: 11px; padding: 11px 14px; border: 1px solid var(--line, #dce7f1); border-radius: 14px; background: rgba(255,255,255,.8); }
+.staff-workspace-badge > span { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 12px; background: color-mix(in srgb, var(--school-accent, #2375e1) 12%, white); color: var(--school-accent-strong, #1c5da8); font-weight: 800; }
+.staff-workspace-badge b, .staff-workspace-badge small { display: block; }
+.staff-workspace-badge b { font-size: .82rem; }
+.staff-workspace-badge small { margin-top: 3px; color: var(--muted, #6b7f93); font-size: .7rem; }
+.staff-workspace-mobile-tabs { display: none; }
+.staff-workspace-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; margin-top: 18px; }
+.staff-workspace-stats article, .staff-workspace-panel { min-width: 0; padding: 19px; border: 1px solid var(--line, #dce7f1); border-radius: 16px; background: var(--panel, #fff); box-shadow: 0 6px 20px rgba(18, 50, 81, .035); }
+.staff-workspace-stats article > span, .staff-workspace-stats small { display: block; color: var(--muted, #6b7f93); font-size: .75rem; }
+.staff-workspace-stats strong { display: block; margin: 10px 0 5px; color: var(--ink, #173652); font-size: clamp(1.25rem, 3vw, 1.7rem); overflow-wrap: anywhere; }
+.staff-workspace-stats .staff-status-value { font-size: 1.15rem; text-transform: capitalize; }
+.staff-workspace-panel { margin-top: 15px; }
+.staff-workspace-panel h2, .staff-leave-form h2 { margin: 0; color: var(--ink, #173652); font-size: 1.1rem; }
+.staff-workspace-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 12px; }
+.staff-workspace-panel-head .staff-workspace-eyebrow { margin-bottom: 4px; }
+.staff-workspace-panel-head > span { color: var(--muted, #6b7f93); font-size: .72rem; }
+.staff-workspace-panel-head button { min-height: 40px; padding: 8px 12px; border: 1px solid var(--line, #dce7f1); border-radius: 10px; background: transparent; color: var(--school-accent-strong, #1c5da8); font: inherit; font-size: .76rem; font-weight: 700; cursor: pointer; }
+.staff-payslip-list, .staff-leave-list { display: grid; }
+.staff-payslip-list article, .staff-leave-list article { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 0; border-top: 1px solid var(--line, #e4ebf2); }
+.staff-payslip-list article > div, .staff-leave-list article > div { min-width: 0; }
+.staff-payslip-list b, .staff-payslip-list small, .staff-leave-list b, .staff-leave-list small { display: block; }
+.staff-payslip-list b, .staff-leave-list b { font-size: .84rem; text-transform: capitalize; }
+.staff-payslip-list small, .staff-leave-list small { margin-top: 4px; color: var(--muted, #6b7f93); font-size: .72rem; line-height: 1.5; overflow-wrap: anywhere; }
+.staff-payslip-list strong { flex: 0 0 auto; font-size: .9rem; }
+.staff-leave-status { flex: 0 0 auto; padding: 5px 9px; border-radius: 999px; background: #edf2f8; color: #4e6278; font-size: .68rem; font-weight: 750; text-transform: capitalize; }
+.staff-leave-status.approved { background: #e7f6ed; color: #237144; }
+.staff-leave-status.rejected { background: #fff0ef; color: #a83c35; }
+.staff-leave-status.pending { background: #fff6dd; color: #896315; }
+.staff-workspace-message, .staff-workspace-state, .staff-workspace-empty { margin: 15px 0; padding: 13px 15px; border: 1px solid var(--line, #dce7f1); border-radius: 12px; background: var(--panel, #fff); color: var(--muted, #637a90); font-size: .82rem; line-height: 1.5; }
+.staff-workspace-message { border-color: #c9dff7; color: var(--ink, #173652); }
+.staff-workspace-empty { margin: 0; border: 0; padding: 14px 0 3px; }
+.staff-workspace-leave-grid { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: start; gap: 14px; margin-top: 18px; }
+.staff-workspace-leave-grid .staff-workspace-panel { margin: 0; }
+.staff-leave-form { display: grid; gap: 12px; }
+.staff-leave-form > label, .staff-leave-dates label { display: grid; gap: 6px; color: var(--ink, #173652); font-size: .75rem; font-weight: 700; }
+.staff-leave-form input, .staff-leave-form select, .staff-leave-form textarea { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid var(--line, #d8e2ec); border-radius: 9px; background: var(--panel, #fff); color: var(--ink, #173652); font: inherit; font-size: .82rem; }
+.staff-leave-form textarea { resize: vertical; }
+.staff-leave-dates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.staff-workspace-primary { min-height: 44px; padding: 10px 14px; border: 0; border-radius: 10px; background: var(--school-accent-strong, #1c5da8); color: #fff; font: inherit; font-size: .8rem; font-weight: 750; cursor: pointer; }
+.staff-workspace-primary:disabled { opacity: .55; cursor: not-allowed; }
+.staff-details-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; margin: 14px 0 0; }
+.staff-details-grid > div { padding: 12px 0; border-top: 1px solid var(--line, #e4ebf2); }
+.staff-details-grid dt { color: var(--muted, #6b7f93); font-size: .7rem; }
+.staff-details-grid dd { margin: 4px 0 0; color: var(--ink, #173652); font-size: .84rem; font-weight: 650; overflow-wrap: anywhere; }
+.staff-workspace button:focus-visible, .staff-leave-form :focus-visible { outline: 3px solid color-mix(in srgb, var(--school-accent, #2375e1) 55%, white); outline-offset: 2px; }
+@media (max-width: 780px) { .staff-workspace-hero { align-items: flex-start; flex-direction: column; } .staff-workspace-badge { min-width: 0; width: 100%; } .staff-workspace-stats { grid-template-columns: 1fr; } .staff-workspace-leave-grid { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .staff-workspace { padding: 14px 12px 28px; } .staff-workspace-hero { padding: 20px 17px; border-radius: 16px; } .staff-workspace-mobile-tabs { display: flex; gap: 7px; margin: 13px 0; padding: 2px 1px 7px; overflow-x: auto; } .staff-workspace-mobile-tabs button { flex: 0 0 auto; min-height: 40px; padding: 8px 11px; border: 1px solid var(--line, #dce7f1); border-radius: 999px; background: var(--panel, #fff); color: var(--muted, #637a90); font: inherit; font-size: .72rem; font-weight: 700; } .staff-workspace-mobile-tabs button.active { border-color: var(--school-accent, #2375e1); background: color-mix(in srgb, var(--school-accent, #2375e1) 9%, white); color: var(--school-accent-strong, #1c5da8); } .staff-workspace-stats article, .staff-workspace-panel { padding: 15px; } .staff-leave-dates, .staff-details-grid { grid-template-columns: 1fr; } }

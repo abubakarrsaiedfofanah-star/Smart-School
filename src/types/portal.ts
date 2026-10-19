@@ -1,10 +1,11 @@
-export type PortalRole = 'super_admin' | 'school_admin' | 'teacher' | 'student' | 'parent'
+export type PortalRole = 'super_admin' | 'school_admin' | 'teacher' | 'staff' | 'student' | 'parent'
 
 export interface UserProfile {
   id: string
   full_name: string
   role: PortalRole
   school_id: string | null
+  is_active?: boolean
   email?: string
   [field: string]: any
 }

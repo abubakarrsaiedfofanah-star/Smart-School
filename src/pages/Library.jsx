@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { hasSchoolPermission } from '../lib/schoolRoles';
 import toast from 'react-hot-toast';
 
 export default function Library() {
-  const { profile } = useAuth();
+  const { profile, staffRoles, demo } = useAuth();
   const navigate = useNavigate();
   const [resources, setResources] = useState([]);
   const [subjects, setSubjects] = useState([]);
@@ -18,14 +19,19 @@ export default function Library() {
   const [file, setFile] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const isStaff = ['school_admin', 'teacher', 'super_admin'].includes(profile?.role);
+  const canManage = !demo && hasSchoolPermission(profile?.role, staffRoles, 'school.library.manage');
 
   useEffect(() => {
     if (profile?.school_id) fetchData();
   }, [profile]);
 
   async function fetchData() {
-    if (!supabase) return;
+    if (!supabase || !profile?.school_id) {
+      setSubjects([]);
+      setResources([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const [subsRes, resRes] = await Promise.all([
@@ -39,7 +45,7 @@ export default function Library() {
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!supabase || !file) return;
+    if (!canManage || !supabase || !file) return;
     setUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
@@ -83,7 +89,7 @@ export default function Library() {
     <div className="library-page page-transition">
       <style>{`
         .library-page { padding: 40px 24px; max-width: 1200px; margin: 0 auto; }
-        .library-layout { display: grid; grid-template-columns: ${isStaff ? '350px 1fr' : '1fr'}; gap: 30px; }
+        .library-layout { display: grid; grid-template-columns: ${canManage ? '350px 1fr' : '1fr'}; gap: 30px; }
         .res-card { display: flex; flex-direction: column; justify-content: space-between; height: 100%; transition: all 0.3s; }
         .glass-input, .glass-textarea { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); margin-bottom: 15px; }
       `}</style>
@@ -93,8 +99,9 @@ export default function Library() {
         <button className="button outline-button tactile-btn" onClick={() => navigate('/portal')}>← Dashboard</button>
       </header>
 
+      {!canManage && <p role="status" style={{ color: 'var(--muted)' }}>Read-only library access. Ask your school administrator to assign the librarian role to publish resources.</p>}
       <div className="library-layout">
-        {isStaff && (
+        {canManage && (
           <div className="glass-card" style={{height:'fit-content'}}>
             <h3>Publish Resource</h3>
             <form onSubmit={handleUpload}>
@@ -103,7 +110,7 @@ export default function Library() {
                 <option value="">-- Choose Subject --</option>
                 {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
-              <input type="file" className="glass-input" onChange={e=>setFile(e.target.files[0])} required />
+              <input type="file" className="glass-input" accept="application/pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg" onChange={e=>setFile(e.target.files[0])} required />
               <button className="button blue-button full tactile-btn" disabled={uploading}>{uploading ? 'Processing...' : 'Upload Resource'}</button>
             </form>
           </div>

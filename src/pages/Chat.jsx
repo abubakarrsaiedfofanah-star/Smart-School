@@ -178,7 +178,7 @@ export default function Chat() {
         <div className="sidebar-header">
           <div>
             <h2>Messages</h2>
-            {(profile?.role === 'school_admin' || profile?.role === 'teacher') && (
+            {profile?.role === 'school_admin' && (
               <button
                 className="broadcast-link"
                 onClick={() => navigate('/broadcast')}

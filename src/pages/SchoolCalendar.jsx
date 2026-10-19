@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 import { scheduleEventReminder } from '../lib/notifications'
 import { roleRoute } from '../lib/roleRoute'
+import { hasSchoolPermission } from '../lib/schoolRoles'
 
 const dateKey = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 const sampleEvents = [
@@ -14,7 +15,7 @@ const sampleEvents = [
 ]
 
 export default function SchoolCalendar() {
-  const { profile, demo } = useAuth()
+  const { profile, demo, staffRoles } = useAuth()
   const navigate = useNavigate()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [events, setEvents] = useState([])
@@ -24,7 +25,7 @@ export default function SchoolCalendar() {
   const [showCreate, setShowCreate] = useState(false)
   const [saving, setSaving] = useState(false)
   const [draft, setDraft] = useState({ title: '', description: '', event_date: dateKey(new Date()) })
-  const canCreate = ['school_admin', 'teacher'].includes(profile?.role)
+  const canCreate = hasSchoolPermission(profile?.role, staffRoles, 'school.calendar.manage')
   const monthLabel = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(currentDate)
 
   const fetchEvents = useCallback(async () => {

@@ -1,0 +1,123 @@
+name: Apply Supabase database migrations
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'supabase/[0-9][0-9][0-9]_*.sql'
+      - 'supabase/functions/**'
+      - 'scripts/apply-supabase-migrations.sh'
+      - '.github/workflows/supabase-migrations.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-production-migrations
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install --yes postgresql-client
+
+      - name: Apply new numbered migrations
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          base="$PUSH_BEFORE"
+          if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
+            if git rev-parse "$PUSH_SHA^" >/dev/null 2>&1; then
+              base="$PUSH_SHA^"
+            else
+              base="$(git hash-object -t tree /dev/null)"
+            fi
+          fi
+
+          mapfile -t changed < <(git diff --diff-filter=AM --name-only "$base" "$PUSH_SHA" -- 'supabase/[0-9][0-9][0-9]_*.sql')
+          migrations=()
+          for migration in "${changed[@]}"; do
+            filename="${migration##*/}"
+            version="${filename%%_*}"
+            if (( 10#$version >= 69 )); then migrations+=("$migration"); fi
+          done
+
+          if ((${#migrations[@]} == 0)); then
+            echo 'No new automatic migrations in this push.'
+            exit 0
+          fi
+          bash scripts/apply-supabase-migrations.sh "${migrations[@]}"
+
+  deploy-functions:
+    needs: apply
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Find changed Edge Functions
+        id: changed
+        env:
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          base="$PUSH_BEFORE"
+          if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
+            if git rev-parse "$PUSH_SHA^" >/dev/null 2>&1; then
+              base="$PUSH_SHA^"
+            else
+              base="$(git hash-object -t tree /dev/null)"
+            fi
+          fi
+          mapfile -t changed < <(git diff --diff-filter=AM --name-only "$base" "$PUSH_SHA" -- 'supabase/functions/**')
+          functions=()
+          declare -A seen=()
+          for path in "${changed[@]}"; do
+            if [[ "$path" =~ ^supabase/functions/([A-Za-z0-9_-]+)/ ]]; then
+              name="${BASH_REMATCH[1]}"
+              if [[ -d "supabase/functions/$name" && -z "${seen[$name]:-}" ]]; then
+                functions+=("$name")
+                seen[$name]=1
+              fi
+            fi
+          done
+          {
+            echo 'functions<<EOF'
+            if ((${#functions[@]} > 0)); then printf '%s\n' "${functions[@]}"; fi
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up Supabase CLI
+        if: steps.changed.outputs.functions != ''
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy changed Edge Functions
+        if: steps.changed.outputs.functions != ''
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+          CHANGED_FUNCTIONS: ${{ steps.changed.outputs.functions }}
+        run: |
+          set -euo pipefail
+          : "${SUPABASE_ACCESS_TOKEN:?Add the SUPABASE_ACCESS_TOKEN GitHub secret.}"
+          : "${SUPABASE_PROJECT_ID:?Add the SUPABASE_PROJECT_ID GitHub secret.}"
+          while IFS= read -r function_name; do
+            [[ -z "$function_name" ]] && continue
+            supabase functions deploy "$function_name" --use-api --project-ref "$SUPABASE_PROJECT_ID"
+          done <<< "$CHANGED_FUNCTIONS"

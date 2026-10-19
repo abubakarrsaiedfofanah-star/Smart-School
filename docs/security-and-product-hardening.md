@@ -12,12 +12,34 @@
 
 ## Deployment steps
 
-1. Apply migrations `034_notification_delivery_outbox.sql` through `043_role_access_and_admissions_hardening.sql` in numerical order.
+1. Apply migrations `034_notification_delivery_outbox.sql` through `067_academic_role_separation.sql` in numerical order.
 2. Set the Supabase Edge Function secret. Example: `supabase secrets set SMARTSCHOOL_ALLOWED_ORIGINS="https://school.example,https://www.school.example"`. Add `http://localhost:5173` only in a development project. Add `capacitor://localhost` only when using that native origin.
 3. Set `NOTIFICATION_WORKER_SECRET`, `NOTIFICATION_DELIVERY_WEBHOOK_URL` (HTTPS), and `NOTIFICATION_DELIVERY_WEBHOOK_SECRET` as Edge Function secrets. Deploy with `supabase functions deploy deliver-notifications`. Its `config.toml` disables Supabase JWT verification for that function; the worker verifies its own high-entropy bearer secret.
 4. Configure the trusted webhook adapter. It receives a JSON `smartschool.notification` event and an `X-SmartSchool-Timestamp` plus `X-SmartSchool-Signature: v1=<hex>` HMAC-SHA256 signature over `<timestamp>.<raw request body>`. Verify the signature in constant time, reject stale timestamps (for example, older than five minutes), use `delivery_id` as the provider idempotency key, and return 2xx only after the provider accepted the message. Do not log payload bodies, recipient addresses, tokens, or message content. Protect the adapter endpoint with provider-specific quotas and alerting.
 5. Invoke the worker from a trusted scheduler every minute with `Authorization: Bearer <NOTIFICATION_WORKER_SECRET>` and a small JSON body such as `{"limit":25}`. Restrict access to the scheduler. Monitor returned claimed/sent/failed/cancelled counts and terminal outbox failures. Push delivery also needs native APNS/FCM credentials and a provider adapter; database token registration alone does not deliver push messages.
 6. In Supabase Auth, enable TOTP MFA and configure the assurance policy appropriate to the school. The frontend challenges users with an enrolled factor; privileged database changes also require MFA at the database layer.
+
+Migration 057 enforces the active-profile flag in shared database authorization helpers and privileged RPCs, prevents users from changing their own active status, and limits employee self-service reads to active accounts and matching school records. The sign-in flow and protected routes also reject disabled profiles. Apply the migration before relying on disabled-account revocation.
+
+Migration 058 restricts asset inventory reads to active school administrators, platform administrators, and staff assigned inventory-view permission. Inventory management remains limited to roles with inventory-management permission.
+
+Migration 059 scopes live bus routes and trip logs to school administrators, assigned transport managers, and each route's assigned driver. Drivers may update trip status and live coordinates but cannot reassign routes or alter vehicle and route details. Family route visibility needs an explicit learner-to-route relationship before it can be safely granted.
+
+Migration 060 requires an active same-school administrator or properly assigned teacher for class/subject actions, and blocks inactive teacher profiles from receiving new class assignments.
+
+Migration 061 validates both the existing and replacement assignment-file storage paths against the uploader's learner, school, and class relationship, and blocks replacing files after an assignment closes.
+
+Migration 062 validates driver-updated route status and geographic coordinates and sets the location update time on the server, preventing forged timestamps and malformed location values.
+
+Migration 063 prevents clients from forging the payroll approval session flag, requires approval to run through the audited security-definer RPC, and prevents the preparer from approving their own payroll.
+
+Migration 064 prevents principals from approving payroll runs that include their own salary, blocks approval of salary changes by the creator or beneficiary, and requires a different finance officer to confirm a payout than the initiator or beneficiary.
+
+Migration 065 prevents expense creators from approving their own expenses, restricts approval and voiding to principals, locks approval evidence, and lets Finance mark approved expenses paid with a server-set timestamp.
+
+Migration 066 validates driver trip-log event types and coordinate pairs, confirms the driver is assigned to the route, and sets log timestamps on the server.
+
+Migration 067 reserves timetable changes for school administrators, principals, and assigned heads of department. Teachers, students, parents, and deputy principals retain read-only timetable access. Specialist-only accounts are routed to their assigned workspaces rather than teacher tools.
 
 ## Manual role-access verification before production
 
@@ -26,6 +48,11 @@ Use separate accounts and two schools. Ensure each account has only the relation
 - A teacher assigned to Class A / Mathematics can create and grade its assignments and results. A teacher assigned only to another subject cannot read or grade those submissions/results, change assignment ownership, or add a cross-school class/subject.
 - A student can see only published work for their class, submit written work or an allowed file before the school's local due date, revise their own ungraded work, and cannot change grades or another student's submission. A graded submission cannot be changed by its student.
 - A parent can see published classwork/results only for linked learners. An unrelated parent cannot read either learner's data.
+- Inventory readers can see only their own school's assets when their account has the inventory-view permission; inventory managers can change records, while unrelated staff and learner/parent accounts cannot query asset values or serial numbers.
+- HR can prepare and submit payroll but cannot approve it by setting `app.hr_payroll_approval`; only a different, MFA-verified principal can approve/reject through the RPC, and the approval plus audit rows must be recorded.
+- A principal who is included as a payroll beneficiary cannot approve that run or their own salary change; a finance officer cannot confirm their own payroll item or a payout they initiated.
+- Expense creators cannot approve their own entries; only principals approve or void expenses, and Finance can mark an approved expense paid without changing its approval evidence.
+- Teachers, students, parents, and deputy principals cannot insert, update, or delete timetable rows. School administrators, principals, and assigned heads of department can manage schedules.
 - A teacher without the `school.wellbeing.manage` permission cannot read reports or counselling notes. The counsellor can read/manage reports in their school and only edit notes they authored; students can read their own submitted report.
 - A notification recipient can change only `is_read`; editing title/body/recipient or school must fail. The delivery worker should cancel opted-out jobs, retry transient webhook failures, stop after bounded attempts, and deliver an idempotent event after a webhook timeout/retry.
 - Two schools cannot access one another's records or assignment files. Students cannot fetch another school's object by changing the Storage path.

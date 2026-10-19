@@ -170,6 +170,8 @@ export default function Gradebook() {
           .gradebook-page { padding:20px 12px; }
           .gb-header { align-items:flex-start; gap:12px; }
           .gradebook-controls { flex-direction:column; gap:10px !important; padding:16px !important; }
+          .gradebook-controls select { box-sizing:border-box; width:100% !important; min-height:46px; }
+          .gradebook-page h1 { font-size:clamp(1.45rem, 7vw, 2rem); }
           .gb-table thead { display:none; }
           .gb-table, .gb-table tbody, .gb-table tr, .gb-table td { display:block; width:100%; }
           .gb-table tr { padding:12px; border-bottom:1px solid var(--line); }

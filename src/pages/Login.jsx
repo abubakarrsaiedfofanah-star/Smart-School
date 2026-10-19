@@ -16,7 +16,7 @@ export default function Login(){
   const [forgotLoading,setForgotLoading]=useState(false)
 
   const {login,loginDemo,resetPassword,logout,session,profile,staffRoles,loading:authLoading}=useAuth(),navigate=useNavigate(),{portalRole}=useParams();
-  const roleLabels={school_admin:'School Admin',teacher:'Teacher',student:'Student',parent:'Parent',hr:'HR & Payroll',finance:'Finance'};
+  const roleLabels={school_admin:'School Admin',teacher:'Teacher',staff:'Staff',student:'Student',parent:'Parent',hr:'HR & Payroll',finance:'Finance'};
   const requestedRole=roleLabels[portalRole] ? portalRole : null;
   const specialistPermission = requestedRole === 'hr' ? 'school.hr.portal.view' : requestedRole === 'finance' ? 'school.finance.portal.view' : null;
   const sessionMatchesRequestedRole = !requestedRole || (specialistPermission
@@ -35,6 +35,17 @@ export default function Login(){
     }
   }, [remember, email]);
 
+  useEffect(() => {
+    if (!showForgotModal) return undefined
+    const previousOverflow = document.body.style.overflow
+    const closeOnEscape = event => { if (event.key === 'Escape') setShowForgotModal(false) }
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [showForgotModal])
   async function handleLogin(e){
     e.preventDefault();
     setLoading(true);
@@ -112,7 +123,7 @@ export default function Login(){
           <div className="login-heading" style={{ marginBottom: '25px' }}>
             <span className="eyebrow" style={{ display: 'inline-block', marginBottom: '8px' }}>{requestedRole ? roleLabels[requestedRole].toUpperCase()+' PORTAL' : 'SECURE SCHOOL PORTAL'}</span>
             <h1 style={{ fontSize: '1.9rem', fontWeight: 800, marginBottom: '8px', letterSpacing: '-0.5px' }}>{requestedRole ? roleLabels[requestedRole]+' sign in' : 'Welcome Back'}</h1>
-            <p style={{ color: 'var(--muted)', margin: 0, fontSize: '0.95rem' }}>Sign in with the account your school provided. You will open your own role portal.</p>
+            <p style={{ color: 'var(--muted)', margin: 0, fontSize: '0.95rem' }}>Sign in with the account your school issued. Your school and portal access are determined by that account.</p>
           </div>
 
           <form onSubmit={handleLogin} style={{ display: 'grid', gap: '18px' }}>
@@ -182,7 +193,7 @@ export default function Login(){
             <p className="demo-specialist-note"><b>HR & Finance are separate school portals.</b> Each uses its own dashboard and navigation. Live access is assigned by your school administrator; previews use read-only sample data.</p>
           </section>
 
-          <nav className="login-portals" aria-label="Choose a role portal"><span>Choose a portal</span><div>{[['school_admin','School Admin'],['teacher','Teacher'],['student','Student'],['parent','Parent'],['hr','HR & Payroll'],['finance','Finance']].map(([role,label])=><Link className={requestedRole===role?'active':''} to={'/login/'+role} key={role}>{label}</Link>)}</div></nav>
+          <nav className="login-portals" aria-label="Choose a role portal"><span>Choose a portal</span><div>{[['school_admin','School Admin'],['teacher','Teacher'],['staff','Staff'],['student','Student'],['parent','Parent'],['hr','HR & Payroll'],['finance','Finance']].map(([role,label])=><Link className={requestedRole===role?'active':''} to={'/login/'+role} key={role}>{label}</Link>)}</div></nav>
           <div style={{ marginTop: '25px', textAlign: 'center', fontSize: '0.9rem', borderTop: '1px solid var(--line)', paddingTop: '20px' }}>
             <span style={{ color: 'var(--muted)' }}>New educational institution? </span>
             <Link to="/register" className="text-link" style={{ fontWeight: 700, color: 'var(--green)' }}>Register your school →</Link>

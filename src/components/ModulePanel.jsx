@@ -1,36 +1,22 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import PaymentFlow from './PaymentFlow'
-import toast from 'react-hot-toast'
 import Skeleton, { SkeletonTable, SkeletonCard } from './Skeleton'
-import ConfirmShield from './ConfirmShield'
 
 import { Link } from 'react-router-dom'
 
 const labels={schools:'Schools',profiles:'People',students:'Students',classes:'Classes',subjects:'Subjects',attendance:'Attendance',assignments:'Assignments',exams:'Exams',results:'Results',fees:'Fees',payments:'Payments',announcements:'Announcements',events:'Events',messages:'Messages',subscriptions:'Subscriptions'}
 const fields={schools:['name','status','subscription_plan'],profiles:['full_name','role'],students:['admission_number','full_name'],classes:['name','grade'],subjects:['name','code'],attendance:['student','attendance_date','status'],assignments:['title','due_date','status'],exams:['name','exam_date','academic_year','term','max_score'],results:['student','score','remarks'],fees:['name','amount','due_date'],payments:['reference','amount','status'],announcements:['title','created_at'],events:['title','event_date'],messages:['body','created_at'],subscriptions:['plan','status']}
 
-export default function ModulePanel({table,profile,canCreate=false,superAdmin=false,studentId=null}){
+export default function ModulePanel({table,profile,superAdmin=false,studentId=null}){
   const [rows,setRows]=useState([]),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[form,setForm]=useState(false),[editingExam,setEditingExam]=useState(null),[payingRow,setPayingRow]=useState(null),[searchTerm,setSearchTerm]=useState('')
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [rowToDelete, setRowToDelete] = useState(null);
 
   const cols=fields[table]||[],title=labels[table]||table
 
-  const deleteRow = async () => {
-    if (!rowToDelete) return;
-    const toastId = toast.loading('Deleting record...');
-    try {
-      if (supabase) {
-        const { error } = await supabase.from(table).delete().eq('id', rowToDelete.id);
-        if (error) throw error;
-      }
-      toast.success('Record deleted successfully!', { id: toastId });
-      load();
-    } catch (e) {
-      toast.error('Failed to delete: ' + e.message, { id: toastId });
-    }
-  };
+  // The shared dashboard table is read-only by default. Only these school
+  // setup records have complete, role-safe forms here; other writes use their
+  // dedicated workflows with the required class, learner, and approval scope.
+  const canAddRecord = profile?.role === 'school_admin' && ['students', 'classes', 'subjects', 'fees'].includes(table)
 
   const filteredRows = rows.filter(row =>
     Object.values(row).some(val => String(val).toLowerCase().includes(searchTerm.toLowerCase()))
@@ -81,7 +67,7 @@ export default function ModulePanel({table,profile,canCreate=false,superAdmin=fa
             View Report Card 📊
           </Link>
         )}
-        {canCreate&&<button className="button small tactile-btn" onClick={()=>{setEditingExam(null);setForm(!form)}}>Add {title.replace(/s$/,'')} +</button>}
+        {canAddRecord&&<button className="button small tactile-btn" onClick={()=>{setEditingExam(null);setForm(!form)}}>Add {title.replace(/s$/,'')} +</button>}
         <button className="outline tactile-btn" onClick={load} disabled={busy}>Refresh</button>
       </div>
     </div>
@@ -120,7 +106,7 @@ export default function ModulePanel({table,profile,canCreate=false,superAdmin=fa
               {table==='schools'&&superAdmin&&<th>Review</th>}
               {table==='students'&&<th>Action</th>}
               {table==='payments'&&<th>Action</th>}
-              <th>Actions</th>
+              {table==='exams'&&profile?.role==='school_admin'&&<th>Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -139,10 +125,7 @@ export default function ModulePanel({table,profile,canCreate=false,superAdmin=fa
                 <Link to={`/invoice/${row.id}`} className="mini accept" style={{marginRight: '5px', backgroundColor: '#3b82f6'}}>Invoice</Link>
                 {row.status==='pending'&&<button className="button small" onClick={()=>setPayingRow(row)}>Pay Now</button>}
               </td>}
-              <td>
-                {table==='exams'&&profile?.role==='school_admin'&&<button className="mini accept tactile-btn" onClick={()=>{setEditingExam(row);setForm(true)}}>Edit period</button>}
-                <button className="mini reject tactile-btn" onClick={() => { setRowToDelete(row); setConfirmOpen(true); }}>Delete</button>
-              </td>
+              {table==='exams'&&profile?.role==='school_admin'&&<td><button className="mini accept tactile-btn" onClick={()=>{setEditingExam(row);setForm(true)}}>Edit period</button></td>}
             </tr>)}
           </tbody>
         </table>
@@ -171,7 +154,6 @@ export default function ModulePanel({table,profile,canCreate=false,superAdmin=fa
                   {row.status==='pending'&&<button className="button small full" onClick={()=>setPayingRow(row)}>Pay Now</button>}
                 </>}
                 {table==='exams'&&profile?.role==='school_admin'&&<button className="button small full" onClick={()=>{setEditingExam(row);setForm(true)}}>Edit academic period</button>}
-                <button className="button small full reject tactile-btn" style={{ marginTop: '5px' }} onClick={() => { setRowToDelete(row); setConfirmOpen(true); }}>Delete Record</button>
               </div>
             </div>
           ))}
@@ -181,12 +163,5 @@ export default function ModulePanel({table,profile,canCreate=false,superAdmin=fa
 
     {payingRow && <PaymentFlow payment={payingRow} onClose={()=>setPayingRow(null)} />}
 
-    <ConfirmShield
-      isOpen={confirmOpen}
-      onClose={() => setConfirmOpen(false)}
-      onConfirm={deleteRow}
-      title={`Delete ${title.slice(0, -1)}?`}
-      message={`Are you sure you want to delete this ${title.toLowerCase().slice(0, -1)}? This action is permanent and will be logged in the Security Audit Trail.`}
-    />
   </section>
 }

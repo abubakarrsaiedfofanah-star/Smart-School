@@ -1,4 +1,4 @@
-.portal-frame { --portal-side-width: 260px; display: flex; min-height: 100vh; background: #f4f7fb; color: #142b40; }
+.portal-frame { --portal-side-width: 272px; display: flex; min-height: 100vh; background: #f4f7fb; color: #142b40; }
 .portal-sidebar { position: sticky; top: 0; z-index: 50; display: flex; flex: 0 0 var(--portal-side-width); flex-direction: column; width: var(--portal-side-width); height: 100vh; height: 100dvh; padding: 21px 13px 14px; overflow: hidden; background: color-mix(in srgb, var(--school-accent) 34%, #10263b); color: #e7f0f8; transition: width .22s ease, flex-basis .22s ease, transform .22s ease, background .2s ease; }
 .portal-frame-collapsed { --portal-side-width: 78px; }
 .portal-sidebar-brand { display: flex; align-items: center; justify-content: space-between; min-height: 46px; padding: 0 8px 13px; border-bottom: 1px solid #ffffff1a; }
@@ -52,4 +52,76 @@
 
 @media (prefers-reduced-motion: reduce) {
   .portal-sidebar, .portal-nav-group button, .portal-settings-link { transition: none; }
+}
+
+/* More readable navigation and comfortable touch targets across the shared portals. */
+.portal-nav-group { margin: 13px 0 19px; }
+.portal-nav-group h2 { margin-bottom: 7px; color: #a8bbcd; font-size: 10px; }
+.portal-nav-group button, .portal-logout { min-height: 44px; border-radius: 8px; color: #d4e0eb; }
+.portal-nav-icon { width: 26px; height: 26px; flex-basis: 26px; font-size: 15px; }
+.portal-nav-label { font-size: 12px; }
+.portal-topbar-user b { font-size: 12px; }
+.portal-topbar-user small { color: #718597; font-size: 10px; }
+.portal-nav-group button:active, .portal-settings-link:active, .portal-menu-button:active { transform: scale(.98); }
+
+/* Use a drawer on tablets to keep the workspace wide enough for its content. */
+@media (max-width: 900px) {
+  .portal-sidebar { position: fixed; top: 0; bottom: 0; left: 0; z-index: 60; width: min(310px, 88vw); height: 100vh; height: 100dvh; flex-basis: auto; padding-top: max(18px, env(safe-area-inset-top)); padding-bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-105%); box-shadow: 12px 0 32px #07152230; }
+  .portal-sidebar.portal-sidebar-open { transform: translateX(0); }
+  .portal-frame-collapsed .portal-sidebar { padding-right: 13px; padding-left: 13px; }
+  .portal-frame-collapsed .tenant-brand-copy, .portal-frame-collapsed .portal-tenant-chip, .portal-frame-collapsed .portal-nav-group h2, .portal-frame-collapsed .portal-nav-label, .portal-frame-collapsed .portal-upgrade-link > span:last-child { display: initial; }
+  .portal-frame-collapsed .tenant-brand-copy { display: flex; }
+  .portal-frame-collapsed .portal-tenant-chip { display: flex; }
+  .portal-frame-collapsed .portal-sidebar-brand { justify-content: space-between; padding-right: 8px; padding-left: 8px; }
+  .portal-frame-collapsed .portal-nav-group button, .portal-frame-collapsed .portal-settings-link, .portal-frame-collapsed .portal-logout { justify-content: flex-start; padding-right: 10px; padding-left: 10px; }
+  .portal-frame-collapsed .portal-upgrade-link { justify-content: flex-start; padding-right: 10px; padding-left: 10px; }
+  .portal-frame-collapsed .portal-nav-active-mark { position: static; margin-left: auto; }
+  .portal-collapse-button { display: none; }
+  .portal-menu-button { display: grid; }
+  .portal-sidebar-close { display: block; min-width: 44px; min-height: 44px; }
+  .portal-scrim { position: fixed; z-index: 55; inset: 0; display: block; border: 0; background: #07152280; }
+  .portal-page-content > * { min-width: 0; max-width: 100%; }
+  .portal-page-content table { display: block; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portal-nav-group button:active, .portal-settings-link:active, .portal-menu-button:active { transform: none; }
+}
+
+/* Accessible, responsive feedback when a role is denied a workspace. */
+.portal-loading > section {
+  display: grid;
+  width: min(540px, calc(100% - 32px));
+  gap: 14px;
+  padding: clamp(22px, 5vw, 34px);
+  border: 1px solid #dce6ee;
+  border-radius: 16px;
+  background: var(--panel, #fff);
+  box-shadow: 0 20px 55px #18324b12;
+  color: var(--ink, #18324b);
+}
+.portal-loading > section .eyebrow,
+.portal-loading > section h1,
+.portal-loading > section p { margin: 0; }
+.portal-loading > section h1 { font-size: clamp(1.45rem, 4vw, 1.9rem); line-height: 1.2; }
+.portal-loading > section p:not(.eyebrow) { color: var(--muted, #60758a); line-height: 1.65; }
+.portal-loading > section .button,
+.portal-loading > section .outline-button { min-height: 44px; justify-content: center; }
+.portal-loading > section :focus-visible,
+.portal-access-denied :focus-visible { outline: 3px solid #73b5ff; outline-offset: 3px; }
+.portal-access-denied {
+  width: min(620px, 100%);
+  margin: auto;
+  padding: clamp(20px, 4vw, 30px);
+  border: 1px solid #e3d6b4;
+  border-left: 4px solid #bd8421;
+  border-radius: 14px;
+  background: #fffaf0;
+  color: #382d18;
+}
+.portal-access-denied h2 { margin: 0 0 8px; font-size: clamp(1.15rem, 3vw, 1.45rem); }
+.portal-access-denied p { margin: 0; color: #68583a; line-height: 1.6; }
+@media (max-width: 520px) {
+  .portal-loading > section { gap: 12px; border-radius: 13px; }
+  .portal-access-denied { border-radius: 12px; }
 }

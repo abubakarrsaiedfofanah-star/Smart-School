@@ -25,7 +25,7 @@ interface AuthContextValue {
   resetPassword: (email: string) => Promise<void>
 }
 
-const roles: PortalRole[] = ['super_admin', 'school_admin', 'teacher', 'student', 'parent']
+const roles: PortalRole[] = ['super_admin', 'school_admin', 'teacher', 'staff', 'student', 'parent']
 const isPortalRole = (value: string | null): value is PortalRole => roles.includes(value as PortalRole)
 const AuthContext = createContext<AuthContextValue | null>(null)
 
@@ -39,16 +39,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const loadStaffRoles = async (nextProfile: UserProfile | null) => {
     if (!nextProfile?.school_id || !supabase || nextProfile.role !== 'teacher') { setStaffRoles([]); return }
-    const [assigned, legacy] = await Promise.all([
-      supabase.from('school_staff_role_assignments').select('role_key').eq('school_id', nextProfile.school_id).eq('profile_id', nextProfile.id),
-      supabase.from('school_hr_roles').select('hr_role').eq('school_id', nextProfile.school_id).eq('profile_id', nextProfile.id).maybeSingle()
-    ])
-    setStaffRoles([...new Set([...(assigned.data || []).map(row => row.role_key), legacy.data?.hr_role].filter(Boolean))])
+    const { data: assigned, error } = await supabase.from('school_staff_role_assignments')
+      .select('role_key').eq('school_id', nextProfile.school_id).eq('profile_id', nextProfile.id)
+    if (error) throw error
+    setStaffRoles([...new Set((assigned || []).map(row => row.role_key).filter(Boolean))])
   }
 
   const enterDemo = (role: PortalRole): { profile: UserProfile } => {
     const labels: Record<PortalRole, string> = {
-      super_admin: 'Platform Administrator', school_admin: 'Demo School Admin', teacher: 'Demo Teacher', student: 'Demo Student', parent: 'Demo Parent'
+      super_admin: 'Platform Administrator', school_admin: 'Demo School Admin', teacher: 'Demo Teacher', staff: 'Demo Staff Member', student: 'Demo Student', parent: 'Demo Parent'
     }
     const demoProfile: UserProfile = {
       id: `demo-${role}`, full_name: labels[role], role,
@@ -131,12 +130,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
     if (profileError) throw profileError
     if (!nextProfileData) throw new Error('Your account is active but has no school profile yet. Contact an administrator.')
     const nextProfile = nextProfileData as UserProfile
+    if (nextProfile.is_active === false) {
+      await supabase.auth.signOut()
+      throw new Error('This account is disabled. Contact your school administrator.')
+    }
     setProfile(nextProfile)
-    const [assigned, legacy] = nextProfile.school_id && nextProfile.role === 'teacher' ? await Promise.all([
-      supabase.from('school_staff_role_assignments').select('role_key').eq('school_id', nextProfile.school_id).eq('profile_id', nextProfile.id),
-      supabase.from('school_hr_roles').select('hr_role').eq('school_id', nextProfile.school_id).eq('profile_id', nextProfile.id).maybeSingle()
-    ]) : [{ data: [] }, { data: null }]
-    const nextStaffRoles = [...new Set([...(assigned.data || []).map((row: { role_key: string }) => row.role_key), legacy.data?.hr_role].filter(Boolean))]
+    const { data: assigned, error: rolesError } = nextProfile.school_id && nextProfile.role === 'teacher'
+      ? await supabase.from('school_staff_role_assignments').select('role_key').eq('school_id', nextProfile.school_id).eq('profile_id', nextProfile.id)
+      : { data: [], error: null }
+    if (rolesError) throw rolesError
+    const nextStaffRoles = [...new Set((assigned || []).map((row: { role_key: string }) => row.role_key).filter(Boolean))]
     setStaffRoles(nextStaffRoles)
     if (nextProfile.school_id) {
       const { data: nextSchool } = await supabase.from('schools').select('*').eq('id', nextProfile.school_id).maybeSingle()

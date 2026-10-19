@@ -141,7 +141,7 @@
 .school-nav .public-menu { width: 44px; height: 40px; padding: 0; border: 1px solid #ffffff80; border-radius: 6px; background: transparent; color: #fff; font-size: 1.35rem; line-height: 1; }
 .school-nav .public-menu[aria-expanded="true"] { background: #ffffff1c; }
 .school-nav nav a.active { color: #fff; box-shadow: inset 0 -2px #d8eaff; }
-.school-nav nav a.header-register { padding: 12px 14px; border: 0; background: #fff; color: #123d68; }
+.school-nav nav a.header-register { padding: 12px 14px; border: 0; background: #fff; color: #123d68 !important; }
 .school-nav nav a.header-register:hover { background: #e8f0f7; color: #123d68; }
 .school-nav nav a.header-login { padding: 10px 0; }
 /* Keep the full registration action visible on mid-size desktop screens. */
@@ -149,7 +149,7 @@
   .school-nav { padding-right: 24px; padding-left: 24px; }
   .school-nav nav { gap: clamp(8px, 1.2vw, 16px); padding-left: 16px; }
   .school-nav nav a.header-register,
-  .school-nav nav a.header-register b { color: #123d68; }
+  .school-nav nav a.header-register b { color: #123d68 !important; }
 }
 .school-public-page { min-height: 100vh; }
 .school-public-content { width: min(1160px, calc(100% - 48px)); min-height: 66vh; margin: 0 auto; padding: clamp(56px, 9vw, 110px) 0 90px; }
@@ -346,4 +346,66 @@
   .school-hero .hero-copy h1 { font-size: clamp(2.3rem, 11vw, 2.8rem); }
   .school-footer .footer-container { grid-template-columns: minmax(0, 1fr); }
   .school-footer .footer-brand { grid-column: auto; }
+}
+
+/* Portal directory: clear school-account guidance and role-specific sign-in actions. */
+.school-portal-access-note {
+  display: grid;
+  gap: 5px;
+  margin: -20px 0 24px;
+  padding: 16px 19px;
+  border: 1px solid #cbdceb;
+  border-left: 4px solid #2470cf;
+  border-radius: 10px;
+  background: #edf5fc;
+  color: #18324b;
+  line-height: 1.55;
+}
+.school-portal-access-note b { font-size: .94rem; }
+.school-portal-access-note span { color: #526c83; font-size: .88rem; }
+.school-public-portal-grid { align-items: stretch; }
+.school-public-portal-grid .school-public-card {
+  min-height: 232px;
+  padding: 28px 30px;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.school-public-portal-grid .school-public-card:hover {
+  transform: translateY(-2px);
+  border-color: #8eb9ec;
+  box-shadow: 0 14px 32px #18324b12;
+}
+.school-public-portal-grid .school-public-card h2 { margin-bottom: 10px; }
+.school-public-portal-grid .school-public-card p { line-height: 1.65; }
+.school-public-portal-grid .school-public-card .school-public-portal-link {
+  display: flex;
+  width: fit-content;
+  min-height: 42px;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding: 0 14px;
+  border: 1px solid #d2dfeb;
+  border-radius: 8px;
+  color: #164f87;
+  font-size: .9rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background .18s ease, color .18s ease, border-color .18s ease;
+}
+.school-public-portal-grid .school-public-card .school-public-portal-link:hover {
+  border-color: #1e67b9;
+  background: #1e67b9;
+  color: #fff;
+}
+.school-public-portal-grid .school-public-card .school-public-portal-link:focus-visible {
+  outline: 3px solid #78b7ff;
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .school-portal-access-note { margin: -14px 0 18px; padding: 14px; }
+  .school-public-portal-grid .school-public-card { min-height: 195px; padding: 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .school-public-portal-grid .school-public-card,
+  .school-public-portal-grid .school-public-card .school-public-portal-link { transition: none; }
 }

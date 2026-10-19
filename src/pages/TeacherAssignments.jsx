@@ -51,10 +51,10 @@ export default function TeacherAssignments() {
     await load()
   }
 
-  return <main style={{ maxWidth: 1120, margin: '0 auto', padding: '32px 24px' }}>
+  return <main className="teacher-assignments-page">
     <p className="eyebrow">Teaching workspace</p><h1>Assignments & submissions</h1>
     <p>Publish classwork for a subject you teach, track submissions, then review and grade each student’s work.</p>
-    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px,.75fr) minmax(0,1.25fr)', gap: 18, alignItems: 'start', marginTop: 24 }}>
+    <div className="teacher-assignments-layout">
       <form className="panel" onSubmit={createAssignment} style={{ padding: 20, display: 'grid', gap: 12 }}>
         <h2 style={{ margin: 0 }}>Create assignment</h2>
         <label>Class and subject<select required value={form.teaching} onChange={event => setForm({ ...form, teaching: event.target.value })}><option value="">Choose a class and subject</option>{teaching.map(item => <option key={`${item.class_id}:${item.subject_id}`} value={`${item.class_id}:${item.subject_id}`}>{item.classes?.name || 'Class'} · {item.subjects?.name || 'Subject'}</option>)}</select></label>
@@ -69,6 +69,19 @@ export default function TeacherAssignments() {
         {loading ? <p>Loading assignments…</p> : !assignments.length ? <p>No assignments are available for your classes yet.</p> : <div style={{ display: 'grid', gap: 12 }}>{assignments.map(item => { const submitted = item.submissions || []; const graded = submitted.filter(row => row.score !== null).length; return <article key={item.id} style={{ borderTop: '1px solid var(--line)', paddingTop: 12 }}><div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}><div><strong>{item.title}</strong><p style={{ margin: '4px 0', color: 'var(--muted)' }}>{item.classes?.name || 'Class'} · {item.subjects?.name || 'Subject'} · Max {item.max_score ?? 100}{item.due_date ? ` · Due ${item.due_date}` : ''}</p><small>{submitted.length} submitted · {graded} graded</small></div><Link className="button outline-button" to={`/review/${item.id}`}>Review submissions</Link></div></article> })}</div>}
       </section>
     </div>
-    <style>{`@media(max-width:800px){.panel form{min-width:0}}.panel label{display:grid;gap:6px}.panel input,.panel select,.panel textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}`}</style>
+        <style>{`
+      .teacher-assignments-page { max-width: 1120px; margin: 0 auto; padding: 32px 24px; }
+      .teacher-assignments-layout { display: grid; grid-template-columns: minmax(260px, .75fr) minmax(0, 1.25fr); gap: 18px; align-items: start; margin-top: 24px; }
+      .teacher-assignments-layout > * { min-width: 0; }
+      .teacher-assignments-layout label { display: grid; gap: 6px; }
+      .teacher-assignments-layout input, .teacher-assignments-layout select, .teacher-assignments-layout textarea { box-sizing: border-box; width: 100%; min-width: 0; min-height: 46px; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); }
+      @media (max-width: 850px) { .teacher-assignments-layout { grid-template-columns: minmax(0, 1fr); } }
+      @media (max-width: 520px) {
+        .teacher-assignments-page { padding: 22px 12px; }
+        .teacher-assignments-page h1 { font-size: clamp(1.45rem, 7vw, 2rem); }
+        .teacher-assignments-layout > .panel { padding: 16px !important; }
+        .teacher-assignments-layout button, .teacher-assignments-layout a.button { min-height: 44px; }
+      }
+    `}</style>
   </main>
 }

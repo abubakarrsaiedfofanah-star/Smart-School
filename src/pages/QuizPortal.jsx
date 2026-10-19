@@ -464,9 +464,10 @@ export default function QuizPortal() {
 
   async function deleteResource(resource) {
     if (!window.confirm(`Remove “${resource.title}”?`)) return;
+    const { error: fileError } = await supabase.storage.from('subject-resources').remove([resource.file_path]);
+    if (fileError) return toast.error(fileError.message || 'Could not remove the resource file.');
     const { error } = await supabase.from('subject_resources').delete().eq('id', resource.id);
     if (error) return toast.error(error.message);
-    await supabase.storage.from('subject-resources').remove([resource.file_path]);
     setResources(list => list.filter(item => item.id !== resource.id)); toast.success('Resource removed.');
   }
 

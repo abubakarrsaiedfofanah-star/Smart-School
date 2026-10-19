@@ -905,3 +905,22 @@ input:focus, select:focus, textarea:focus {
   .register-page .form-actions .button, .register-page .form-actions .back-btn { padding: 11px 16px !important; }
 }
 
+
+/* Touch-friendly sign-in and registration controls. */
+.auth.login-page button, .register-page button, .register-page a { -webkit-tap-highlight-color: transparent; }
+.login-page .login-demo-access button, .login-page .login-portals a, .login-page .login-aside-footer a,
+.register-page .choice, .register-page .form-actions .button, .register-page .form-actions .back-btn { transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease; }
+.login-page .login-demo-access button:active, .register-page .choice:active, .register-page .form-actions .button:active { transform: scale(.985); }
+.login-page button:focus-visible, .login-page a:focus-visible, .register-page button:focus-visible, .register-page a:focus-visible { outline: 3px solid #2375e166; outline-offset: 3px; }
+@media (max-width: 520px) {
+  .login-page > div[style*="position: fixed"], .register-page > div[style*="position: fixed"] { align-items: flex-start !important; overflow-y: auto; padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)) !important; }
+  .login-page > div[style*="position: fixed"] > .glass-card, .register-page > div[style*="position: fixed"] > .glass-card { max-height: calc(100dvh - 24px); overflow-y: auto; overscroll-behavior: contain; padding: 22px 18px !important; border-radius: 18px !important; }
+  .login-card input:not([type="checkbox"]), .register-main input, .register-main select { min-height: 48px; font-size: 16px; }
+  .login-card form label > div > button { min-width: 44px; min-height: 44px; }
+  .login-card .login-demo-access button, .login-card .login-portals a { min-height: 42px; }
+  .register-page .choice { min-height: 48px; }
+  .register-page .form-actions .button, .register-page .form-actions .back-btn { min-height: 46px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .login-page .login-demo-access button, .register-page .choice, .register-page .form-actions .button, .register-page .form-actions .back-btn { transition: none; }
+}

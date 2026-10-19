@@ -1,0 +1,54 @@
+.staff-attendance-page{width:min(1150px,100%);margin:0 auto;padding:clamp(20px,4vw,40px) clamp(12px,3vw,28px);color:var(--ink)}
+.staff-attendance-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:24px}
+.staff-attendance-head h1{margin:4px 0;font-size:clamp(1.7rem,4vw,2.35rem);letter-spacing:-.035em}
+.staff-attendance-head p{color:var(--muted);margin:0;line-height:1.5}
+.staff-save-all{flex:0 0 auto;min-height:44px}
+.staff-attendance-tools{display:grid;grid-template-columns:minmax(180px,240px) minmax(220px,1fr);gap:12px;margin:20px 0}
+.staff-attendance-tools label{display:grid;gap:6px;color:var(--muted);font-size:.78rem;font-weight:750}
+.staff-attendance-tools input,.staff-attendance-table select,.staff-attendance-table input{width:100%;min-width:0;min-height:44px;box-sizing:border-box;padding:10px 11px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit}
+.staff-attendance-tools input:focus-visible,.staff-attendance-table select:focus-visible,.staff-attendance-table input:focus-visible{outline:3px solid color-mix(in srgb,var(--school-accent,#2375e1) 28%,transparent);outline-offset:1px;border-color:var(--school-accent,#2375e1)}
+.staff-attendance-summary{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:9px;margin:0 0 18px}
+.staff-attendance-count{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);text-align:left;cursor:pointer;transition:border-color .15s,background .15s,transform .15s}
+.staff-attendance-count:hover{transform:translateY(-1px);border-color:var(--school-accent,#2375e1)}
+.staff-attendance-count.selected{border-color:var(--school-accent,#2375e1);background:color-mix(in srgb,var(--school-accent,#2375e1) 8%,var(--panel));box-shadow:inset 0 0 0 1px var(--school-accent,#2375e1)}
+.staff-attendance-count span{overflow:hidden;color:var(--muted);font-size:.73rem;text-overflow:ellipsis;text-transform:capitalize;white-space:nowrap}
+.staff-attendance-count strong{font-size:1.1rem;font-variant-numeric:tabular-nums}
+.staff-attendance-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.staff-attendance-table{width:100%;border-collapse:collapse;min-width:720px}
+.staff-attendance-table th,.staff-attendance-table td{padding:12px;text-align:left;border-bottom:1px solid var(--line)}
+.staff-attendance-table th{color:var(--muted);font-size:.76rem;font-weight:750;letter-spacing:.035em}
+.staff-attendance-table td{vertical-align:middle}
+.staff-attendance-table tr:last-child td{border-bottom:0}
+.staff-attendance-table tr.is-dirty{background:color-mix(in srgb,var(--school-accent,#2375e1) 5%,var(--panel))}
+.staff-attendance-table td:first-child strong,.staff-role-label{display:block}
+.staff-role-label{margin-top:3px;color:var(--muted);font-size:.76rem;text-transform:capitalize}
+.staff-attendance-table td:last-child .button{min-width:72px;min-height:40px;justify-content:center}
+.staff-attendance-empty{padding:32px!important;color:var(--muted);text-align:center!important}
+.staff-attendance-error{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:14px 0;padding:16px;border:1px solid color-mix(in srgb,#c2413b 35%,var(--line));border-radius:12px;background:color-mix(in srgb,#c2413b 6%,var(--panel))}
+.staff-attendance-error strong{color:var(--ink)}
+.staff-attendance-error p{margin:5px 0 0;color:var(--muted);overflow-wrap:anywhere}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:900px){.staff-attendance-summary{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:640px){
+  .staff-attendance-page{padding:20px 12px 28px}
+  .staff-attendance-head{align-items:flex-start;flex-direction:column;margin-bottom:18px}
+  .staff-save-all{width:100%}
+  .staff-attendance-tools{grid-template-columns:minmax(0,1fr);gap:10px;margin:14px 0}
+  .staff-attendance-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .staff-attendance-count{min-height:48px;padding:10px}
+  .staff-attendance-wrap{overflow:visible;border:0;background:transparent}
+  .staff-attendance-table,.staff-attendance-table tbody{display:block;width:100%;min-width:0}
+  .staff-attendance-table thead{display:none}
+  .staff-attendance-table tbody{display:grid;gap:11px}
+  .staff-attendance-table tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px;padding:8px 13px;border:1px solid var(--line);border-radius:14px;background:var(--panel);box-shadow:var(--shadow)}
+  .staff-attendance-table tr.is-dirty{border-color:var(--school-accent,#2375e1)}
+  .staff-attendance-table td{display:grid;grid-template-columns:minmax(0,1fr);gap:5px;min-width:0;padding:8px 0;border:0}
+  .staff-attendance-table td::before{content:attr(data-label);color:var(--muted);font-size:.68rem;font-weight:750}
+  .staff-attendance-table td:first-child,.staff-attendance-table td:nth-child(5),.staff-attendance-table td:last-child{grid-column:1/-1}
+  .staff-attendance-table td input,.staff-attendance-table td select{min-height:46px}
+  .staff-attendance-table td:last-child .button{width:100%;min-height:46px}
+  .staff-attendance-table .staff-attendance-empty{display:block;grid-column:1/-1;border:0;background:transparent;box-shadow:none}
+  .staff-attendance-error{align-items:stretch;flex-direction:column}
+}
+@media(max-width:360px){.staff-attendance-count{align-items:flex-start;flex-direction:column;gap:4px}.staff-attendance-table tr{gap:0 8px;padding:7px 10px}}
+@media(prefers-reduced-motion:reduce){.staff-attendance-count{transition:none}}

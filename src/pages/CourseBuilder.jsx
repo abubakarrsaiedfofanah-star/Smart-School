@@ -41,15 +41,31 @@ export default function CourseBuilder() {
     if (!supabase) return;
     setLoadingCourses(true);
     try {
-      const [subData, courseData] = await Promise.all([
-        supabase.from('subjects').select('*').eq('school_id', profile.school_id).order('name'),
-        supabase.from('courses').select('*, subjects(name)').eq('school_id', profile.school_id).order('created_at', { ascending: false })
-      ]);
+      let assignedSubjectIds = null;
+      if (profile.role === 'teacher') {
+        const { data: assignments, error: assignmentError } = await supabase
+          .from('teacher_subject_assignments').select('subject_id')
+          .eq('school_id', profile.school_id).eq('teacher_id', profile.id);
+        if (assignmentError) throw assignmentError;
+        assignedSubjectIds = [...new Set((assignments || []).map(row => row.subject_id).filter(Boolean))];
+      }
+      const subjectRequest = assignedSubjectIds && !assignedSubjectIds.length
+        ? Promise.resolve({ data: [], error: null })
+        : supabase.from('subjects').select('id,name').eq('school_id', profile.school_id)
+          .order('name').then(result => assignedSubjectIds
+            ? { ...result, data: (result.data || []).filter(subject => assignedSubjectIds.includes(subject.id)) }
+            : result);
+      let courseRequest = supabase.from('courses').select('*, subjects(name)')
+        .eq('school_id', profile.school_id).order('created_at', { ascending: false });
+      if (profile.role === 'teacher') courseRequest = courseRequest.eq('teacher_id', profile.id);
+      const [subData, courseData] = await Promise.all([subjectRequest, courseRequest]);
+      if (subData.error) throw subData.error;
+      if (courseData.error) throw courseData.error;
       setSubjects(subData.data || []);
       setCourses(courseData.data || []);
     } catch (err) {
       console.error(err);
-      toast.error('Failed to load courses.');
+      toast.error(err.message || 'Failed to load courses.');
     } finally {
       setLoadingCourses(false);
     }
@@ -73,6 +89,10 @@ export default function CourseBuilder() {
   async function handleCreateCourse(e) {
     e.preventDefault();
     if (!supabase || !courseTitle.trim()) return;
+    if (profile.role === 'teacher' && !subjects.some(subject => subject.id === courseSubjectId)) {
+      toast.error('Choose one of your assigned subjects before creating a course.');
+      return;
+    }
     setSubmittingCourse(true);
     try {
       const { data, error } = await supabase.from('courses').insert({
@@ -169,10 +189,11 @@ export default function CourseBuilder() {
             <h3>New Course</h3>
             <form onSubmit={handleCreateCourse}>
               <input className="glass-input" placeholder="Course Title" value={courseTitle} onChange={e=>setCourseTitle(e.target.value)} required />
-              <select className="glass-select" value={courseSubjectId} onChange={e=>setCourseSubjectId(e.target.value)}>
-                <option value="">-- Choose Subject --</option>
+              <select className="glass-select" value={courseSubjectId} onChange={e=>setCourseSubjectId(e.target.value)} required={profile?.role === 'teacher'} disabled={profile?.role === 'teacher' && !subjects.length}>
+                <option value="">{profile?.role === 'teacher' && !subjects.length ? 'No assigned subjects' : '-- Choose Subject --'}</option>
                 {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
+              {profile?.role === 'teacher' && !subjects.length && <p style={{color:'var(--muted)'}}>Ask your school administrator to assign a subject before creating courses.</p>}
               <textarea className="glass-textarea" placeholder="Brief description..." value={courseDesc} onChange={e=>setCourseDesc(e.target.value)} />
               <button className="button blue-button full tactile-btn" disabled={submittingCourse}>Create Structure →</button>
             </form>

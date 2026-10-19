@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import VideoGuide from '../components/VideoGuide'
@@ -84,6 +84,17 @@ export default function RegisterSchool(){
     try { localStorage.setItem('smartschool_reg_step', step.toString()) } catch { /* Keep registration usable when browser storage is unavailable. */ }
   },[step]);
 
+  useEffect(() => {
+    if (!showHelpModal) return undefined
+    const previousOverflow = document.body.style.overflow
+    const closeOnEscape = event => { if (event.key === 'Escape') setShowHelpModal(false) }
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [showHelpModal])
   const clearDraft = () => {
     try { localStorage.removeItem('smartschool_reg_draft'); localStorage.removeItem('smartschool_reg_step') } catch { /* Ignore unavailable browser storage. */ }
     setForm(initial);

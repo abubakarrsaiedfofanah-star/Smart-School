@@ -227,8 +227,26 @@ const Analytics = ({ onBack }) => {
                 .line-chart-container, .bar-chart-container { flex: 1; }
 
                 @media (max-width: 768px) {
-                    .analytics-grid { grid-template-columns: 1fr; }
-                    .chart-card { min-height: 350px; padding: 20px; }
+                    .analytics-page { min-width: 0; padding: 24px 16px; }
+                    .analytics-header { align-items: flex-start; gap: 14px; margin-bottom: 22px; }
+                    .analytics-header h1 { font-size: clamp(1.4rem, 6vw, 2rem); }
+                    .analytics-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+                    .chart-card { min-width: 0; min-height: 0; padding: 20px; }
+                    .chart-header { gap: 10px; margin-bottom: 14px; }
+                    .chart-header h3 { font-size: 1.1rem; }
+                    .chart-info { flex-wrap: wrap; gap: 14px; margin-top: 12px; padding-top: 14px; }
+                    .info-box { min-width: 120px; }
+                    .info-box b { font-size: clamp(.85rem, 4vw, 1.05rem); overflow-wrap: anywhere; }
+                    .bar-chart-container, .line-chart-container, .benchmark-viz { min-width: 0; max-width: 100%; }
+                    .chart-card svg { max-width: 100%; }
+                }
+                @media (max-width: 420px) {
+                    .analytics-page { padding: 18px 10px; }
+                    .analytics-header { flex-wrap: wrap; }
+                    .chart-card { padding: 16px; }
+                    .chart-info { gap: 10px; }
+                    .info-box { min-width: 0; flex-basis: calc(50% - 5px); }
+                    .radial-chart-container svg { width: min(220px, 100%); height: auto; }
                 }
             `}</style>
         </div>

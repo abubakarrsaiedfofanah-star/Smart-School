@@ -1,0 +1,9 @@
+.tt-header-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tt-readonly-badge{display:inline-flex;align-items:center;min-height:36px;padding:0 12px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--muted);font-size:.78rem;font-weight:750}
+.tt-error{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:12px 0;padding:14px 16px;border:1px solid color-mix(in srgb,#b42318 32%,var(--line));border-radius:12px;background:color-mix(in srgb,#b42318 6%,var(--panel));color:var(--ink);overflow-wrap:anywhere}
+.tt-button:focus-visible,.session-buttons button:focus-visible,.tt-day-tabs button:focus-visible{outline:3px solid color-mix(in srgb,var(--green) 35%,transparent);outline-offset:2px}
+.tt-day-tabs button{min-height:46px;font-weight:750}
+.tt-form input:focus-visible,.tt-form select:focus-visible,.tt-controls select:focus-visible{outline:3px solid color-mix(in srgb,var(--green) 30%,transparent);outline-offset:1px}
+@media(max-width:800px){.tt-header-actions{width:100%;justify-content:space-between}.tt-error{align-items:stretch;flex-direction:column}.tt-error .tt-button{min-height:44px}.tt-day-tabs{overflow-x:auto;padding:2px}.tt-day-tabs button{min-width:56px}}
+@media(max-width:560px){.tt-form{grid-template-columns:minmax(0,1fr)}.tt-form-actions{flex-direction:column}.tt-form-actions button{min-height:44px}.tt-controls{align-items:stretch;flex-direction:column}.tt-controls select{width:100%;min-height:44px}.tt-title h1{font-size:clamp(1.65rem,8vw,2.2rem)}}
+@media(prefers-reduced-motion:reduce){.tt-day-tabs button{scroll-behavior:auto}}

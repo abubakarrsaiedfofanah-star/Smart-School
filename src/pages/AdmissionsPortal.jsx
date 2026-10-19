@@ -32,11 +32,7 @@ const AdmissionsPortal = () => {
 
     try {
       if (!supabase) {
-        // Demo mode simulation
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setSubmitted(true);
-        toast.success('Application submitted successfully (Demo Mode)');
-        return;
+        throw new Error('Online applications are unavailable because this school is not connected yet. No application was sent. Contact the school directly or try again later.');
       }
 
       const { error } = await supabase.rpc('submit_school_application', {
@@ -97,6 +93,7 @@ const AdmissionsPortal = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">School code</label>
               <input required type="text" name="schoolSlug" value={formData.schoolSlug || ''} onChange={handleChange} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" placeholder="Enter the school code from its application link" />
             </div>}
+            <p className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-900" role="note">This form includes a student date of birth and guardian contact details. Submit it only through the school’s official application link. The details are sent to that school’s admissions records for review.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Student First Name</label>
@@ -130,6 +127,7 @@ const AdmissionsPortal = () => {
                 <input
                   required
                   type="date"
+                  max={new Date().toISOString().slice(0, 10)}
                   name="dob"
                   value={formData.dob}
                   onChange={handleChange}

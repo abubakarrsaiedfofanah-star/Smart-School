@@ -43,7 +43,7 @@ const HrPayrollPortal = lazy(() => import('./pages/HrPayrollPortal'))
 const SchoolSubscription = lazy(() => import('./pages/SchoolSubscription'))
 const SchoolAccounts = lazy(() => import('./pages/SchoolAccounts'))
 const SchoolStaffRoles = lazy(() => import('./pages/SchoolStaffRoles'))
-const StaffPortals = lazy(() => import('./pages/StaffPortals'))
+const StaffWorkspace = lazy(() => import('./pages/StaffWorkspace'))
 import AppInstallPrompt from './components/AppInstallPrompt'
 import CommandPalette from './components/CommandPalette'
 
@@ -56,7 +56,7 @@ const readTheme = () => {
 }
 
 function Guard() { const {session,profile,loading}=useAuth(); if(loading)return <div className="portal-loading"><div className="spinner"></div></div>; if(!session)return <Navigate to="/login" replace/>; return profile?.role ? <Navigate to={roleRoute(profile.role)} replace/> : <Navigate to="/login" replace/> }
-const roleRoutes=[['super-admin','super_admin'],['school-admin','school_admin'],['teacher','teacher'],['student','student'],['parent','parent']]
+const roleRoutes=[['super-admin','super_admin'],['school-admin','school_admin'],['teacher','teacher'],['staff','staff'],['student','student'],['parent','parent']]
 export default function App(){
   const { profile } = useAuth()
   const [theme, setTheme] = useState(readTheme);
@@ -103,7 +103,7 @@ export default function App(){
         <Route path="/login" element={<Login/>}/>
         <Route path="/login/:portalRole" element={<Login/>}/>
         <Route path="/chat" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><Chat /></ProtectedRoute>} />
-        <Route path="/broadcast" element={<ProtectedRoute roles={['school_admin', 'teacher']}><Broadcast /></ProtectedRoute>} />
+        <Route path="/broadcast" element={<ProtectedRoute roles={['school_admin']}><Broadcast /></ProtectedRoute>} />
         <Route path="/report-card/:studentId" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']} shell={false}><AcademicReport /></ProtectedRoute>} />
         <Route path="/invoice/:paymentId" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><InvoiceView /></ProtectedRoute>} />
         <Route path="/gradebook" element={<ProtectedRoute roles={['school_admin', 'teacher']}><Gradebook /></ProtectedRoute>} />
@@ -115,15 +115,15 @@ export default function App(){
         <Route path="/review/:assignmentId" element={<ProtectedRoute roles={['teacher', 'school_admin']}><TeacherReview /></ProtectedRoute>} />
         <Route path="/calendar" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><SchoolCalendar /></ProtectedRoute>} />
         <Route path="/timetable" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><Timetable /></ProtectedRoute>} />
-        <Route path="/library" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><Library /></ProtectedRoute>} />
+        <Route path="/library" element={<ProtectedRoute roles={['school_admin', 'teacher', 'student', 'parent']}><Library /></ProtectedRoute>} />
         <Route path="/inventory" element={<ProtectedRoute roles={['school_admin', 'teacher']} permission="school.inventory.view"><Inventory /></ProtectedRoute>} />
         <Route path="/staff-attendance" element={<ProtectedRoute roles={['school_admin', 'teacher']} permission="school.staff_attendance.manage"><StaffAttendance /></ProtectedRoute>} />
         <Route path="/finance-operations" element={<ProtectedRoute roles={['school_admin', 'teacher']} permission="school.finance.portal.view" portal="finance"><FinanceOperations portalMode /></ProtectedRoute>} />
         <Route path="/quizzes" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student']}><QuizPortal /></ProtectedRoute>} />
         <Route path="/audit-trail" element={<ProtectedRoute roles={['super_admin', 'school_admin']}><AuditTrail /></ProtectedRoute>} />
         <Route path="/security" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><SecuritySettings /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><ProfileSettings /></ProtectedRoute>} />
-        <Route path="/lessons" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><LessonPlans /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'staff', 'student', 'parent']}><ProfileSettings /></ProtectedRoute>} />
+        <Route path="/lessons" element={<ProtectedRoute roles={['school_admin', 'teacher', 'student']}><LessonPlans /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute roles={['school_admin']}><SchoolSettings /></ProtectedRoute>} />
         <Route path="/subscription" element={<ProtectedRoute roles={['school_admin']}><SchoolSubscription /></ProtectedRoute>} />
         <Route path="/school-accounts" element={<ProtectedRoute roles={['school_admin']}><SchoolAccounts /></ProtectedRoute>} />
@@ -135,10 +135,10 @@ export default function App(){
         <Route path="/apply" element={<AdmissionsPortal />} />
         <Route path="/apply/:schoolSlug" element={<AdmissionsPortal />} />
         <Route path="/admissions" element={<ProtectedRoute roles={['school_admin', 'teacher']} permission="school.admissions.manage"><AdmissionsManager /></ProtectedRoute>} />
-        <Route path="/staff-portals" element={<ProtectedRoute roles={['school_admin', 'teacher']}><StaffPortals /></ProtectedRoute>} />
+        <Route path="/staff-portals" element={<ProtectedRoute roles={['school_admin', 'teacher']}><Navigate to="/portal" replace /></ProtectedRoute>} />
         <Route path="/portal" element={<Guard/>}/>
         {roleRoutes.map(([path,role])=>(
-          <Route key={path} path={'/'+path} element={<ProtectedRoute roles={[role]}>{role === 'teacher' ? <TeacherWorkspace /> : <RoleDashboard role={role} embedded />}</ProtectedRoute>}/>
+          <Route key={path} path={'/'+path} element={<ProtectedRoute roles={[role]} shell={role === 'staff'}>{role === 'teacher' ? <TeacherWorkspace /> : role === 'staff' ? <StaffWorkspace /> : <RoleDashboard role={role} embedded />}</ProtectedRoute>}/>
         ))}
         <Route path="*" element={<Navigate to="/" replace/>}/>
       </Routes>

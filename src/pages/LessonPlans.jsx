@@ -30,8 +30,9 @@ export default function LessonPlans() {
     if (!supabase) return;
     try {
       if (profile.role === 'teacher') {
-        const { data } = await supabase.from('teacher_subject_assignments').select('*, subjects(id, name), classes(id, name)').eq('teacher_id', profile.id);
-        setAssignedSubjects((data || []).map(d => ({ id: d.subjects.id, name: d.subjects.name, class_id: d.classes.id, class_name: d.classes.name, assignment_id: d.id })));
+        const { data, error } = await supabase.from('teacher_subject_assignments').select('*, subjects(id, name), classes(id, name)').eq('school_id', profile.school_id).eq('teacher_id', profile.id);
+        if (error) throw error;
+        setAssignedSubjects((data || []).filter(d => d.subjects && d.classes).map(d => ({ id: d.subjects.id, name: d.subjects.name, class_id: d.classes.id, class_name: d.classes.name, assignment_id: d.id })));
       } else if (profile.role === 'student') {
         const { data } = await supabase.from('subjects').select('*').eq('school_id', profile.school_id);
         setSubjects(data || []);
@@ -45,9 +46,10 @@ export default function LessonPlans() {
     try {
       let query = supabase.from('lesson_plans').select('*, subjects(name), classes(name)').eq('school_id', profile.school_id);
       if (filterSubjectId !== 'all') query = query.eq('subject_id', filterSubjectId);
-      const { data } = await query.order('created_at', { ascending: false });
+      const { data, error } = await query.order('created_at', { ascending: false });
+      if (error) throw error;
       setPlans(data || []);
-    } catch (err) { console.error(err); } finally { setLoading(false); }
+    } catch (err) { console.error(err); toast.error(err.message || 'Could not load lesson plans.'); } finally { setLoading(false); }
   }
 
   async function handleSubmit(e) {

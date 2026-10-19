@@ -27,7 +27,7 @@ Deno.serve(async request => {
   const { data: authData, error: authError } = await caller.auth.getUser()
   if (authError || !authData.user) return respond({ error: 'Your session is no longer valid. Sign in again.' }, 401)
 
-  let body: { email?: string; full_name?: string; role?: string; student_id?: string }
+  let body: { email?: string; full_name?: string; role?: string; student_id?: string; job_title?: string; department?: string }
   try {
     const rawBody = await request.text()
     if (new TextEncoder().encode(rawBody).byteLength > 16_384) return respond({ error: 'Invitation request is too large.' }, 413)
@@ -39,15 +39,30 @@ Deno.serve(async request => {
   const studentId = body.student_id || null
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) return respond({ error: 'Enter a valid email address.' }, 400)
   if (fullName.length < 2 || fullName.length > 160) return respond({ error: 'Enter the person’s full name.' }, 400)
-  if (!['teacher', 'student', 'parent'].includes(role || '')) return respond({ error: 'Choose teacher, student, or parent access.' }, 400)
+  if (!['teacher', 'staff', 'student', 'parent'].includes(role || '')) return respond({ error: 'Choose teacher, staff, student, or parent access.' }, 400)
   if ((role === 'student' || role === 'parent') && !studentId) return respond({ error: 'Select the learner record for this account.' }, 400)
+  const jobTitle = body.job_title?.trim() || ''
+  const department = body.department?.trim() || null
+  if (role === 'staff' && (jobTitle.length < 2 || jobTitle.length > 120)) return respond({ error: 'Enter a staff job title.' }, 400)
+  if (role === 'staff' && (department?.length || 0) > 100) return respond({ error: 'Department names must be 100 characters or fewer.' }, 400)
 
   const admin = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } })
-  const { data: actor, error: actorError } = await admin.from('profiles').select('id,role,school_id').eq('id', authData.user.id).maybeSingle()
-  if (actorError || actor?.role !== 'school_admin' || !actor.school_id) return respond({ error: 'Only a school administrator can manage portal accounts.' }, 403)
+  const { data: actor, error: actorError } = await admin.from('profiles').select('id,role,school_id,is_active').eq('id', authData.user.id).maybeSingle()
+  if (actorError || actor?.role !== 'school_admin' || actor.is_active !== true || !actor.school_id) return respond({ error: 'Only an active school administrator can manage portal accounts.' }, 403)
 
   const { data: school, error: schoolError } = await admin.from('schools').select('id,name,status').eq('id', actor.school_id).maybeSingle()
   if (schoolError || !school || school.status !== 'active') return respond({ error: 'This school workspace is not active.' }, 403)
+
+  let existingStaffEmployeeId: string | null = null
+  if (role === 'staff') {
+    const { data: matchingEmployees, error: employeeLookupError } = await admin.from('hr_employees')
+      .select('id,profile_id').eq('school_id', actor.school_id).eq('email', email).limit(2)
+    if (employeeLookupError) return respond({ error: 'Could not verify the staff record for this invitation.' }, 503)
+    if ((matchingEmployees || []).length > 1) return respond({ error: 'More than one staff record uses this email. Ask HR to resolve the duplicate records first.' }, 409)
+    const matchingEmployee = matchingEmployees?.[0]
+    if (matchingEmployee?.profile_id) return respond({ error: 'This staff record is already linked to a portal account.' }, 409)
+    existingStaffEmployeeId = matchingEmployee?.id || null
+  }
 
   const { data: invitationAllowed, error: invitationLimitError } = await admin.rpc('consume_portal_invitation_attempt', { p_actor_id: authData.user.id, p_school_id: actor.school_id })
   if (invitationLimitError) return respond({ error: 'Invitations are temporarily unavailable. Try again later.' }, 503)
@@ -84,6 +99,21 @@ Deno.serve(async request => {
     return respond({ error: 'The account was invited but its school role could not be set. Please retry.' }, 500)
   }
 
+  if (role === 'staff') {
+    const employeeResult = existingStaffEmployeeId
+      ? await admin.from('hr_employees').update({ profile_id: userId }).eq('id', existingStaffEmployeeId).eq('school_id', actor.school_id).is('profile_id', null).select('id').maybeSingle()
+      : await admin.from('hr_employees').insert({
+        school_id: actor.school_id, profile_id: userId,
+        staff_number: `STF-${crypto.randomUUID().replaceAll('-', '').slice(0, 10).toUpperCase()}`,
+        full_name: fullName, email, department, job_title: jobTitle, employment_status: 'active', created_by: actor.id,
+      }).select('id').maybeSingle()
+    const employeeError = employeeResult.error
+    if (employeeError || !employeeResult.data) {
+      await admin.auth.admin.deleteUser(userId)
+      return respond({ error: employeeError?.code === '23505' ? 'A staff record already exists for this account.' : 'Could not link the school staff record.' }, 500)
+    }
+  }
+
   if (role === 'student') {
     const { error } = await admin.from('students').update({ profile_id: userId }).eq('id', studentId).eq('school_id', actor.school_id)
     if (error) {
@@ -104,6 +134,8 @@ Deno.serve(async request => {
     accepted_at: inviteData.user.email_confirmed_at ? new Date().toISOString() : null,
   })
   if (recordError) {
+    if (role === 'staff' && existingStaffEmployeeId) await admin.from('hr_employees').update({ profile_id: null }).eq('id', existingStaffEmployeeId).eq('profile_id', userId).eq('school_id', actor.school_id)
+    else if (role === 'staff') await admin.from('hr_employees').delete().eq('profile_id', userId).eq('school_id', actor.school_id)
     await admin.auth.admin.deleteUser(userId)
     return respond({ error: recordError.message }, 500)
   }
