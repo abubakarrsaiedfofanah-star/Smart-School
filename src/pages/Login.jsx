@@ -185,7 +185,7 @@ export default function Login(){
 
           <section className="demo-access login-demo-access" aria-labelledby="demo-access-title">
             <h3 id="demo-access-title">Explore with a demo account</h3>
-            <p>Sample data only.</p>
+            <p>Demo accounts contain no school records.</p>
             <div className="demo-grid">
               {Object.entries(roleLabels).filter(([role]) => ['school_admin','teacher','student','parent'].includes(role)).map(([role,label])=><button type="button" key={role} onClick={()=>openDemo(role)}>{label}<span>Open demo →</span></button>)}
             </div>

@@ -9,10 +9,10 @@ const challenges = [
     explanation: "Plants use Carbon Dioxide (CO2) and Water (H2O) along with light to produce Glucose and Oxygen!"
   },
   {
-    question: "In Mathematics, what is the derivative of x² with respect to x?",
-    options: ["x", "2x", "x³ / 3", "2"],
+    question: "In Mathematics, what is the derivative of xÂ² with respect to x?",
+    options: ["x", "2x", "xÂ³ / 3", "2"],
     answer: 1,
-    explanation: "Using the power rule: d/dx (x^n) = n * x^(n-1), so d/dx (x²) = 2x."
+    explanation: "Using the power rule: d/dx (x^n) = n * x^(n-1), so d/dx (xÂ²) = 2x."
   },
   {
     question: "Which organelle is known as the powerhouse of the eukaryotic cell?",
@@ -25,8 +25,8 @@ const challenges = [
 export default function AIStudyBuddyWidget() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
-  const [streak, setStreak] = useState(3);
-  const [points, setPoints] = useState(150);
+  const [streak, setStreak] = useState(0);
+  const [points, setPoints] = useState(0);
 
   const current = challenges[currentIndex];
 
@@ -39,7 +39,7 @@ export default function AIStudyBuddyWidget() {
       const newPoints = points + 25;
       setStreak(newStreak);
       setPoints(newPoints);
-      toast.success(`🎉 Correct! +25 AI Knowledge Points! Streak: ${newStreak}🔥`, { duration: 3000 });
+      toast.success(`Correct! +25 Session Points! Streak: ${newStreak}ðŸ”¥`, { duration: 3000 });
     } else {
       setStreak(0);
       toast.error("Not quite! Check the explanation below.", { duration: 3000 });
@@ -55,12 +55,12 @@ export default function AIStudyBuddyWidget() {
     <div className="study-buddy-card glass-card">
       <div className="buddy-header">
         <div className="buddy-title-group">
-          <span className="buddy-badge">⚡ AI DAILY CHALLENGE</span>
+          <span className="buddy-badge">âš¡ AI DAILY CHALLENGE</span>
           <h4>Quick Concept Booster</h4>
         </div>
         <div className="buddy-stats">
-          <span className="streak-tag">🔥 {streak} Streak</span>
-          <span className="points-tag">⭐ {points} Pts</span>
+          <span className="streak-tag">{streak} Session Streak</span>
+          <span className="points-tag">â­ {points} Session Points</span>
         </div>
       </div>
 
@@ -91,7 +91,7 @@ export default function AIStudyBuddyWidget() {
         <div className="buddy-explanation page-transition">
           <p><strong>Explanation:</strong> {current.explanation}</p>
           <button className="next-challenge-btn" onClick={handleNext}>
-            Next Question ➔
+            Next Question âž”
           </button>
         </div>
       )}

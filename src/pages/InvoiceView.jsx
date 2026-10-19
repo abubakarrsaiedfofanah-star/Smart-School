@@ -17,13 +17,8 @@ export default function InvoiceView() {
       try {
         setLoading(true);
 
-        if (paymentId.startsWith('PAY-DEMO') || !supabase) {
-          setData({
-            payment: { reference: paymentId, amount: 25000, status: 'paid', paid_at: new Date().toISOString() },
-            fee: { name: 'Term 2 Tuition' },
-            student: { admission_number: 'ST001', profiles: { full_name: 'Amina Hassan' }, classes: { name: 'Grade 7A' } },
-            school: { name: 'Bright Future Academy', address: '456 Innovation Blvd, Electric City', logo_url: '' }
-          });
+        if (!supabase) {
+          setData(null)
           setLoading(false);
           return;
         }

@@ -10,49 +10,28 @@ export default function SchoolSettings() {
   const [school, setSchool] = useState({
     name: '',
     school_motto: '',
-    school_level: 'Primary school',
+    school_level: '',
     logo_url: '',
     principal_signature_url: '',
     teacher_signature_url: '',
     mpesa_paybill: '',
     mpesa_till: '',
-    country_code: 'KE',
+    country_code: '',
     mobile_money_provider: '',
     mobile_money_number: '',
     mobile_money_account_name: '',
     bank_name: '',
     bank_account_number: '',
-    primary_color: '#2375e1',
-    timezone: 'Africa/Nairobi',
-    currency_code: 'KES',
-    academic_terms: ['Term 1', 'Term 2', 'Term 3'],
-    grading_scale: [{ min: 80, grade: 'A' }, { min: 70, grade: 'B' }, { min: 60, grade: 'C' }, { min: 50, grade: 'D' }, { min: 0, grade: 'E' }]
+    primary_color: '',
+    timezone: '',
+    currency_code: '',
+    academic_terms: [],
+    grading_scale: []
   });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    // Immediate fallback for no profile or demo environment
-    if (!profile || !supabase || !profile.school_id || profile.school_id === 'demo-school-id') {
-      setSchool({
-        name: 'SmartSchool Demo Academy',
-        school_motto: 'Learning for the Future',
-        school_level: 'Primary school',
-        logo_url: '',
-        principal_signature_url: '',
-        teacher_signature_url: '',
-        mpesa_paybill: '247247',
-        mpesa_till: '512345',
-        country_code: 'KE',
-        mobile_money_provider: 'M-Pesa',
-        mobile_money_number: '247247',
-        mobile_money_account_name: 'SmartSchool Demo Academy',
-        bank_name: 'Equity Bank',
-        bank_account_number: '0123456789',
-        timezone: 'Africa/Nairobi',
-        currency_code: 'KES',
-        academic_terms: ['Term 1', 'Term 2', 'Term 3'],
-        grading_scale: [{ min: 80, grade: 'A' }, { min: 70, grade: 'B' }, { min: 60, grade: 'C' }, { min: 50, grade: 'D' }, { min: 0, grade: 'E' }]
-      });
+    if (demo || !profile || !supabase || !profile.school_id) {
       setLoading(false);
       return;
     }
@@ -99,10 +78,7 @@ export default function SchoolSettings() {
       toast.error('Grade boundaries must be unique values from 0 to 100, including a starting grade at 0%.');
       return;
     }
-    if (demo) {
-      const next = { ...school, academic_terms: terms, primary_color: normalizeBrandColor(school.primary_color) };
-      setSchool(next); setTenant(next); toast.success('Demo branding updated for this session.'); return;
-    }
+    if (demo || !supabase || !profile?.school_id) { toast.error('Connect a school account to save these settings.'); return }
     setSaving(true);
     try {
       const { error } = await supabase.from('schools').update({
@@ -138,6 +114,7 @@ export default function SchoolSettings() {
   }
 
   const handleFileChange = async (e, field) => {
+    if (demo) { toast.error('Demo account is read only.'); return }
     const file = e.target.files[0];
     if (!file) return;
     const toastId = toast.loading('Uploading image...');
@@ -149,13 +126,11 @@ export default function SchoolSettings() {
         catch (error) { toast(error.message || 'Could not detect the logo color. You can choose it manually.'); }
         finally { URL.revokeObjectURL(localImage); }
       }
-      let url;
-      if (demo) url = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); });
-      else { const path = `${profile.school_id}/${field}-${Date.now()}`; url = await uploadFile(file, 'branding', path); }
+      const path = `${profile.school_id}/${field}-${Date.now()}`;
+      const url = await uploadFile(file, 'branding', path);
       const updates = { [field]: url };
       if (detectedColor) updates.primary_color = detectedColor;
       setSchool(current => ({ ...current, ...updates }));
-      if (demo) setTenant(current => ({ ...current, ...updates }));
       toast.success(field === 'logo_url' && updates.primary_color ? `Logo uploaded. Detected ${updates.primary_color}.` : 'Image uploaded!', { id: toastId });
     } catch (err) {
       toast.error('Upload failed', { id: toastId });

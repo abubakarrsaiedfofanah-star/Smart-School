@@ -23,14 +23,9 @@ export default function TeacherReview() {
       try {
         setLoading(true);
 
-        if (!supabase || profile?.school_id === 'demo-school-id' || assignmentId.startsWith('demo')) {
-          const demoAss = { title: 'Algebra Quadratic Equations', max_score: 100, classes: { name: 'Grade 7A' }, subjects: { name: 'Mathematics' } };
-          const demoSubs = [
-            { id: 'ds1', score: null, content: 'Done my best.', file_path: 'demo.pdf', students: { admission_number: 'ST001', profiles: { full_name: 'Amina Hassan' } } },
-            { id: 'ds2', score: 85, content: 'Easy assignment.', file_path: 'demo2.pdf', students: { admission_number: 'ST002', profiles: { full_name: 'David Kimani' } } }
-          ];
-          setAssignment(demoAss);
-          setSubmissions(demoSubs);
+        if (!supabase) {
+          setAssignment(null);
+          setSubmissions([]);
           setLoading(false);
           return;
         }

@@ -84,8 +84,8 @@ export default function TeacherAttendance() {
       }
     }
     if (demo) {
-      setClasses([{ id: 'demo-class-7a', name: 'Class 7A' }])
-      setClassId(current => current || 'demo-class-7a')
+      setClasses([])
+      setClassId('')
       setLoading(false)
       return () => { cancelled = true }
     }
@@ -97,13 +97,8 @@ export default function TeacherAttendance() {
     let cancelled = false
     const loadRoster = async () => {
       if (demo) {
-        const examples = [
-          { id: 'demo-student-1', admission_number: 'DEMO-001', profiles: { full_name: 'Amina Hassan' } },
-          { id: 'demo-student-2', admission_number: 'DEMO-002', profiles: { full_name: 'Brian Otieno' } },
-          { id: 'demo-student-3', admission_number: 'DEMO-003', profiles: { full_name: 'Wanjiku Mwangi' } },
-        ]
-        setStudents(examples)
-        setStatuses(Object.fromEntries(examples.map(student => [student.id, 'present'])))
+        setStudents([])
+        setStatuses({})
         setLoading(false)
         return () => { cancelled = true }
       }
@@ -145,7 +140,7 @@ export default function TeacherAttendance() {
 
   async function saveAttendance() {
     if (!students.length) return
-    if (demo) { toast.success('Demo attendance saved for this session.'); return }
+    if (demo) { toast.error('Connect a school account to record attendance.'); return }
     setSaving(true)
     const payload = students.map(student => ({
       school_id: profile.school_id,

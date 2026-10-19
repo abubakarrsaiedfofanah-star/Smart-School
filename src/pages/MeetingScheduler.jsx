@@ -25,10 +25,7 @@ export default function MeetingScheduler() {
     setLoading(true);
     try {
       if (!supabase || demo) {
-        setMeetings([
-          { id: 'm1', start_time: '2026-09-25T10:00:00Z', end_time: '2026-09-25T10:15:00Z', status: 'available', teacher: { full_name: 'Mark Otieno' } },
-          { id: 'm2', start_time: '2026-09-25T10:30:00Z', end_time: '2026-09-25T10:45:00Z', status: 'booked', teacher: { full_name: 'Grace Wanjiku' }, parent: { full_name: 'David Parent' } }
-        ]);
+        setMeetings([])
         setLoading(false);
         return;
       }
@@ -50,6 +47,7 @@ export default function MeetingScheduler() {
 
   async function createSlot(e) {
     e.preventDefault();
+    if (!supabase || demo) { toast.error('Connect a school account to create meeting times.'); return }
     try {
       const payload = {
         school_id: profile.school_id,
@@ -59,12 +57,6 @@ export default function MeetingScheduler() {
         meeting_link: newSlot.link,
         status: 'available'
       };
-
-      if (!supabase || demo) {
-        setMeetings([...meetings, { ...payload, id: Date.now(), teacher: { full_name: profile.full_name } }]);
-        toast.success('Slot created (Demo)!');
-        return;
-      }
 
       const { error } = await supabase.from('meetings').insert(payload);
       if (error) throw error;
@@ -77,11 +69,7 @@ export default function MeetingScheduler() {
 
   async function bookSlot(meetingId) {
     try {
-      if (!supabase || demo) {
-        setMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, status: 'booked', parent: { full_name: profile.full_name } } : m));
-        toast.success('Meeting booked (Demo)!');
-        return;
-      }
+      if (!supabase || demo) { toast.error('Connect a school account to book a meeting.'); return }
 
       const { error } = await supabase
         .from('meetings')

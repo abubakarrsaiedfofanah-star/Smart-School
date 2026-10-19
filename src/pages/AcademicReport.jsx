@@ -32,21 +32,7 @@ export default function AcademicReport() {
       setLoading(true)
       try {
         if (demo || !supabase) {
-          const sample = {
-            student: {
-              id: studentId,
-              admission_number: 'DEMO-024',
-              profiles: { full_name: 'Demo Student' },
-              classes: { name: 'Class 7A', teacher: { full_name: 'Demo Teacher', signature_url: null } },
-              schools: { name: 'Greenfield Academy', logo_url: null, primary_color: '#2375e1', school_level: 'Primary school', school_motto: 'Learning for the future', principal_signature_url: null, grading_scale: defaultScale, timezone: 'Africa/Nairobi' }
-            },
-            results: [
-              { score: 86, remarks: 'Excellent progress', exams: { name: 'Term assessment', academic_year: String(new Date().getFullYear()), term: 'Term 1', exam_date: `${new Date().getFullYear()}-03-20`, max_score: 100, subjects: { name: 'Mathematics' } } },
-              { score: 74, remarks: 'Good effort', exams: { name: 'Term assessment', academic_year: String(new Date().getFullYear()), term: 'Term 1', exam_date: `${new Date().getFullYear()}-03-20`, max_score: 100, subjects: { name: 'English' } } },
-              { score: 41, remarks: 'Making steady progress', exams: { name: 'Term assessment', academic_year: String(new Date().getFullYear()), term: 'Term 1', exam_date: `${new Date().getFullYear()}-03-20`, max_score: 50, subjects: { name: 'Science' } } }
-            ]
-          }
-          if (!cancelled) { setData(sample); setBehavior([{ type: 'merit', points: 2 }]) }
+          if (!cancelled) { setData(null); setBehavior([]) }
           return
         }
 

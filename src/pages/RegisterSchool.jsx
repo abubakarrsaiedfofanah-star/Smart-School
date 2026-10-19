@@ -146,30 +146,7 @@ export default function RegisterSchool(){
 
   const passwordStrength = getPasswordStrength(form.password);
 
-  const fillDemoData = () => {
-    const demoData = {
-      schoolName: 'Greenfield Academy',
-      email: 'info@greenfield.edu',
-      phone: '+254 712 345678',
-      address: '123 Education Ave, Nairobi',
-      countryCode: 'KE', currencyCode: 'KES', timezone: 'Africa/Nairobi', mobileProvider: 'M-Pesa', mobileMoneyNumber: '123456', mobileMoneyAccountName: 'Greenfield Academy',
-      level: 'Primary school',
-      mpesaPaybill: '123456',
-      mpesaTill: '789012',
-      bankName: 'Equity Bank',
-      bankAccountName: 'Greenfield Academy',
-      bankAccountNumber: '011000123456',
-      adminName: 'Sarah Jenkins',
-      adminEmail: 'admin@greenfield.edu',
-      adminPhone: '+254 722 987654',
-      password: 'SecurePassword123!',
-      confirmPassword: 'SecurePassword123!',
-      plan: 'Professional'
-    };
-    setForm(demoData);
-    persistDraft(demoData);
-    toast.success('Demo school data loaded!');
-  }
+
 
   const copyCredentials = () => {
     const text = `School: ${form.schoolName}\nAdmin Email: ${form.adminEmail}\nPlan: ${form.plan}`;
@@ -195,9 +172,7 @@ export default function RegisterSchool(){
               Reset Draft
             </button>
           )}
-          <button type="button" onClick={fillDemoData} style={{ fontSize: '0.8rem', padding: '8px 14px', background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, color: 'var(--green)' }}>
-            Auto-fill demo data
-          </button>
+
         </div>
       </div>
       <Field label="School name" value={form.schoolName} onChange={v=>update('schoolName',v)} placeholder="e.g. Springfield High School"/>

@@ -11,13 +11,6 @@ const STAGES = [
   { key: 'enrolled', label: 'Enrolled', dot: 'bg-violet-500' }
 ]
 
-const demoApplications = [
-  { id: 'demo-application-1', student_first_name: 'Alice', student_last_name: 'Smith', grade_level: 'Grade 5', status: 'pending', parent_name: 'Robert Smith', parent_email: 'robert@example.test', created_at: '2026-10-12T09:00:00.000Z' },
-  { id: 'demo-application-2', student_first_name: 'Bob', student_last_name: 'Johnson', grade_level: 'Grade 3', status: 'interview', parent_name: 'Mary Johnson', parent_email: 'mary@example.test', created_at: '2026-10-14T09:00:00.000Z' },
-  { id: 'demo-application-3', student_first_name: 'Charlie', student_last_name: 'Brown', grade_level: 'Grade 1', status: 'accepted', parent_name: 'Lucy Brown', parent_email: 'lucy@example.test', created_at: '2026-10-16T09:00:00.000Z' },
-  { id: 'demo-application-4', student_first_name: 'Aminata', student_last_name: 'Kamara', grade_level: 'Grade 2', status: 'enrolled', parent_name: 'Joseph Kamara', parent_email: 'joseph@example.test', created_at: '2026-10-10T09:00:00.000Z' }
-]
-
 export default function AdmissionsManager() {
   const { profile, school, demo } = useAuth()
   const [applications, setApplications] = useState([])
@@ -31,8 +24,9 @@ export default function AdmissionsManager() {
     setLoading(true)
     setLoadError('')
     if (demo || !supabase) {
-      setApplications(demoApplications)
-      setClasses([{ id: 'demo-class-1', name: 'Grade 1' }, { id: 'demo-class-2', name: 'Grade 2' }, { id: 'demo-class-3', name: 'Grade 3' }, { id: 'demo-class-5', name: 'Grade 5' }])
+      setApplications([])
+      setClasses([])
+      setLoadError('Connect a school account to load admissions records.')
       setLoading(false)
       return
     }
@@ -57,12 +51,7 @@ export default function AdmissionsManager() {
 
   async function updateStatus(id, status) {
     setBusyId(id)
-    if (demo || !supabase) {
-      setApplications(rows => rows.map(application => application.id === id ? { ...application, status } : application))
-      setBusyId('')
-      toast.success(`Application moved to ${STAGES.find(stage => stage.key === status)?.label || status}`)
-      return
-    }
+    if (demo || !supabase) { setBusyId(''); toast.error('Connect a school account to update admissions.'); return }
     const { error } = await supabase.from('applications').update({ status }).eq('id', id).eq('school_id', profile.school_id)
     setBusyId('')
     if (error) { toast.error(error.message || 'Could not update application'); return }
@@ -72,12 +61,7 @@ export default function AdmissionsManager() {
   async function enrollStudent(application) {
     setBusyId(application.id)
     const classId = classByApplication[application.id] || null
-    if (demo || !supabase) {
-      setApplications(rows => rows.map(row => row.id === application.id ? { ...row, status: 'enrolled', enrolled_class_id: classId } : row))
-      setBusyId('')
-      toast.success(`${application.student_first_name} enrolled in the demo school`)
-      return
-    }
+    if (demo || !supabase) { setBusyId(''); toast.error('Connect a school account to enroll a student.'); return }
     const { error } = await supabase.rpc('enroll_school_application', {
       target_application: application.id,
       target_class: classId
@@ -102,7 +86,7 @@ export default function AdmissionsManager() {
     <style>{`.admissions-page{min-height:100%;padding:clamp(20px,4vw,40px);background:var(--bg);color:var(--ink)}.admissions-shell{max-width:1500px;margin:auto}.admissions-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:26px}.admissions-head h1{margin:0;font-size:clamp(1.8rem,4vw,2.5rem);letter-spacing:-.04em}.admissions-head p{margin:8px 0 0;color:var(--muted)}.admissions-link-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.admissions-link-actions a,.admissions-link-actions button{padding:8px 11px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--school-accent,#2375e1);font-size:.75rem;font-weight:700;text-decoration:none;cursor:pointer}.admissions-kpis{display:flex;gap:10px}.admissions-kpi{min-width:130px;padding:13px 16px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}.admissions-kpi small{display:block;color:var(--muted);font-size:.7rem;font-weight:750;letter-spacing:.06em;text-transform:uppercase}.admissions-kpi strong{display:block;margin-top:5px;font-size:1.4rem}.admissions-board{display:grid;grid-template-columns:repeat(5,minmax(235px,1fr));gap:12px;overflow-x:auto;padding:2px 2px 18px}.admissions-column{display:flex;min-height:340px;max-height:calc(100vh - 250px);flex-direction:column;border:1px solid var(--line);border-radius:16px;background:color-mix(in srgb,var(--panel) 78%,var(--bg))}.admissions-column-head{display:flex;align-items:center;justify-content:space-between;padding:14px;border-bottom:1px solid var(--line)}.admissions-column-head h2{display:flex;align-items:center;gap:8px;margin:0;font-size:.9rem}.admissions-column-head h2 i{width:8px;height:8px;border-radius:50%}.admissions-column-head span{display:grid;min-width:24px;height:24px;place-items:center;border-radius:99px;background:var(--bg);color:var(--muted);font-size:.73rem}.admissions-card-list{display:grid;align-content:start;gap:10px;overflow:auto;padding:10px}.admissions-card{padding:14px;border:1px solid var(--line);border-radius:13px;background:var(--panel);box-shadow:0 5px 14px rgba(17,39,61,.04)}.admissions-card h3{margin:0;color:var(--ink);font-size:.95rem}.admissions-card-subtitle{margin:5px 0;color:var(--muted);font-size:.77rem}.admissions-card-meta{display:grid;gap:4px;margin:12px 0;color:var(--muted);font-size:.74rem}.admissions-card-actions{display:flex;flex-wrap:wrap;gap:6px;padding-top:10px;border-top:1px solid var(--line)}.admissions-card-actions button,.admissions-enroll button{padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font-size:.7rem;font-weight:700;cursor:pointer}.admissions-card-actions button:hover,.admissions-enroll button:hover{border-color:var(--school-accent,#2375e1)}.admissions-enroll{display:grid;gap:7px;margin:10px 0}.admissions-enroll label{color:var(--muted);font-size:.7rem}.admissions-enroll select{width:100%;box-sizing:border-box;margin-top:4px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}.admissions-enroll button{background:var(--school-accent,#2375e1);color:#fff}.admissions-empty,.admissions-error{padding:24px;border:1px dashed var(--line);border-radius:14px;color:var(--muted);text-align:center}.admissions-error{margin-bottom:14px;border-color:#e59a9a;color:#a13636}@media(max-width:800px){.admissions-head{align-items:flex-start;flex-direction:column}.admissions-kpis{width:100%}.admissions-kpi{flex:1;min-width:0}}`}</style>
     <div className="admissions-shell">
       <header className="admissions-head"><div><p className="eyebrow">STUDENT SERVICES</p><h1>Admissions</h1>{applicationUrl && <div className="admissions-link-actions"><a href={applicationUrl} target="_blank" rel="noreferrer">Preview public form</a><button onClick={() => void copyApplicationLink()}>Copy application link</button></div>}</div><div className="admissions-kpis"><div className="admissions-kpi"><small>Applications</small><strong>{applications.length}</strong></div><div className="admissions-kpi"><small>Enrolled</small><strong>{enrolledCount} · {conversionRate}%</strong></div></div></header>
-      {demo && <p className="hr-pill">Demo data · local only</p>}
+      {demo && <p className="hr-pill">Demo account · no connected records</p>}
       {loadError && <div className="admissions-error" role="alert">{loadError}</div>}
       {loading ? <div className="admissions-empty" role="status">Loading applications…</div> : <div className="admissions-board">{STAGES.map(stage => {
         const stageApplications = applications.filter(application => application.status === stage.key)

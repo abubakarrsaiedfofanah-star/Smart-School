@@ -3,41 +3,6 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
-const sampleNotifications = [
-  {
-    id: 'sample-1',
-    title: 'Attendance Alert',
-    body: 'Amina Hassan was marked ABSENT today.',
-    type: 'alert',
-    is_read: false,
-    created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString()
-  },
-  {
-    id: 'sample-2',
-    title: 'Upcoming Exam Reminder',
-    body: 'Term 2 Mathematics exam is scheduled for tomorrow at 9:00 AM.',
-    type: 'exam',
-    is_read: false,
-    created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString()
-  },
-  {
-    id: 'sample-3',
-    title: 'Fee Payment Success',
-    body: 'Invoice Reference PAY-001 for 25,000 has been successfully processed.',
-    type: 'payment',
-    is_read: true,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString()
-  },
-  {
-    id: 'sample-4',
-    title: 'Campus Announcement',
-    body: 'Annual sports day registrations are now open for all grades.',
-    type: 'announcement',
-    is_read: false,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 36).toISOString()
-  }
-];
-
 export default function NotificationHub({ isOpen, onClose }) {
   const { session, profile, demo } = useAuth();
   const [notifications, setNotifications] = useState([]);
@@ -49,7 +14,7 @@ export default function NotificationHub({ isOpen, onClose }) {
     const fetchNotifications = async () => {
       setLoading(true);
       if (!supabase || demo) {
-        setNotifications(sampleNotifications);
+        setNotifications([]);
         setLoading(false);
         return;
       }

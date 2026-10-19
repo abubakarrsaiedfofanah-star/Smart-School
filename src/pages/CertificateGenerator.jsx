@@ -24,25 +24,10 @@ export default function CertificateGenerator() {
     setLoading(true);
     try {
       if (demo || !supabase) {
-        // Mock Data for Demo
-        const mockCourse = { id: courseId, title: 'Artificial Intelligence Mastery' };
-        const mockStudent = {
-          id: 'demo-student-uuid',
-          profiles: { full_name: profile.full_name || 'Amina Hassan' }
-        };
-        const mockSchool = {
-          name: 'Green Valley Academy',
-          logo_url: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=128&auto=format&fit=crop',
-          principal_name: 'Dr. Sarah Jenkins'
-        };
-
-        setCourse(mockCourse);
-        setStudent(mockStudent);
-        setSchool(mockSchool);
-        setCredential({
-          validation_hash: '5f9d3a7e2b1c4d8e9f0a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u',
-          issued_at: new Date().toISOString()
-        });
+        setCourse(null)
+        setStudent(null)
+        setSchool(null)
+        setCredential(null)
         setLoading(false);
         return;
       }
@@ -215,7 +200,7 @@ export default function CertificateGenerator() {
                 <div className="text-center min-w-[180px]">
                   <div className="mb-2 h-16 flex items-end justify-center">
                     <span className="font-serif italic text-3xl text-slate-700" style={{ fontFamily: "'Dancing Script', cursive" }}>
-                      {school.principal_name || 'Sarah Jenkins'}
+                      {school.principal_name || 'School Principal'}
                     </span>
                   </div>
                   <div className="border-t border-slate-300 pt-2">
@@ -254,7 +239,7 @@ export default function CertificateGenerator() {
               {/* Bottom Decorative Element */}
               <div className="flex items-center justify-center gap-4 text-amber-500/20">
                 <div className="h-[1px] w-24 bg-current"></div>
-                <div className="text-lg">✦</div>
+                <div className="text-lg">âœ¦</div>
                 <div className="h-[1px] w-24 bg-current"></div>
               </div>
             </div>

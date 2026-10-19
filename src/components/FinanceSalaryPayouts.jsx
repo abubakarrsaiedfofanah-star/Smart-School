@@ -22,14 +22,11 @@ export default function FinanceSalaryPayouts() {
 
   const load = useCallback(async () => {
     if (demo) {
-      setItems([
-        { id: 'demo-item-ready', net_pay: 52500, hr_employees: { full_name: 'Demo Teacher', staff_number: 'T-001' }, payroll_runs: { pay_period: '2026-10-01', status: 'approved', currency_code: 'KES' } },
-        { id: 'demo-item-paid', net_pay: 41800, hr_employees: { full_name: 'Demo Administrator', staff_number: 'S-004' }, payroll_runs: { pay_period: '2026-10-01', status: 'approved', currency_code: 'KES' } }
-      ])
-      setPayments([{ id: 'demo-payment', payroll_item_id: 'demo-item-paid', amount: 41800, provider: 'bank', transaction_reference: 'DEMO-SAL-1026', status: 'paid', initiated_by: 'demo-finance', confirmed_by: 'demo-finance', confirmed_at: '2026-10-25T10:00:00Z', created_at: '2026-10-25T09:30:00Z' }])
-      setActorNames({ 'demo-finance': 'Demo Finance Officer' })
-      setPayoutAccount({ currency_code: 'KES', bank_name: 'Demo Bank', bank_account_name: 'Greenfield Academy', bank_account_number: '•••• 0123', bank_routing_code: '', mobile_money_provider: '', mobile_money_number: '' })
-      setMessage('Demo only: sample payroll data. No salary transfer can be made here.')
+      setItems([])
+      setPayments([])
+      setActorNames({})
+      setPayoutAccount({ currency_code: school?.currency_code || '', bank_name: '', bank_account_name: '', bank_account_number: '', bank_routing_code: '', mobile_money_provider: '', mobile_money_number: '' })
+      setMessage('This demo account has no connected school records.')
       setLoading(false)
       return
     }

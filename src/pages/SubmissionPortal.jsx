@@ -23,17 +23,9 @@ export default function SubmissionPortal() {
       try {
         setLoading(true);
 
-        // Handle Demo Mode
-        if (!supabase || profile?.school_id === 'demo-school-id' || assignmentId.startsWith('demo')) {
-          const demoAss = {
-            id: assignmentId,
-            title: 'Algebra Quadratic Equations',
-            instructions: 'Please solve the 10 problems attached in the worksheet and show all your steps.',
-            due_date: '2026-10-15',
-            subjects: { name: 'Mathematics' }
-          };
-          setAssignment(demoAss);
-          setStudentId('demo-student-id');
+        if (!supabase || !profile?.school_id) {
+          setAssignment(null);
+          setStudentId(null);
           setLoading(false);
           return;
         }

@@ -47,22 +47,18 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const enterDemo = (role: PortalRole, specialistRole?: string): { profile: UserProfile } => {
     const labels: Record<PortalRole, string> = {
-      super_admin: 'Platform Administrator', school_admin: 'Demo School Admin', teacher: 'Demo Teacher', staff: 'Demo Staff Member', student: 'Demo Student', parent: 'Demo Parent'
+      super_admin: 'Platform administrator', school_admin: 'School administrator', teacher: 'Teacher', staff: 'Staff member', student: 'Student', parent: 'Parent'
     }
     const demoProfile: UserProfile = {
       id: `demo-${role}`, full_name: labels[role], role,
-      school_id: role === 'super_admin' ? null : 'demo-school-id',
+      school_id: null,
       email: `${role}@demo.smartschool.local`
-    }
-    const demoSchool: SchoolWorkspace = {
-      id: 'demo-school-id', name: 'Greenfield Academy', slug: 'greenfield-academy', status: 'active',
-      school_level: 'Demo workspace', logo_url: null, primary_color: '#2375e1'
     }
     sessionStorage.setItem('smartschool_demo_role', role)
     setDemo(true)
     setProfile(demoProfile)
     setStaffRoles(role === 'staff' && specialistRole ? [specialistRole] : [])
-    setSchool(role === 'super_admin' ? null : demoSchool)
+    setSchool(null)
     setSession({ user: { id: demoProfile.id, email: demoProfile.email! }, demo: true })
     return { profile: demoProfile }
   }

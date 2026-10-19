@@ -2,17 +2,12 @@ import React from 'react';
 
 export default function PerformanceSummary({ role, t }) {
   const insights = {
-    teacher: "AI Insight: Class 8B has completed 90% of assignments this week. Excellent engagement!",
-    student: "AI Tip: Your Mathematics performance is trending upwards. Keep it up to reach an A!",
-    school_admin: "Warning: Overall attendance in Grade 7B dropped by 12% today. Checking reasons...",
-    parent: "Observation: Yusuf is showing strong interest in Science. Consider encouraging extra reading.",
-    super_admin: "Platform Health: 3 new schools joined this week. Revenue is up by 5%."
+    teacher: 'Connect a school account to view class insights.',
+    student: 'Connect a school account to view learning insights.',
+    school_admin: 'Connect a school account to view school insights.',
+    parent: 'Connect a school account to view learner insights.',
+    super_admin: 'Connect platform data to view system insights.'
   };
-
-  const atRisk = (role === 'teacher' || role === 'school_admin') ? [
-    { name: 'David Kimani', reason: 'Attendance dropped to 65%', action: 'Meeting needed' },
-    { name: 'Sarah Wanjiru', reason: 'Declining grades in Math', action: 'Send remedial invite' }
-  ] : [];
 
   return (
     <div className="performance-summary-card glass-card page-transition">
@@ -22,18 +17,7 @@ export default function PerformanceSummary({ role, t }) {
       </div>
       <p>{insights[role] || "Ready to provide school insights."}</p>
 
-      {atRisk.length > 0 && (
-        <div className="at-risk-section">
-          <div className="at-risk-header">⚠️ AI PREDICTIVE ALERT: AT-RISK STUDENTS</div>
-          {atRisk.map((s, i) => (
-            <div key={i} className="at-risk-item">
-              <b>{s.name}</b>
-              <span>{s.reason}</span>
-              <button className="mini-action">{s.action}</button>
-            </div>
-          ))}
-        </div>
-      )}
+
 
       <style>{`
         .performance-summary-card {

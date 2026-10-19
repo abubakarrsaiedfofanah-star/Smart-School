@@ -11,7 +11,7 @@ const personas = {
 
 const personaResponses = {
   concierge: {
-    'status': { text: "School operations are running smoothly! Attendance is at 94%, fee collection is at 82%, and all 12 modules are active.", action: { label: 'View Full Analytics', path: '/analytics' } },
+    'status': { text: "Connect your school account to view current school status and records.", action: null },
     'library': { text: "Opening the Digital Library Repository. You can access textbooks, research papers, and video lectures.", action: { label: 'Go to Library 📖', path: '/library' } },
     'gradebook': { text: "Navigating to your Interactive Gradebook to check subject scores and continuous assessment.", action: { label: 'Open Gradebook 📊', path: '/gradebook' } },
     'timetable': { text: "Here is your quick timetable access. Check your class schedules and room assignments.", action: { label: 'View Timetable 📅', path: '/timetable' } },
@@ -25,9 +25,9 @@ const personaResponses = {
     'study': { text: "Try the Pomodoro Technique: 25 minutes focused study, followed by a 5 minute break. Repeat 4 times then take a 20 min break!", action: null }
   },
   insights: {
-    'attendance': { text: "Overall school attendance rate is 92.5% this week. Grade 10A leads with 97% attendance!", action: { label: 'View Behavior Logs 📋', path: '/behavior-log' } },
-    'finance': { text: "Total term collection is KES 1.45M (82% target achieved). 12 accounts pending reminder nudges.", action: { label: 'View Invoices 💳', path: '/invoice/1' } },
-    'report': { text: "65% of enrolled students are currently on track for honors (A/B grade average).", action: { label: 'Generate Academic Report 📄', path: '/report-card/ST-DEMO-1' } }
+    'attendance': { text: "Connect your school account to view attendance records.", action: null },
+    'finance': { text: "Connect your school account to view fee and payment records.", action: null },
+    'report': { text: "Connect your school account to view academic results.", action: null }
   }
 };
 

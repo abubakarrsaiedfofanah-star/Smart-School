@@ -8,12 +8,6 @@ import { roleRoute } from '../lib/roleRoute'
 import { hasSchoolPermission } from '../lib/schoolRoles'
 
 const dateKey = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-const sampleEvents = [
-  { id: 'demo-event-1', title: 'Staff planning meeting', description: 'Review this week’s school priorities.', event_date: dateKey(new Date()), type: 'event' },
-  { id: 'demo-event-2', title: 'Science project due', description: 'Submit the class science project.', event_date: dateKey(new Date(Date.now() + 86400000)), type: 'assignment' },
-  { id: 'demo-event-3', title: 'Family reading morning', description: 'Families are welcome in the library.', event_date: dateKey(new Date(Date.now() + 4 * 86400000)), type: 'event' }
-]
-
 export default function SchoolCalendar() {
   const { profile, demo, staffRoles } = useAuth()
   const navigate = useNavigate()
@@ -25,14 +19,15 @@ export default function SchoolCalendar() {
   const [showCreate, setShowCreate] = useState(false)
   const [saving, setSaving] = useState(false)
   const [draft, setDraft] = useState({ title: '', description: '', event_date: dateKey(new Date()) })
-  const canCreate = hasSchoolPermission(profile?.role, staffRoles, 'school.calendar.manage')
+  const canCreate = !demo && hasSchoolPermission(profile?.role, staffRoles, 'school.calendar.manage')
   const monthLabel = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(currentDate)
 
   const fetchEvents = useCallback(async () => {
     if (!profile) return
     setLoading(true); setLoadError('')
-    if (demo || profile.school_id === 'demo-school-id') {
-      setEvents(sampleEvents.map(item => ({ ...item, dateKey: item.event_date })))
+    if (demo) {
+      setEvents([])
+      setLoadError('Connect a school account to load calendar records.')
       setLoading(false)
       return
     }
@@ -76,18 +71,14 @@ export default function SchoolCalendar() {
 
   async function createEvent(event) {
     event.preventDefault()
+    if (demo || !supabase) { toast.error('Connect a school account to add calendar events.'); return }
     if (!draft.title.trim() || !draft.event_date) return
     setSaving(true)
     const payload = { school_id: profile.school_id, title: draft.title.trim(), description: draft.description.trim() || null, event_date: `${draft.event_date}T12:00:00` }
     try {
-      if (demo || profile.school_id === 'demo-school-id') {
-        const next = { id: `demo-event-${Date.now()}`, ...payload, type: 'event', dateKey: draft.event_date }
-        setEvents(items => [...items, next].sort((a, b) => a.dateKey.localeCompare(b.dateKey)))
-      } else {
-        const { error } = await supabase.from('events').insert(payload)
-        if (error) throw error
-        await fetchEvents()
-      }
+      const { error } = await supabase.from('events').insert(payload)
+      if (error) throw error
+      await fetchEvents()
       setShowCreate(false); setDraft({ title: '', description: '', event_date: dateKey(new Date()) }); toast.success('Calendar event added.')
     } catch (error) { toast.error(error.message || 'Could not create event.') }
     finally { setSaving(false) }

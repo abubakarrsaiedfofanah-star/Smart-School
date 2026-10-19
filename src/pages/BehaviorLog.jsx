@@ -22,87 +22,18 @@ export default function BehaviorLog() {
   const categories = ['Attendance', 'Behavior', 'Academic', 'Helpfulness', 'Leadership', 'Sports', 'Other'];
 
   useEffect(() => {
-    if (profile?.school_id) {
+    if (profile) {
       loadData();
     }
-  }, [profile?.school_id]);
+  }, [profile, demo]);
 
   const loadData = async () => {
     setFetching(true);
     try {
-      if (demo || !supabase) {
-        setStudents([
-          { id: 'S1', full_name: 'Amina Hassan', admission_number: 'ST-001' },
-          { id: 'S2', full_name: 'David Kimani', admission_number: 'ST-002' },
-          { id: 'S3', full_name: 'Sarah Wambui', admission_number: 'ST-003' }
-        ]);
-        setRecords([
-          { id: 1, student_name: 'Amina Hassan', type: 'merit', category: 'Academic', points: 10, comment: 'Excellent performance in Math quiz', created_at: new Date().toISOString() },
-          { id: 2, student_name: 'David Kimani', type: 'demerit', category: 'Attendance', points: 5, comment: 'Late for morning assembly twice', created_at: new Date().toISOString() },
-          { id: 3, student_name: 'Sarah Wambui', type: 'merit', category: 'Helpfulness', points: 5, comment: 'Assisted in organizing the library', created_at: new Date().toISOString() }
-        ]);
-      } else {
-        const [stdRes, recRes] = await Promise.all([
-          supabase.from('students').select('id, full_name, admission_number').eq('school_id', profile.school_id).order('full_name'),
-          supabase.from('behavior_records')
-            .select(`
-              *,
-              students:student_id (full_name)
-            `)
-            .eq('school_id', profile.school_id)
-            .order('created_at', { ascending: false })
-            .limit(30)
-        ]);
-
-        if (stdRes.error) throw stdRes.error;
-        if (recRes.error) throw recRes.error;
-
-        setStudents(stdRes.data || []);
-        setRecords(recRes.data?.map(r => ({
-          ...r,
-          student_name: r.students?.full_name || 'Unknown Student'
-        })) || []);
-      }
-    } catch (e) {
-      toast.error('Failed to load data');
-      console.error(e);
-    } finally {
-      setFetching(false);
-    }
-  };
-
-  const handleSave = async (e) => {
-    e.preventDefault();
-    if (!studentId) return toast.error('Please select a student');
-
-    setLoading(true);
-    const payload = {
-      student_id: studentId,
-      type,
-      category,
-      points: Number(points),
-      comment,
-      school_id: profile.school_id,
-      logged_by: profile.id
-    };
-
-    try {
-      if (demo || !supabase) {
-        const student = students.find(s => s.id === studentId);
-        const newRecord = {
-          ...payload,
-          id: Date.now(),
-          student_name: student?.full_name || 'Demo Student',
-          created_at: new Date().toISOString()
-        };
-        setRecords(prev => [newRecord, ...prev]);
-        toast.success('Behavior record saved (Demo Mode)');
-      } else {
-        const { error } = await supabase.from('behavior_records').insert(payload);
-        if (error) throw error;
-        toast.success('Record logged successfully! 🌟');
-        loadData();
-      }
+      const { error } = await supabase.from('behavior_records').insert(payload);
+      if (error) throw error;
+      toast.success('Record logged successfully.');
+      loadData();
       // Reset form fields
       setStudentId('');
       setComment('');
