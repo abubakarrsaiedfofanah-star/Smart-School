@@ -75,12 +75,24 @@ export default function RegisterSchool(){
   const [showConfirmPassword,setShowConfirmPassword]=useState(false);
   const [showHelpModal,setShowHelpModal]=useState(false);
   const [helpTopic,setHelpTopic]=useState('');
+  const [formError,setFormError]=useState('');
 
-  const update=(key,value)=>setForm(current=>{
+  const focusField = (fieldId, message, targetStep = step) => {
+    setFormError(message)
+    toast.error(message)
+    setStep(targetStep)
+    window.setTimeout(() => {
+      const field = document.getElementById(fieldId)
+      field?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      field?.focus({ preventScroll: true })
+    }, 80)
+  }
+
+  const update=(key,value)=>{ setFormError(''); return setForm(current=>{
     const updated = {...current,[key]:value};
     persistDraft(updated)
     return updated;
-  });
+  }) }
 
   useEffect(()=>{
     try { localStorage.setItem('smartschool_reg_step', step.toString()) } catch { /* Keep registration usable when browser storage is unavailable. */ }
@@ -105,11 +117,17 @@ export default function RegisterSchool(){
   }
 
   const next=()=>{
-    if(step===0&&(!form.schoolName||!form.email||!form.phone)) return toast.error('Please add the school name, email and phone number.');
-    if(step===0&&(!/^[A-Z]{3}$/.test(form.currencyCode)|| (form.countryCode==='OTHER'&&!/^[A-Z]{2}$/.test(form.customCountryCode)))) return toast.error('Choose a valid 3-letter currency and country.');
-    if(step===3&&(!form.adminName||!form.adminEmail||!form.password)) return toast.error('Please complete the administrator details.');
-    if(step===3&&form.password.length<12) return toast.error('Use a password with at least 12 characters.');
-    if(step===3&&form.password !== form.confirmPassword) return toast.error('Passwords do not match.');
+    setFormError('')
+    if(step===0&&!form.schoolName.trim()) return focusField('registration-school-name','Enter the school name.')
+    if(step===0&&!form.email.trim()) return focusField('registration-school-email','Enter the school email.')
+    if(step===0&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return focusField('registration-school-email','Enter a valid school email address.')
+    if(step===0&&!form.phone.trim()) return focusField('registration-school-phone','Enter the school phone number.')
+    if(step===0&&(!/^[A-Z]{3}$/.test(form.currencyCode)|| (form.countryCode==='OTHER'&&!/^[A-Z]{2}$/.test(form.customCountryCode)))) return focusField(form.countryCode==='OTHER'&&!/^[A-Z]{2}$/.test(form.customCountryCode)?'registration-country-code':form.countryCode==='OTHER'?'registration-currency-code':'registration-currency','Choose a valid country and 3-letter currency code.')
+    if(step===3&&!form.adminName.trim()) return focusField('registration-admin-name','Enter the administrator’s full name.')
+    if(step===3&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.adminEmail)) return focusField('registration-admin-email','Enter a valid administrator email address.')
+    if(step===3&&!form.password) return focusField('registration-admin-password','Create the administrator password.')
+    if(step===3&&form.password.length<12) return focusField('registration-admin-password','Use a password with at least 12 characters.')
+    if(step===3&&form.password !== form.confirmPassword) return focusField('registration-confirm-password','Passwords do not match.')
     setStep(current=>Math.min(current+1,5))
   }
   const back=()=>setStep(current=>Math.max(current-1,0))
@@ -139,7 +157,14 @@ export default function RegisterSchool(){
       toast.success(form.trialRequested ? 'Trial request submitted for review.' : 'School and plan request submitted for review.', {id});
       setStep(6)
     }catch(e){
-      toast.error(e.message || 'Could not register the school. Check the details and try again.', {id});
+      const message = e.message || 'Could not register the school. Check the details and try again.'
+      const lower = message.toLowerCase()
+      const destination = lower.includes('school email') || lower.includes('school name') || lower.includes('school contact') || lower.includes('school name and contact') || lower.includes('phone') || lower.includes('already registered') ? 0 : lower.includes('administrator') || lower.includes('admin email') || lower.includes('password') ? 3 : lower.includes('country') || lower.includes('currency') || lower.includes('time zone') ? 0 : lower.includes('plan') ? 5 : 5
+      const fieldId = destination === 0 ? (lower.includes('email') || lower.includes('registered') ? 'registration-school-email' : lower.includes('phone') ? 'registration-school-phone' : lower.includes('country') ? 'registration-country-code' : lower.includes('currenc') ? 'registration-currency' : 'registration-school-name') : destination === 3 ? (lower.includes('password') ? 'registration-admin-password' : lower.includes('email') ? 'registration-admin-email' : 'registration-admin-name') : null
+      setFormError(message)
+      setStep(destination)
+      toast.error(message, {id})
+      if (fieldId) window.setTimeout(() => { const field = document.getElementById(fieldId); field?.scrollIntoView({ behavior: 'smooth', block: 'center' }); field?.focus({ preventScroll: true }) }, 80)
     }finally{
       setSaving(false)
     }
@@ -176,14 +201,14 @@ export default function RegisterSchool(){
 
         </div>
       </div>
-      <Field label="School name" value={form.schoolName} onChange={v=>update('schoolName',v)} placeholder="e.g. Springfield High School"/>
-      <Field label="School email" type="email" value={form.email} onChange={v=>update('email',v)} placeholder="info@springfield.edu"/>
-      <Field label="Phone number" value={form.phone} onChange={v=>update('phone',v)} placeholder="+254 700 000000"/>
+      <Field id="registration-school-name" label="School name" value={form.schoolName} onChange={v=>update('schoolName',v)} placeholder="e.g. Springfield High School"/>
+      <Field id="registration-school-email" label="School email" type="email" value={form.email} onChange={v=>update('email',v)} placeholder="info@springfield.edu"/>
+      <Field id="registration-school-phone" label="Phone number" value={form.phone} onChange={v=>update('phone',v)} placeholder="+254 700 000000"/>
       <Field label="Address / Location" value={form.address} onChange={v=>update('address',v)} placeholder="City, Street, Region"/>
       <label style={{display:'grid',gap:'6px',fontWeight:600,fontSize:'0.9rem',marginBottom:'16px'}}><span>Country</span><select value={form.countryCode} onChange={event => { const country = event.target.value; const defaults = countryDefaults[country]; setForm(current => { const updated = { ...current, countryCode: country, customCountryCode: '', currencyCode: defaults.currency, timezone: defaults.timezone, mobileProvider: country === 'KE' ? 'M-Pesa' : '' }; persistDraft(updated); return updated }) }}>{Object.entries(countryDefaults).map(([code, country]) => <option key={code} value={code}>{country.label}</option>)}</select></label>
-      {form.countryCode==='OTHER' && <Field label="2-letter country code" value={form.customCountryCode} onChange={v=>update('customCountryCode',v.toUpperCase().slice(0,2))} placeholder="e.g. SL"/>}
-      <label style={{display:'grid',gap:'6px',fontWeight:600,fontSize:'0.9rem',marginBottom:'16px'}}><span>School currency</span><select value={form.currencyCode} onChange={event => update('currencyCode', event.target.value)}>{currencyOptions.map(currency => <option key={currency} value={currency}>{currency}</option>)}</select></label>
-      {form.countryCode==='OTHER' && <Field label="Other 3-letter currency code" value={form.currencyCode} onChange={v=>update('currencyCode',v.toUpperCase().slice(0,3))} placeholder="e.g. SLE"/>}
+      {form.countryCode==='OTHER' && <Field id="registration-country-code" label="2-letter country code" value={form.customCountryCode} onChange={v=>update('customCountryCode',v.toUpperCase().slice(0,2))} placeholder="e.g. SL"/>}
+      <label style={{display:'grid',gap:'6px',fontWeight:600,fontSize:'0.9rem',marginBottom:'16px'}}><span>School currency</span><select id="registration-currency" value={form.currencyCode} onChange={event => update('currencyCode', event.target.value)}>{currencyOptions.map(currency => <option key={currency} value={currency}>{currency}</option>)}</select></label>
+      {form.countryCode==='OTHER' && <Field id="registration-currency-code" label="Other 3-letter currency code" value={form.currencyCode} onChange={v=>update('currencyCode',v.toUpperCase().slice(0,3))} placeholder="e.g. SLE"/>}
     </>,
     <>
       <h2>Choose your school level</h2>
@@ -217,13 +242,13 @@ export default function RegisterSchool(){
     <>
       <h2>Create the administrator</h2>
       <p className="form-help">This master account will manage staff, teachers, and system permissions.</p>
-      <Field label="Full name" value={form.adminName} onChange={v=>update('adminName',v)} placeholder="Dr. Jane Doe"/>
-      <Field label="Administrator email" type="email" value={form.adminEmail} onChange={v=>update('adminEmail',v)} placeholder="admin@school.edu"/>
+      <Field id="registration-admin-name" label="Full name" value={form.adminName} onChange={v=>update('adminName',v)} placeholder="Dr. Jane Doe"/>
+      <Field id="registration-admin-email" label="Administrator email" type="email" value={form.adminEmail} onChange={v=>update('adminEmail',v)} placeholder="admin@school.edu"/>
       <Field label="Phone number" value={form.adminPhone} onChange={v=>update('adminPhone',v)} placeholder="+254 711 000000"/>
 
       <label>Password
         <div className="password-field" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-          <input type={showPassword?'text':'password'} value={form.password} onChange={event=>update('password',event.target.value)} placeholder="At least 12 characters" minLength={12} autoComplete="new-password" required style={{ width: '100%', paddingRight: '70px' }}/>
+          <input id="registration-admin-password" type={showPassword?'text':'password'} value={form.password} onChange={event=>update('password',event.target.value)} placeholder="At least 12 characters" minLength={12} autoComplete="new-password" required style={{ width: '100%', paddingRight: '70px' }}/>
           <button type="button" onClick={()=>setShowPassword(!showPassword)} style={{ position: 'absolute', right: '12px', background: 'transparent', border: 'none', fontWeight: 600, color: 'var(--muted)', cursor: 'pointer' }}>{showPassword?'Hide':'Show'}</button>
         </div>
         {form.password && (
@@ -238,7 +263,7 @@ export default function RegisterSchool(){
 
       <label style={{ marginTop: '15px' }}>Confirm Password
         <div className="password-field" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-          <input type={showConfirmPassword?'text':'password'} value={form.confirmPassword} onChange={event=>update('confirmPassword',event.target.value)} placeholder="Re-enter password" minLength={12} autoComplete="new-password" required style={{ width: '100%', paddingRight: '70px' }}/>
+          <input id="registration-confirm-password" type={showConfirmPassword?'text':'password'} value={form.confirmPassword} onChange={event=>update('confirmPassword',event.target.value)} placeholder="Re-enter password" minLength={12} autoComplete="new-password" required style={{ width: '100%', paddingRight: '70px' }}/>
           <button type="button" onClick={()=>setShowConfirmPassword(!showConfirmPassword)} style={{ position: 'absolute', right: '12px', background: 'transparent', border: 'none', fontWeight: 600, color: 'var(--muted)', cursor: 'pointer' }}>{showConfirmPassword?'Hide':'Show'}</button>
         </div>
         {form.confirmPassword && (
@@ -344,6 +369,7 @@ export default function RegisterSchool(){
             <div className="progress" style={{ height: '100%', background: 'var(--green)', width: `${((step + 1) / 6) * 100}%`, transition: 'width 0.3s' }} />
           </div>
 
+          {formError && <div className="registration-error" role="alert">{formError}</div>}
           {content[step]}
 
           <div className="form-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '40px', borderTop: '1px solid var(--line)', paddingTop: '20px' }}>
@@ -378,4 +404,4 @@ export default function RegisterSchool(){
   )
 }
 
-function Field({label,type='text',value,onChange,placeholder}){return <label style={{ display: 'grid', gap: '6px', fontWeight: 600, fontSize: '0.9rem', marginBottom: '16px' }}>{label}<input type={type} value={value} onChange={event=>onChange(event.target.value)} placeholder={placeholder} style={{ borderRadius: '12px', padding: '14px 16px' }} required/></label>}
+function Field({id,label,type='text',value,onChange,placeholder}){return <label style={{ display: 'grid', gap: '6px', fontWeight: 600, fontSize: '0.9rem', marginBottom: '16px' }}>{label}<input id={id} type={type} value={value} onChange={event=>onChange(event.target.value)} placeholder={placeholder} style={{ borderRadius: '12px', padding: '14px 16px' }} required/></label>}

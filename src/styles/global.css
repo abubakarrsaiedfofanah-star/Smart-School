@@ -809,6 +809,7 @@ input:focus, select:focus, textarea:focus {
 .register-page .choice.selected { border-color: #2375e1; box-shadow: 0 0 0 3px #2375e11a; }
 .register-page .form-actions { margin-top: 30px !important; }
 .register-page .form-actions .button { min-height: 46px; }
+.register-page .registration-error { margin: 0 0 18px; padding: 13px 15px; border: 1px solid #efb4b4; border-left: 4px solid #c43c3c; border-radius: 10px; background: #fff5f5; color: #8f2424; font-size: .9rem; line-height: 1.45; }
 
 @media (max-width: 900px) {
   .login-container { grid-template-columns: minmax(0, 1fr); max-width: 620px !important; }
@@ -839,7 +840,10 @@ input:focus, select:focus, textarea:focus {
   .register-page .register-aside-hero { margin: 18px 0 0 !important; }
   .register-page .register-aside-hero h1 { margin: 0 0 8px !important; font-size: 1.6rem !important; }
   .register-page .register-aside-hero > p:last-child { margin: 0; font-size: .82rem !important; }
-  .register-page .step-list { display: none; }
+  .register-page .step-list { display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px !important; margin: 20px 0 0 !important; }
+  .register-page .step-list li { display: flex !important; min-width: 0; min-height: 38px; gap: 6px !important; padding: 5px 6px; border: 1px solid #ffffff26; border-radius: 9px; opacity: 1 !important; }
+  .register-page .step-list .step-num { flex: 0 0 25px; width: 25px !important; height: 25px !important; font-size: .63rem !important; }
+  .register-page .step-list .step-label { min-width: 0; overflow-wrap: anywhere; font-size: .68rem !important; line-height: 1.05; }
   .register-page .register-main { padding: 22px 18px !important; }
   .register-page .register-top-bar { align-items: flex-start !important; flex-direction: column; margin-bottom: 14px !important; }
   .register-page .progress-bar-wrapper { margin-bottom: 22px !important; }
