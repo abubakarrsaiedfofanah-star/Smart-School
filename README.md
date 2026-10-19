@@ -31,6 +31,8 @@ Migration `068_staff_attendance_for_staff_accounts.sql` adds active non-teaching
 
 Migration `078_written_assessment_papers.sql` adds a written-paper assessment mode with private, class-scoped downloads for students. Interactive MCQ assessments remain portal-only. Parents can see assignment titles and deadlines in their family dashboard but cannot enter quizzes, download assessment papers, or submit student work. Teachers can label MCQ answers with letters, numbers, Roman numerals, custom labels, or no prefix.
 
+Migration `079_school_public_portal_registration.sql` lists active schools on the public Portals page and lets people request student, parent, teacher, HR & Payroll, or Finance accounts under a selected school. School administrators must approve requests; student and parent requests must match a learner admission number. Public registration cannot create school administrator accounts, and a unique database index enforces one school administrator per school. For a new project, run `supabase/FULL_SETUP_FRESH_PROJECT.sql` once; it now includes migration 079. If applying numbered migrations individually, apply 001-078 first, then 079. Configure the Supabase Auth email confirmation redirect allowlist to include `https://smart-school-blue.vercel.app/login` (and your local `/login` URL for development).
+
 ## Mobile app and TypeScript
 
 SmartSchool can be installed as a Progressive Web App. Build and preview it with `npm run build` and `npm run preview`; the production preview exposes the install prompt for student, teacher, and parent accounts. Browser storage caches only the app shell and static assets. School records and portal data remain online and are never added to the offline cache. On iOS, use Share → Add to Home Screen.

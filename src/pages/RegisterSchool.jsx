@@ -125,6 +125,9 @@ export default function RegisterSchool(){
         } });
         if (error) {
           const response = await error.context?.json?.().catch(() => null)
+          if (error.context?.status === 404) {
+            throw new Error('School registration is not available yet. The register-school service has not been deployed to this Supabase project. Please contact the platform administrator.');
+          }
           throw new Error(response?.error || error.message)
         }
         if (data?.error) throw new Error(data.error)

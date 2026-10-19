@@ -1,0 +1,12 @@
+.school-member-signup-main { width: min(100% - 32px, 620px); min-height: 65vh; margin: 0 auto; padding: 56px 0 72px; }
+.school-member-signup-card { padding: clamp(22px, 5vw, 42px); border: 1px solid #e0e9f1; border-radius: 18px; background: #fff; box-shadow: 0 18px 55px #14395712; }
+.school-member-signup-card h1 { margin: 0 0 12px; color: #153b5b; font-size: clamp(1.65rem, 5vw, 2.35rem); line-height: 1.15; }
+.school-member-signup-card > p:not(.eyebrow) { color: #62778b; line-height: 1.65; }
+.school-member-signup-card form { display: grid; gap: 15px; margin-top: 24px; }
+.school-member-signup-card label { display: grid; gap: 7px; color: #25445f; font-size: .88rem; font-weight: 700; }
+.school-member-signup-card input, .school-member-signup-card select { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #ccd9e4; border-radius: 8px; background: #fff; color: #173953; font: inherit; }
+.school-member-signup-card label small { color: #718598; font-size: .78rem; font-weight: 400; }
+.school-member-signup-card button { width: 100%; min-height: 46px; margin-top: 3px; }
+.school-member-signup-card button:disabled { opacity: .58; cursor: not-allowed; }
+.school-member-signup-back { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; font-size: .82rem; }
+.school-member-signup-error { margin: 0; color: #a52626; font-size: .85rem; }

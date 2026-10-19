@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 const Landing = lazy(() => import('./pages/Landing'))
 const Login = lazy(() => import('./pages/Login'))
 const RegisterSchool = lazy(() => import('./pages/RegisterSchool'))
+const SchoolMemberSignup = lazy(() => import('./pages/SchoolMemberSignup'))
 import { useAuth } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 const RoleDashboard = lazy(() => import('./pages/RoleDashboard'))
@@ -102,6 +103,7 @@ export default function App(){
         <Route path="/about" element={<PublicPage page="about"/>}/>
         <Route path="/contact" element={<PublicPage page="contact"/>}/>
         <Route path="/register" element={<RegisterSchool/>}/>
+        <Route path="/join-school/:schoolSlug" element={<SchoolMemberSignup/>}/>
         <Route path="/login" element={<Login/>}/>
         <Route path="/login/:portalRole" element={<Login/>}/>
         <Route path="/chat" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><Chat /></ProtectedRoute>} />

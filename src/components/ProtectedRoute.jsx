@@ -14,6 +14,7 @@ const portalPermissions = {
 export default function ProtectedRoute({ roles, permission, children, shell = true, portal = null }) {
   const { session, profile, school, staffRoles, loading, logout } = useAuth()
   const location = useLocation()
+  const [signupRequestStatus, setSignupRequestStatus] = useState('')
   const assignedStaffPortal = profile?.role === 'staff' && staffRoles.includes('hr_admin') !== staffRoles.includes('finance_officer')
     ? staffRoles.includes('hr_admin') ? 'hr' : 'finance' : null
   const staffSpecialistOnly = Boolean(assignedStaffPortal)
@@ -39,10 +40,18 @@ export default function ProtectedRoute({ roles, permission, children, shell = tr
     return () => { active = false }
   }, [profile?.id, profile?.role, profile?.school_id, staffRoles.join(',')])
 
+  useEffect(() => {
+    if (!profile?.id || profile.is_active !== false || !supabase) { setSignupRequestStatus(''); return undefined }
+    let active = true
+    supabase.from('school_portal_signup_requests').select('status').eq('user_id', profile.id).maybeSingle()
+      .then(({ data }) => { if (active) setSignupRequestStatus(data?.status || '') })
+    return () => { active = false }
+  }, [profile?.id, profile?.is_active])
+
   if (loading) return <div className="portal-loading" role="status"><div className="spinner" /><p>Verifying secure session…</p></div>
   if (!session) return <Navigate to={roles?.length === 1 ? `/login/${roles[0]}` : '/login'} replace state={{ from: location }} />
   if (!profile) return <main className="portal-loading"><section><p className="eyebrow">ACCOUNT ACCESS</p><h1>Account profile unavailable</h1><p>This signed-in account has no SmartSchool profile. Contact your school administrator.</p><button className="outline-button" onClick={logout}>Sign out</button></section></main>
-  if (profile.is_active === false) return <main className="portal-loading"><section><p className="eyebrow">ACCOUNT ACCESS</p><h1>This account is disabled</h1><p>Contact your school administrator to restore access.</p><button className="outline-button" onClick={logout}>Sign out</button></section></main>
+  if (profile.is_active === false) return <main className="portal-loading"><section><p className="eyebrow">ACCOUNT ACCESS</p><h1>{signupRequestStatus === 'pending' ? 'Waiting for school approval' : signupRequestStatus === 'rejected' ? 'School registration request declined' : 'This account is disabled'}</h1><p>{signupRequestStatus === 'pending' ? 'Your email is verified. The school administrator must approve your request before you can access this school workspace.' : signupRequestStatus === 'rejected' ? 'The school administrator declined this request. Contact the school if you think this is a mistake.' : 'Contact your school administrator to restore access.'}</p><button className="outline-button" onClick={logout}>Sign out</button></section></main>
   if (roles?.length && (!profile || !roles.includes(profile.role))) {
     const roleNames = { super_admin: 'Platform administrator', school_admin: 'School administrator', teacher: 'Teacher', staff: 'Staff member', student: 'Student', parent: 'Parent' }
     return <main className="portal-loading"><section><p className="eyebrow">PORTAL ACCESS</p><h1>This portal belongs to another account</h1><p>You are signed in as {roleNames[profile?.role] || 'an account without a portal role'}. Sign out, then use the account assigned to this portal.</p><Link className="button blue-button" to={profile?.role ? roleRoute(profile.role) : '/login'}>Return to your portal</Link><button className="outline-button" onClick={logout}>Sign out and switch account</button></section></main>

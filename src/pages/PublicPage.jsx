@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PublicHeader from '../components/PublicHeader'
 import PublicFooter from '../components/PublicFooter'
+import { supabase } from '../lib/supabase'
 
 const portalPaths = { 'School Admin': '/login/school_admin', Teacher: '/login/teacher', Staff: '/login/staff', Student: '/login/student', Parent: '/login/parent', 'HR & Payroll': '/login/hr', Finance: '/login/finance' }
 
@@ -14,6 +16,20 @@ const pages = {
 
 export default function PublicPage({ page }) {
   const [title, intro, items] = pages[page] || pages.features
+  const [schools, setSchools] = useState([])
+  const [schoolsLoading, setSchoolsLoading] = useState(page === 'portals')
+
+  useEffect(() => {
+    if (page !== 'portals' || !supabase) { setSchoolsLoading(false); return undefined }
+    let live = true
+    supabase.rpc('get_public_school_directory').then(({ data, error }) => {
+      if (!live) return
+      if (error) console.error('Could not load the public school directory:', error.message)
+      setSchools(data || [])
+      setSchoolsLoading(false)
+    })
+    return () => { live = false }
+  }, [page])
 
   return <div className="public-site school-home school-public-page page-transition">
     <PublicHeader />
@@ -23,8 +39,8 @@ export default function PublicPage({ page }) {
         <h1>{title}</h1>
         <p>{intro}</p>
         <div className="school-public-actions">
-          <Link className="button blue-button" to={page === 'pricing' ? '/register?trial=1' : '/register'}>{page === 'pricing' ? 'Start a free trial' : 'Register your school'} <b aria-hidden="true">→</b></Link>
-          <Link className="button outline-hero" to="/login">Sign in</Link>
+          {page === 'pricing' && <Link className="button blue-button" to="/register?trial=1">Start a school trial <b aria-hidden="true">→</b></Link>}
+          <Link className="button outline-hero" to="/login">{page === 'portals' ? 'Sign in to your school' : 'Sign in'}</Link>
         </div>
       </section>
       {page === 'portals' && <aside className="school-portal-access-note" role="note">
@@ -37,7 +53,7 @@ export default function PublicPage({ page }) {
             <span className="school-public-card-number">0{index + 1}</span>
             <h2>{label}</h2>
             <p>{text}</p>
-            {page === 'pricing' && <Link className="school-public-portal-link" to={`/register?trial=1&plan=${encodeURIComponent(label)}`}>Try {label} <b aria-hidden="true">→</b></Link>}
+            {page === 'pricing' && <Link className="school-public-portal-link" to={`/register?trial=1&plan=${encodeURIComponent(label)}`}>Choose {label} for your school <b aria-hidden="true">→</b></Link>}
             {page === 'portals' && <Link className="school-public-portal-link" to={portalPaths[label]}>Continue to {label} sign in <b aria-hidden="true">→</b></Link>}
             {page === 'contact' && label === 'Register a school' && <Link to="/register">Start registration <b aria-hidden="true">→</b></Link>}
             {page === 'contact' && label === 'Existing school' && <Link to="/login">Open sign in <b aria-hidden="true">→</b></Link>}
@@ -45,6 +61,12 @@ export default function PublicPage({ page }) {
           </article>
         ))}
       </section>
+      {page === 'portals' && <section className="school-directory-section" id="schools" aria-labelledby="school-directory-title">
+        <div className="school-directory-heading"><div><p className="eyebrow">SCHOOL MEMBERS</p><h2 id="school-directory-title">Find your school</h2><p>Select your school to request a learner, parent, teacher, HR or Finance account. The school administrator reviews each request.</p></div><Link to="/register">Register a school</Link></div>
+        {schoolsLoading ? <p className="school-directory-empty">Loading schools…</p>
+          : schools.length ? <div className="school-directory-grid">{schools.map(school => <article className="school-directory-card" key={school.id}><h3>{school.name}</h3><p>School portal and account registration</p><Link className="school-public-portal-link" to={`/join-school/${encodeURIComponent(school.slug)}`}>Choose this school <b aria-hidden="true">→</b></Link></article>)}</div>
+            : <p className="school-directory-empty">No approved schools are listed yet. School names appear here after platform approval.</p>}
+      </section>}
     </main>
     <PublicFooter />
   </div>
