@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { roleRoute } from '../lib/roleRoute'
 import { hasSchoolPermission } from '../lib/schoolRoles'
+import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
 
 export default function Login(){
@@ -15,7 +16,7 @@ export default function Login(){
   const [forgotEmail,setForgotEmail]=useState('')
   const [forgotLoading,setForgotLoading]=useState(false)
 
-  const {login,loginDemo,resetPassword,logout,session,profile,staffRoles,loading:authLoading}=useAuth(),navigate=useNavigate(),{portalRole}=useParams();
+  const {login,resetPassword,logout,session,profile,staffRoles,loading:authLoading}=useAuth(),navigate=useNavigate(),{portalRole}=useParams();
   const roleLabels={school_admin:'School Admin',teacher:'Teacher',staff:'Staff',student:'Student',parent:'Parent',hr:'HR & Payroll',finance:'Finance'};
   const requestedRole=roleLabels[portalRole] ? portalRole : null;
   const specialistPermission = requestedRole === 'hr' ? 'school.hr.portal.view' : requestedRole === 'finance' ? 'school.finance.portal.view' : null;
@@ -84,21 +85,6 @@ export default function Login(){
     }
   }
 
-  function openDemo(role){
-    loginDemo(role)
-    navigate(roleRoute(role), { replace: true })
-  }
-
-  function openHrDemo(){
-    loginDemo('staff', 'hr_admin')
-    navigate('/hr-payroll', { replace: true })
-  }
-
-  function openFinanceDemo(){
-    loginDemo('staff', 'finance_officer')
-    navigate('/finance-operations?module=Dashboard', { replace: true })
-  }
-
   if(authLoading) return <div className="portal-loading"><div className="spinner"/><p>Loading your account...</p></div>;
   if(session&&profile&&sessionMatchesRequestedRole) return <Navigate to={portalDestination(profile, staffRoles)} replace/>;
   if(session&&profile) return <main className="portal-loading"><section><p className="eyebrow">PORTAL ACCESS</p><h1>You are signed in to a different portal</h1><p>This account is assigned to the {roleLabels[profile.role] || 'current'} portal. To open {roleLabels[requestedRole] || 'the selected'} portal, sign out and sign in with an account that has that role.</p><button className="button blue-button" type="button" onClick={() => void logout()}>Sign out and switch account</button><Link className="outline-button" to={roleRoute(profile.role)}>Return to your portal</Link></section></main>;
@@ -107,7 +93,7 @@ export default function Login(){
     <div className="auth page-transition login-page" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'radial-gradient(circle at 50% 20%, rgba(35, 117, 225, 0.12) 0%, transparent 60%)' }}>
       <div className="auth-container login-container" style={{ width: '100%', maxWidth: '500px' }}>
         <aside className="login-aside">
-          <Link className="brand" to="/">Smart<span>School</span></Link>
+          <Link className="brand login-platform-logo" to="/" aria-label="SmartSchool home"><img src="/smartschool-logo.svg" alt="SmartSchool — Learn, Grow, Succeed" /></Link>
           <p className="eyebrow">ONE SCHOOL. ONE WORKSPACE.</p>
           <h2>Make room for better learning.</h2>
           <p className="login-aside-copy">A calmer place to manage classes, follow progress, and keep your school community connected.</p>
@@ -124,6 +110,7 @@ export default function Login(){
             <span className="eyebrow" style={{ display: 'inline-block', marginBottom: '8px' }}>{requestedRole ? roleLabels[requestedRole].toUpperCase()+' PORTAL' : 'SECURE SCHOOL PORTAL'}</span>
             <h1 style={{ fontSize: '1.9rem', fontWeight: 800, marginBottom: '8px', letterSpacing: '-0.5px' }}>{requestedRole ? roleLabels[requestedRole]+' sign in' : 'Welcome Back'}</h1>
             <p style={{ color: 'var(--muted)', margin: 0, fontSize: '0.95rem' }}>Sign in with the account your school issued. Your school and portal access are determined by that account.</p>
+            {!supabase && <p role="status" style={{ margin: '12px 0 0', padding: '10px 12px', borderRadius: '10px', background: '#fff7ed', color: '#9a3412', fontSize: '.82rem' }}>Sign-in is unavailable until the school backend is connected.</p>}
           </div>
 
           <form onSubmit={handleLogin} style={{ display: 'grid', gap: '18px' }}>
@@ -182,16 +169,6 @@ export default function Login(){
               {loading ? 'Authenticating Workspace...' : 'Sign in to Portal →'}
             </button>
           </form>
-
-          <section className="demo-access login-demo-access" aria-labelledby="demo-access-title">
-            <h3 id="demo-access-title">Explore with a demo account</h3>
-            <p>Demo accounts contain no school records.</p>
-            <div className="demo-grid">
-              {Object.entries(roleLabels).filter(([role]) => ['school_admin','teacher','student','parent'].includes(role)).map(([role,label])=><button type="button" key={role} onClick={()=>openDemo(role)}>{label}<span>Open demo →</span></button>)}
-            </div>
-            <button type="button" className="demo-hr-preview" onClick={openHrDemo}><span><b>HR & Payroll</b><small>Staff and payroll</small></span><strong>Open →</strong></button>
-            <button type="button" className="demo-hr-preview demo-finance-preview" onClick={openFinanceDemo}><span><b>Finance</b><small>Payments and expenses</small></span><strong>Open →</strong></button>
-          </section>
 
           <nav className="login-portals" aria-label="Choose a role portal"><span>Choose a portal</span><div>{[['school_admin','School Admin'],['teacher','Teacher'],['staff','Staff'],['student','Student'],['parent','Parent'],['hr','HR & Payroll'],['finance','Finance']].map(([role,label])=><Link className={requestedRole===role?'active':''} to={'/login/'+role} key={role}>{label}</Link>)}</div></nav>
           <div style={{ marginTop: '25px', textAlign: 'center', fontSize: '0.9rem', borderTop: '1px solid var(--line)', paddingTop: '20px' }}>

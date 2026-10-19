@@ -12,7 +12,7 @@ const portalPermissions = {
 }
 
 export default function ProtectedRoute({ roles, permission, children, shell = true, portal = null }) {
-  const { session, profile, school, staffRoles, loading, logout, demo } = useAuth()
+  const { session, profile, school, staffRoles, loading, logout } = useAuth()
   const location = useLocation()
   const assignedStaffPortal = profile?.role === 'staff' && staffRoles.includes('hr_admin') !== staffRoles.includes('finance_officer')
     ? staffRoles.includes('hr_admin') ? 'hr' : 'finance' : null
@@ -52,7 +52,7 @@ export default function ProtectedRoute({ roles, permission, children, shell = tr
     || (profile?.role === 'staff' && location.pathname === '/library' ? 'school.library.manage' : null)
   if (portal && !portalPermissions[portal]) return <main className="portal-loading"><section><p className="eyebrow">PORTAL ACCESS</p><h1>This portal is not configured</h1><p>Ask your school administrator to verify this portal route.</p><Link className="button blue-button" to={roleRoute(profile?.role || '')}>Return to your portal</Link></section></main>
   if (requiredPermission && profile?.role !== 'super_admin' && !hasSchoolPermission(profile?.role, staffRoles, requiredPermission)) return <main className="portal-loading"><section><p className="eyebrow">PORTAL ACCESS</p><h1>This specialist portal is not assigned to your account</h1><p>Ask your school administrator to grant the required role before opening this workspace.</p><Link className="button blue-button" to={roleRoute(profile?.role || '')}>Return to your portal</Link></section></main>
-  if (!demo && profile?.role !== 'super_admin' && !profile?.school_id) return <main className="portal-loading"><section><p className="eyebrow">SCHOOL WORKSPACE ACCESS</p><h1>School access is not assigned</h1><p>This account is not linked to a school workspace. Ask your school administrator to invite you, or sign out and use the correct account.</p><button className="outline-button" onClick={logout}>Sign out</button></section></main>
+  if (profile?.role !== 'super_admin' && !profile?.school_id) return <main className="portal-loading"><section><p className="eyebrow">SCHOOL WORKSPACE ACCESS</p><h1>School access is not assigned</h1><p>This account is not linked to a school workspace. Ask your school administrator to invite you, or sign out and use the correct account.</p><button className="outline-button" onClick={logout}>Sign out</button></section></main>
 
   const schoolAdmin = profile?.role === 'school_admin'
   const canManagePending = schoolAdmin && ['/subscription', '/settings'].includes(location.pathname)
@@ -66,7 +66,7 @@ export default function ProtectedRoute({ roles, permission, children, shell = tr
 }
 
 function MfaGate({ onVerified, required }) {
-  const { demo, logout } = useAuth()
+  const { logout } = useAuth()
   const [state, setState] = useState('checking')
   const [challenge, setChallenge] = useState(null)
   const [setup, setSetup] = useState(null)
@@ -76,7 +76,7 @@ function MfaGate({ onVerified, required }) {
   const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
-    if (!supabase || demo) { onVerified(); return }
+    if (!supabase) { setError('Security verification is unavailable until Supabase is connected.'); setState('error'); return }
     let active = true
     const prepare = async () => {
       try {
@@ -98,7 +98,7 @@ function MfaGate({ onVerified, required }) {
     }
     void prepare()
     return () => { active = false }
-  }, [demo, required, attempt])
+  }, [required, attempt])
 
   const beginEnrollment = async () => {
     if (!supabase) return

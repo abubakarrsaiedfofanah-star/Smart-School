@@ -134,7 +134,7 @@ export default function MeetingScheduler() {
             {!isTeacher && m.status === 'available' && (
               <button className="button blue-button full" onClick={() => bookSlot(m.id)}>Book Appointment</button>
             )}
-            {m.meeting_link && <a href={m.meeting_link} target="_blank" className="text-link blue-text-link">Join Meeting Link ↗</a>}
+            {m.meeting_link && <a href={m.meeting_link} target="_blank" rel="noopener noreferrer" className="text-link blue-text-link">Join Meeting Link ↗</a>}
           </div>
         ))}
       </div>

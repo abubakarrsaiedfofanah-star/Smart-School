@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 120" role="img" aria-labelledby="title desc">
+  <title id="title">SmartSchool</title>
+  <desc id="desc">SmartSchool — Learn, Grow, Succeed</desc>
+  <defs>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#123b9b"/><stop offset="1" stop-color="#087cf5"/></linearGradient>
+  </defs>
+  <g fill="none" stroke="url(#blue)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 35 57 17l45 18-45 18z" fill="url(#blue)" stroke="none"/>
+    <path d="M25 42v14c16 13 48 13 64 0V42" stroke="#087cf5" stroke-width="6"/>
+    <path d="M102 35v24" stroke="#123b9b" stroke-width="4"/>
+    <circle cx="102" cy="62" r="4" fill="#123b9b" stroke="none"/>
+    <path d="M100 68c-4 8-4 14-3 18h10c1-4 1-10-3-18" fill="#123b9b" stroke="none"/>
+    <path d="M10 89c19-7 37-4 47 5 10-9 28-12 47-5M14 97c18-5 32-3 43 5 11-8 25-10 43-5" stroke="#087cf5" stroke-width="4"/>
+  </g>
+  <path d="M39 68c10 6 26 6 36 0-5-7-10-13-18-15-8 2-13 8-18 15Z" fill="url(#blue)"/>
+  <text x="124" y="71" fill="#123b9b" font-family="Arial, Helvetica, sans-serif" font-size="49" font-weight="800" letter-spacing="-2">Smart</text>
+  <text x="267" y="71" fill="#087cf5" font-family="Arial, Helvetica, sans-serif" font-size="49" font-weight="800" letter-spacing="-2">School</text>
+  <text x="126" y="101" fill="#123b9b" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="600" letter-spacing="6">LEARN  •  GROW  •  SUCCEED</text>
+</svg>

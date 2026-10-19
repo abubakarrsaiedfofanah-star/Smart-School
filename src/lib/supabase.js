@@ -7,7 +7,7 @@ if (!url || !key) {
   if (import.meta.env.PROD) {
     console.error('CRITICAL: Supabase credentials missing in production environment.')
   } else {
-    console.warn('Supabase credentials not found. Running in Demo Mode with local state.')
+    console.warn('Supabase credentials are missing. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your local environment to connect the backend.')
   }
 }
 

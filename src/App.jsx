@@ -64,10 +64,12 @@ export default function App(){
   useEffect(() => {
     let active = true
     let dispose = () => {}
-    void initPushNotifications(profile).then(cleanup => { if (active) dispose = cleanup || dispose; else cleanup?.() })
+    if (profile && profile.is_active !== false) {
+      void initPushNotifications(profile).then(cleanup => { if (active) dispose = cleanup || dispose; else cleanup?.() })
+    }
     if (import.meta.env.PROD && 'serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(error => console.error('SmartSchool app shell could not be registered:', error));
     return () => { active = false; dispose() }
-  }, [profile?.id, profile?.school_id]);
+  }, [profile?.id, profile?.school_id, profile?.is_active]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);

@@ -34,7 +34,7 @@ export default function TeacherAttendance() {
   const syncPending = useCallback(async () => {
     if (!supabase || !profile?.id || !navigator.onLine) return
     try {
-      const count = await syncOfflineWrites({ ownerId: profile.id, supabase })
+      const count = await syncOfflineWrites({ ownerId: profile.id, schoolId: profile.school_id, supabase })
       if (count) toast.success(`${count} offline attendance or grade entr${count === 1 ? 'y' : 'ies'} synced.`)
     } catch (error) {
       toast.error(`Offline work is still waiting to sync: ${error.message}`)

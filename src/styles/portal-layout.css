@@ -3,6 +3,7 @@
 .portal-frame-collapsed { --portal-side-width: 78px; }
 .portal-sidebar-brand { display: flex; align-items: center; justify-content: space-between; min-height: 46px; padding: 0 8px 13px; border-bottom: 1px solid #ffffff1a; }
 .tenant-brand { display: flex; min-width: 0; align-items: center; gap: 10px; color: #fff; }
+.tenant-brand img.platform-tenant-mark { padding: 3px; border-color: transparent; background: #fff; }
 .tenant-mark, .tenant-brand img { display: grid; width: 38px; height: 38px; flex: 0 0 38px; place-items: center; overflow: hidden; border: 1px solid #ffffff23; border-radius: 11px; background: #ffffff15; color: #fff; font-size: 17px; font-weight: 800; object-fit: contain; }
 .tenant-brand-copy { display: flex; min-width: 0; flex-direction: column; gap: 4px; }.tenant-brand-copy b { max-width: 165px; overflow: hidden; color: #fff; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }.tenant-brand-copy small { color: #a3b5c6; font-size: 9px; font-weight: 800; letter-spacing: .1em; }
 .portal-sidebar-close { display: none; border: 0; background: transparent; color: #fff; font-size: 25px; cursor: pointer; }

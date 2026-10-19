@@ -4,7 +4,7 @@ export default function PublicFooter() {
   return <footer className="site-footer school-footer">
     <div className="footer-container">
       <div className="footer-brand">
-        <Link className="brand" to="/">Smart<span>School</span></Link>
+        <Link className="brand footer-platform-logo" to="/" aria-label="SmartSchool home"><img src="/smartschool-logo.svg" alt="" aria-hidden="true" /></Link>
         <p>A practical home for the people who run a school, teach a class, and help students grow.</p>
         <Link className="footer-start-link" to="/register">Set up your school <b aria-hidden="true">→</b></Link>
       </div>

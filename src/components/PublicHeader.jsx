@@ -18,26 +18,27 @@ export default function PublicHeader() {
 
   useEffect(() => {
     const closeOnEscape = event => { if (event.key === 'Escape') closeMenu() }
-    // The compact navigation is used up to 1080px; close it if the user
-    // scrolls away so its scrim cannot cover the page footer or portal cards.
-    const closeOnScroll = () => closeMenu()
     const closeOnDesktop = () => { if (window.innerWidth > 1080) closeMenu() }
     window.addEventListener('keydown', closeOnEscape)
-    window.addEventListener('scroll', closeOnScroll, { passive: true })
     window.addEventListener('resize', closeOnDesktop)
     return () => {
       window.removeEventListener('keydown', closeOnEscape)
-      window.removeEventListener('scroll', closeOnScroll)
       window.removeEventListener('resize', closeOnDesktop)
     }
   }, [])
+
+  useEffect(() => {
+    if (!menuOpen) return undefined
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = previousOverflow }
+  }, [menuOpen])
 
   return <>
     {menuOpen && <button className="public-menu-scrim" type="button" aria-label="Close navigation menu" onClick={closeMenu} />}
     <header className="nav blue-nav sticky-nav school-nav">
       <Link className="brand school-logo" to="/" aria-label="SmartSchool home">
-        <span className="school-brand-mark" aria-hidden="true">S</span>
-        <span className="school-brand-name">Smart<span>School</span></span>
+        <img className="platform-logo" src="/smartschool-logo.svg" alt="" aria-hidden="true" />
       </Link>
       <button className="public-menu" type="button" onClick={() => setMenuOpen(open => !open)} aria-expanded={menuOpen} aria-controls="public-navigation" aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}>
         {menuOpen ? '\u00d7' : '\u2630'}

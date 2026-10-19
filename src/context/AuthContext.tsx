@@ -2,16 +2,11 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import type { Dispatch, PropsWithChildren, SetStateAction } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
-import type { PortalRole, SchoolWorkspace, UserProfile } from '../types/portal'
+import type { SchoolWorkspace, UserProfile } from '../types/portal'
 import { clearOfflineDataForUser } from '../lib/offlineQueue'
 
-interface DemoSession {
-  user: { id: string; email: string }
-  demo: true
-}
-
 interface AuthContextValue {
-  session: Session | DemoSession | null
+  session: Session | null
   profile: UserProfile | null
   school: SchoolWorkspace | null
   staffRoles: string[]
@@ -20,22 +15,19 @@ interface AuthContextValue {
   loading: boolean
   demo: boolean
   login: (email: string, password: string) => Promise<{ profile: UserProfile; staffRoles: string[] }>
-  loginDemo: (role: PortalRole, specialistRole?: string) => { profile: UserProfile }
   logout: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
 }
 
-const roles: PortalRole[] = ['super_admin', 'school_admin', 'teacher', 'staff', 'student', 'parent']
-const isPortalRole = (value: string | null): value is PortalRole => roles.includes(value as PortalRole)
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const [session, setSession] = useState<Session | DemoSession | null>(null)
+  const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [school, setSchool] = useState<SchoolWorkspace | null>(null)
   const [staffRoles, setStaffRoles] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
-  const [demo, setDemo] = useState(false)
+  const demo = false
 
   const loadStaffRoles = async (nextProfile: UserProfile | null) => {
     if (!nextProfile?.school_id || !supabase || !['teacher', 'staff'].includes(nextProfile.role)) { setStaffRoles([]); return }
@@ -43,24 +35,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
       .select('role_key').eq('school_id', nextProfile.school_id).eq('profile_id', nextProfile.id)
     if (error) throw error
     setStaffRoles([...new Set((assigned || []).map(row => row.role_key).filter(Boolean))])
-  }
-
-  const enterDemo = (role: PortalRole, specialistRole?: string): { profile: UserProfile } => {
-    const labels: Record<PortalRole, string> = {
-      super_admin: 'Platform administrator', school_admin: 'School administrator', teacher: 'Teacher', staff: 'Staff member', student: 'Student', parent: 'Parent'
-    }
-    const demoProfile: UserProfile = {
-      id: `demo-${role}`, full_name: labels[role], role,
-      school_id: null,
-      email: `${role}@demo.smartschool.local`
-    }
-    sessionStorage.setItem('smartschool_demo_role', role)
-    setDemo(true)
-    setProfile(demoProfile)
-    setStaffRoles(role === 'staff' && specialistRole ? [specialistRole] : [])
-    setSchool(null)
-    setSession({ user: { id: demoProfile.id, email: demoProfile.email! }, demo: true })
-    return { profile: demoProfile }
   }
 
   const loadProfile = async (user: User | null): Promise<void> => {
@@ -84,31 +58,25 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }
 
   useEffect(() => {
-    const savedDemoRole = sessionStorage.getItem('smartschool_demo_role')
-    if (isPortalRole(savedDemoRole)) {
-      enterDemo(savedDemoRole)
-      setLoading(false)
-    } else if (savedDemoRole) sessionStorage.removeItem('smartschool_demo_role')
+    sessionStorage.removeItem('smartschool_demo_role')
 
     if (!supabase) {
-      if (!isPortalRole(savedDemoRole)) setLoading(false)
+      setLoading(false)
       return
     }
     const client = supabase
 
     const initAuth = async () => {
       const { data: { session: authSession } } = await client.auth.getSession()
-      if (authSession && !isPortalRole(savedDemoRole)) {
+      if (authSession) {
         setSession(authSession)
         await loadProfile(authSession.user)
       }
-      if (!isPortalRole(savedDemoRole)) setLoading(false)
+      setLoading(false)
     }
     void initAuth()
 
     const { data: { subscription } } = client.auth.onAuthStateChange(async (_event, nextSession) => {
-      if (isPortalRole(sessionStorage.getItem('smartschool_demo_role'))) return
-      setDemo(false)
       setSession(nextSession)
       if (nextSession?.user) await loadProfile(nextSession.user)
       else { setProfile(null); setSchool(null); setStaffRoles([]) }
@@ -118,7 +86,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [])
 
   const login = async (email: string, password: string): Promise<{ profile: UserProfile; staffRoles: string[] }> => {
-    if (demo) throw new Error('Sign out of demo mode before signing in to a real account.')
     if (!supabase) throw new Error('School sign in is unavailable until the platform is connected.')
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
@@ -145,29 +112,28 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }
 
   const resetPassword = async (email: string): Promise<void> => {
-    if (!supabase) return
+    if (!supabase) throw new Error('Password reset is unavailable until Supabase is connected.')
     const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/login` })
     if (error) throw error
   }
 
   const logout = async (): Promise<void> => {
     const userId = profile?.id
-    if (userId && profile?.school_id && !demo && supabase) {
+    if (userId && profile?.school_id && supabase) {
       await supabase.from('push_devices').update({ active: false }).eq('user_id', userId).eq('school_id', profile.school_id)
     }
-    if (demo) sessionStorage.removeItem('smartschool_demo_role')
-    else if (supabase) await supabase.auth.signOut({ scope: 'global' })
-    if (userId && !userId.startsWith('demo-')) {
+    if (supabase) await supabase.auth.signOut({ scope: 'global' })
+    if (userId) {
       await clearOfflineDataForUser(userId).catch(error => console.warn('Could not clear this user\'s offline school data:', error))
       for (let index = localStorage.length - 1; index >= 0; index -= 1) {
         const key = localStorage.key(index)
         if (key?.startsWith(`smartschool-assessment:${userId}:`)) localStorage.removeItem(key)
       }
     }
-    setDemo(false); setSession(null); setProfile(null); setSchool(null); setStaffRoles([])
+    setSession(null); setProfile(null); setSchool(null); setStaffRoles([])
   }
 
-  return <AuthContext.Provider value={{ session, profile, school, staffRoles, setSchool, setProfile, loading, demo, login, loginDemo: enterDemo, logout, resetPassword }}>
+  return <AuthContext.Provider value={{ session, profile, school, staffRoles, setSchool, setProfile, loading, demo, login, logout, resetPassword }}>
     {children}
   </AuthContext.Provider>
 }

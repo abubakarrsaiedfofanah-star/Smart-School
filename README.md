@@ -29,6 +29,8 @@ Migration `067_academic_role_separation.sql` reserves timetable changes for scho
 
 Migration `068_staff_attendance_for_staff_accounts.sql` adds active non-teaching Staff accounts to the attendance roster while keeping attendance management limited to principals, deputy principals, and HR administrators.
 
+Migration `078_written_assessment_papers.sql` adds a written-paper assessment mode with private, class-scoped downloads for students. Interactive MCQ assessments remain portal-only. Parents can see assignment titles and deadlines in their family dashboard but cannot enter quizzes, download assessment papers, or submit student work. Teachers can label MCQ answers with letters, numbers, Roman numerals, custom labels, or no prefix.
+
 ## Mobile app and TypeScript
 
 SmartSchool can be installed as a Progressive Web App. Build and preview it with `npm run build` and `npm run preview`; the production preview exposes the install prompt for student, teacher, and parent accounts. Browser storage caches only the app shell and static assets. School records and portal data remain online and are never added to the offline cache. On iOS, use Share → Add to Home Screen.

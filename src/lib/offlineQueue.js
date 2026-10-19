@@ -3,6 +3,7 @@ const STORE = 'pending-writes'
 const ROSTERS = 'offline-rosters'
 const MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000
 const ROSTER_AGE_MS = 24 * 60 * 60 * 1000
+const OFFLINE_WRITE_TABLES = new Set(['attendance', 'results'])
 
 function openQueue() {
   if (!('indexedDB' in window)) return Promise.reject(new Error('Offline storage is not available in this browser.'))
@@ -34,6 +35,10 @@ export async function getOfflineRoster({ ownerId, schoolId, classId, date }) {
 }
 
 export async function queueOfflineWrite({ ownerId, schoolId, table, payload }) {
+  if (!ownerId || !schoolId || !OFFLINE_WRITE_TABLES.has(table)) throw new Error('This offline action is not allowed.')
+  if (!Array.isArray(payload) || !payload.length || payload.some(row => !row || row.school_id !== schoolId)) {
+    throw new Error('Offline records must belong to your current school.')
+  }
   const db = await openQueue()
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(STORE, 'readwrite')
@@ -46,7 +51,18 @@ export async function queueOfflineWrite({ ownerId, schoolId, table, payload }) {
   })
 }
 
-export async function syncOfflineWrites({ ownerId, supabase }) {
+export async function syncOfflineWrites({ ownerId, schoolId, supabase }) {
+  if (!ownerId || !schoolId || !supabase) throw new Error('A signed-in school account is required to sync offline work.')
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  if (userError) throw userError
+  if (user?.id !== ownerId) throw new Error('Offline work belongs to a different signed-in account.')
+  const { data: account, error: accountError } = await supabase.from('profiles')
+    .select('school_id,is_active').eq('id', ownerId).maybeSingle()
+  if (accountError) throw accountError
+  if (!account || account.is_active !== true || account.school_id !== schoolId) {
+    throw new Error('Your active school account could not be verified. Offline work was not synced.')
+  }
+
   const db = await openQueue()
   const entries = await new Promise((resolve, reject) => {
     const request = db.transaction(STORE, 'readonly').objectStore(STORE).getAll()
@@ -62,6 +78,12 @@ export async function syncOfflineWrites({ ownerId, supabase }) {
       continue
     }
     if (entry.ownerId !== ownerId) continue
+    if (entry.schoolId !== schoolId || entry.schoolId !== account.school_id
+      || !OFFLINE_WRITE_TABLES.has(entry.table) || !Array.isArray(entry.payload)
+      || !entry.payload.length || entry.payload.some(row => !row || row.school_id !== account.school_id)) {
+      await removeEntry(entry.id)
+      continue
+    }
     const conflict = entry.table === 'attendance' ? 'student_id,attendance_date' : 'exam_id,student_id'
     const { error } = await supabase.from(entry.table).upsert(entry.payload, { onConflict: conflict })
     if (error) throw error

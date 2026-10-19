@@ -1,58 +1,31 @@
 import React, { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
-import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
 
 const personas = {
-  concierge: { name: '🏫 School Concierge', placeholder: 'Ask about navigation, status, timetables...' },
-  tutor: { name: '📚 Academic AI Tutor', placeholder: 'Ask any study question, math problem, or essay tip...' },
-  insights: { name: '📈 Insights Advisor', placeholder: 'Ask about grades, attendance, or financial stats...' }
-};
-
-const personaResponses = {
-  concierge: {
-    'status': { text: "Connect your school account to view current school status and records.", action: null },
-    'library': { text: "Opening the Digital Library Repository. You can access textbooks, research papers, and video lectures.", action: { label: 'Go to Library 📖', path: '/library' } },
-    'gradebook': { text: "Navigating to your Interactive Gradebook to check subject scores and continuous assessment.", action: { label: 'Open Gradebook 📊', path: '/gradebook' } },
-    'timetable': { text: "Here is your quick timetable access. Check your class schedules and room assignments.", action: { label: 'View Timetable 📅', path: '/timetable' } },
-    'quizzes': { text: "Accessing the Quiz and Examination Portal. Ready to test your knowledge?", action: { label: 'Take Quiz ✍️', path: '/quizzes' } },
-    'settings': { text: "Taking you to School Settings for configuration and permissions.", action: { label: 'School Settings ⚙️', path: '/settings' } }
-  },
-  tutor: {
-    'math': { text: "In Algebra, remember the quadratic formula: x = (-b ± √(b² - 4ac)) / (2a). Would you like to practice a sample problem?", action: { label: 'Practice Quiz 📝', path: '/quizzes' } },
-    'essay': { text: "For a strong essay: 1. Thesis statement in intro, 2. PEEL (Point, Evidence, Explanation, Link) paragraphs, 3. Synthesis in conclusion.", action: null },
-    'science': { text: "Photosynthesis converts light energy into chemical energy: 6CO₂ + 6H₂O + light → C₆H₁₂O₆ + 6O₂. Need diagram notes?", action: { label: 'Browse Science Books 🧪', path: '/library' } },
-    'study': { text: "Try the Pomodoro Technique: 25 minutes focused study, followed by a 5 minute break. Repeat 4 times then take a 20 min break!", action: null }
-  },
-  insights: {
-    'attendance': { text: "Connect your school account to view attendance records.", action: null },
-    'finance': { text: "Connect your school account to view fee and payment records.", action: null },
-    'report': { text: "Connect your school account to view academic results.", action: null }
-  }
+  concierge: { name: 'School Concierge', placeholder: 'AI service is not connected' },
+  tutor: { name: 'Academic Tutor', placeholder: 'AI service is not connected' },
+  insights: { name: 'Insights Advisor', placeholder: 'AI service is not connected' }
 };
 
 export default function AIGuide() {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState('concierge'); // concierge, tutor, insights
   const [messages, setMessages] = useState([
-    { type: 'ai', text: "Hello! I am your SmartSchool AI 5.0 Intelligence Assistant. How can I assist you today?", action: null }
+    { type: 'ai', text: "AI responses are unavailable because no AI provider is connected yet.", action: null }
   ]);
   const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
 
   const scrollRef = useRef(null);
   const recognitionRef = useRef(null);
-  const { profile } = useAuth();
-  const navigate = useNavigate();
 
   // Scroll to bottom on new message
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isTyping]);
+  }, [messages]);
 
   // Speech Recognition setup
   useEffect(() => {
@@ -112,33 +85,7 @@ export default function AIGuide() {
     window.speechSynthesis.speak(utterance);
   };
 
-  const processResponse = (userInput) => {
-    const lower = userInput.toLowerCase();
-    let result = { text: "I'm analyzing your request. Try asking about status, library, math homework, or attendance!", action: null };
-
-    // Check current persona database
-    const personaDb = personaResponses[mode];
-    let matchedKey = Object.keys(personaDb).find(k => lower.includes(k));
-
-    if (matchedKey) {
-      result = personaDb[matchedKey];
-    } else {
-      // General cross-checking
-      if (lower.includes('library') || lower.includes('book')) {
-        result = { text: "Redirecting you to the Digital Library Repository.", action: { label: 'Go to Library 📖', path: '/library' } };
-      } else if (lower.includes('grade') || lower.includes('score') || lower.includes('report')) {
-        result = { text: "Checking academic performance metrics.", action: { label: 'Open Gradebook 📊', path: '/gradebook' } };
-      } else if (lower.includes('calendar') || lower.includes('event')) {
-        result = { text: "Opening the School Calendar for upcoming events and holidays.", action: { label: 'School Calendar 📅', path: '/calendar' } };
-      } else if (lower.includes('chat') || lower.includes('message')) {
-        result = { text: "Launching the SmartSchool Messaging & Chat Portal.", action: { label: 'Open Chat 💬', path: '/chat' } };
-      } else if (lower.includes('hi') || lower.includes('hello')) {
-        result = { text: `Greetings ${profile?.full_name || 'learner'}! How can I assist your school day today?`, action: null };
-      }
-    }
-
-    return result;
-  };
+  const processResponse = () => ({ text: "AI responses are unavailable because no AI provider is connected yet.", action: null });
 
   const handleSend = (e) => {
     if (e) e.preventDefault();
@@ -147,31 +94,14 @@ export default function AIGuide() {
     const userMsg = input.trim();
     setMessages(prev => [...prev, { type: 'user', text: userMsg }]);
     setInput('');
-    setIsTyping(true);
-
-    setTimeout(() => {
-      const response = processResponse(userMsg);
-      setMessages(prev => [...prev, { type: 'ai', text: response.text, action: response.action }]);
-      setIsTyping(false);
-      speakText(response.text);
-    }, 1000);
-  };
-
-  const quickAsk = (text) => {
-    setMessages(prev => [...prev, { type: 'user', text }]);
-    setIsTyping(true);
-    setTimeout(() => {
-      const response = processResponse(text);
-      setMessages(prev => [...prev, { type: 'ai', text: response.text, action: response.action }]);
-      setIsTyping(false);
-      speakText(response.text);
-    }, 900);
+    const response = processResponse(userMsg);
+    setMessages(prev => [...prev, { type: 'ai', text: response.text, action: null }]);
+    speakText(response.text);
   };
 
   const handleActionClick = (path) => {
     if (path) {
-      toast.success(`Navigating to ${path}...`);
-      navigate(path);
+      window.location.assign(path);
       setIsOpen(false);
     }
   };
@@ -185,7 +115,6 @@ export default function AIGuide() {
         aria-label="Toggle AI Assistant"
       >
         <span className="ai-fab-icon">🤖</span>
-        <span className="ai-fab-badge">5.0</span>
       </button>
 
       {/* AI Chat Window */}
@@ -196,8 +125,8 @@ export default function AIGuide() {
             <div className="ai-header-info">
               <div className="ai-avatar-glowing">🤖</div>
               <div>
-                <b>SmartSchool AI 5.0</b>
-                <span className="ai-status-online">● Online</span>
+                <b>School Assistant</b>
+                <span >● AI unavailable</span>
               </div>
             </div>
             <div className="ai-header-controls">
@@ -246,38 +175,6 @@ export default function AIGuide() {
                 )}
               </div>
             ))}
-            {isTyping && (
-              <div className="ai-bubble ai typing">
-                <span className="dot"></span>
-                <span className="dot"></span>
-                <span className="dot"></span>
-              </div>
-            )}
-          </div>
-
-          {/* Contextual Quick Suggestions */}
-          <div className="ai-suggestions">
-            {mode === 'concierge' && (
-              <>
-                <button onClick={() => quickAsk("Show school status")}>📊 Status</button>
-                <button onClick={() => quickAsk("Take me to the library")}>📖 Library</button>
-                <button onClick={() => quickAsk("Open my gradebook")}>📈 Gradebook</button>
-              </>
-            )}
-            {mode === 'tutor' && (
-              <>
-                <button onClick={() => quickAsk("Explain algebra math formula")}>📐 Math Help</button>
-                <button onClick={() => quickAsk("How to write a great essay?")}>✍️ Essay Tips</button>
-                <button onClick={() => quickAsk("Explain photosynthesis in science")}>🧪 Science Note</button>
-              </>
-            )}
-            {mode === 'insights' && (
-              <>
-                <button onClick={() => quickAsk("Show attendance summary")}>📋 Attendance</button>
-                <button onClick={() => quickAsk("Show finance overview")}>💳 Fee Stats</button>
-                <button onClick={() => quickAsk("Generate report card preview")}>📄 Academic Report</button>
-              </>
-            )}
           </div>
 
           {/* Input Form */}
@@ -291,11 +188,12 @@ export default function AIGuide() {
               🎙️
             </button>
             <input
+              disabled
               value={input}
               onChange={e => setInput(e.target.value)}
               placeholder={personas[mode].placeholder}
             />
-            <button type="submit" className="send-btn">→</button>
+            <button type="submit" className="send-btn" disabled>→</button>
           </form>
         </div>
       )}
@@ -322,19 +220,6 @@ export default function AIGuide() {
         }
         .ai-fab:hover { transform: scale(1.1) rotate(6deg); }
         .ai-fab.active { transform: scale(0.95); background: #1e293b; }
-        .ai-fab-badge {
-          position: absolute;
-          top: -4px;
-          right: -4px;
-          background: #10b981;
-          color: white;
-          font-size: 0.65rem;
-          font-weight: 800;
-          padding: 2px 6px;
-          border-radius: 10px;
-          box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-
         .ai-chat-window {
           position: fixed;
           bottom: 100px;

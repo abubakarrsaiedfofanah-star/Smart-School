@@ -155,7 +155,7 @@ export default function CertificateGenerator() {
             <div className="w-full flex justify-between items-start">
               <div className="text-left">
                 <div className="flex items-center gap-3 mb-2">
-                  <img src={school.logo_url || 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=128&auto=format&fit=crop'} alt="Logo" className="w-12 h-12 object-contain" />
+                  {school.logo_url && <img src={school.logo_url} alt={`${school.name} logo`} className="w-12 h-12 object-contain" />}
                   <div>
                     <h3 className="text-slate-900 font-bold uppercase tracking-widest text-sm">{school.name}</h3>
                     <p className="text-[10px] text-amber-700 font-bold uppercase tracking-tighter">Verified Academic Institution</p>
@@ -248,7 +248,7 @@ export default function CertificateGenerator() {
           {/* Background Watermark */}
           <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none overflow-hidden">
             <h1 className="text-[15rem] font-black transform -rotate-45 uppercase select-none">
-              Green Valley
+              {school?.name || 'School'}
             </h1>
           </div>
         </div>

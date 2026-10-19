@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-labelledby="title">
+  <title id="title">SmartSchool mark</title>
+  <defs><linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#123b9b"/><stop offset="1" stop-color="#087cf5"/></linearGradient></defs>
+  <path d="M8 30 50 13l42 17-42 17z" fill="url(#blue)"/>
+  <path d="M20 37v13c15 12 45 12 60 0V37" fill="none" stroke="#087cf5" stroke-width="5" stroke-linecap="round"/>
+  <path d="M15 70c15-6 27-3 35 5 8-8 20-11 35-5M19 79c13-4 23-2 31 5 8-7 18-9 31-5" fill="none" stroke="url(#blue)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M34 60c7 4 15 4 22 0-2-5-5-9-11-11-6 2-9 6-11 11z" fill="url(#blue)"/>
+</svg>

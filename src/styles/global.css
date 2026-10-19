@@ -300,73 +300,15 @@ input:focus, select:focus, textarea:focus {
   margin-bottom: 25px;
 }
 
-.demo-access {
-  padding: 40px;
-  background: var(--panel);
-  border-radius: var(--radius);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow);
-  position: sticky;
-  top: 40px;
-}
-
-.demo-access h3 {
-  font-size: 1.3rem;
-  font-weight: 800;
-  margin-bottom: 12px;
-  color: var(--ink);
-}
-
-.demo-grid {
-  display: grid;
-  gap: 12px;
-  margin-top: 25px;
-}
-
-.demo-grid button {
-  padding: 14px 20px;
-  border: 1px solid var(--line);
-  background: var(--bg);
-  color: var(--ink);
-  font-weight: 700;
-  font-size: 0.9rem;
-  border-radius: 12px;
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.2s;
-}
-
-.demo-grid button:hover {
-  border-color: var(--green);
-  background: var(--cream);
-  color: var(--green);
-  transform: translateX(5px);
-}
-
-.login-demo-access { position: static; padding: 20px; margin-top: 22px; box-shadow: none; border-radius: 14px; }
-.login-demo-access > p { color: var(--muted); font-size: .85rem; margin: 0; }
-.login-demo-access .demo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
-.login-demo-access .demo-grid button { display: grid; gap: 4px; padding: 12px; font-size: .82rem; }
-.login-demo-access .demo-grid button span { color: var(--green); font-size: .72rem; font-weight: 600; }
-.login-demo-access .demo-specialist-note { margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: .76rem; line-height: 1.5; }
-.login-demo-access .demo-specialist-note b { color: var(--ink); }
-.login-demo-access .demo-hr-preview { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; padding: 12px; border: 1px solid color-mix(in srgb, var(--green) 28%, var(--line)); border-radius: 12px; background: color-mix(in srgb, var(--green) 5%, white); color: var(--ink); text-align: left; cursor: pointer; }
-.login-demo-access .demo-hr-preview span { display: grid; gap: 3px; }
-.login-demo-access .demo-hr-preview b { font-size: .82rem; }
-.login-demo-access .demo-hr-preview small { color: var(--muted); font-size: .73rem; }
-.login-demo-access .demo-hr-preview strong { flex: 0 0 auto; color: var(--green); font-size: .76rem; }
-.login-demo-access .demo-finance-preview { margin-top: 8px; border-color: color-mix(in srgb, var(--blue, #2375e1) 30%, var(--line)); background: color-mix(in srgb, var(--blue, #2375e1) 5%, white); }
 .staff-role-note { padding: 10px 12px; border-left: 3px solid var(--school-accent, var(--green)); border-radius: 6px; background: var(--bg); color: var(--muted); font-size: .82rem; }
 
 @media (max-width: 1024px) {
   .auth-container { grid-template-columns: 1fr; max-width: 550px; }
-  .demo-access { position: static; }
 }
 
 @media (max-width: 600px) {
   .auth-card { padding: 40px 24px; }
   .auth-card h1 { font-size: 2.2rem; }
-  .login-demo-access .demo-grid { grid-template-columns: 1fr; }
 }
 
 .password-field {
@@ -820,6 +762,8 @@ input:focus, select:focus, textarea:focus {
 .login-aside { display: flex; flex-direction: column; min-height: 100%; padding: clamp(26px, 4vw, 44px); border-radius: 24px; background: linear-gradient(145deg, #0d2e4c, #174c76 72%, #1b5b89); color: #fff; box-shadow: 0 24px 55px #0f34501c; }
 .login-aside .brand { color: #fff; font-size: 1.35rem; font-weight: 800; letter-spacing: -.04em; }
 .login-aside .brand span { color: #9dd6ff; }
+.login-aside .login-platform-logo { display: inline-flex; width: 230px; max-width: 100%; padding: 4px 8px; border-radius: 6px; background: #fff; }
+.login-aside .login-platform-logo img { display: block; width: 100%; height: auto; }
 .login-aside > .eyebrow { margin: auto 0 12px; color: #a7d9ff; font-size: .67rem; font-weight: 800; letter-spacing: .14em; }
 .login-aside h2 { max-width: 370px; margin: 0; color: #fff; font-size: clamp(2rem, 3.6vw, 3.15rem); line-height: 1.05; letter-spacing: -.055em; }
 .login-aside-copy { max-width: 360px; margin: 16px 0 0; color: #d5e7f5; font-size: .95rem; line-height: 1.65; }
@@ -839,11 +783,6 @@ input:focus, select:focus, textarea:focus {
 .login-card input:not([type="checkbox"]) { min-height: 48px; }
 .login-card form > div:nth-last-child(2) { flex-wrap: wrap; gap: 10px; }
 .login-card form button.button { min-height: 48px; }
-.login-demo-access { padding: 16px !important; margin-top: 20px !important; border-color: #dce7f0; background: #f8fafc; }
-.login-demo-access h3 { margin: 0 0 4px; font-size: .95rem; }
-.login-demo-access > p { font-size: .76rem; line-height: 1.45; }
-.login-demo-access .demo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 10px; }
-.login-demo-access .demo-grid button { border-radius: 9px; }
 .login-portals { margin-top: 18px !important; }
 .login-portals > div { gap: 6px; }
 .login-portals a { padding: 7px 9px; font-size: .72rem; }
@@ -895,8 +834,6 @@ input:focus, select:focus, textarea:focus {
   .login-card > div:first-child { margin-bottom: 16px !important; }
   .login-card .login-heading h1 { font-size: 1.65rem !important; }
   .login-card form > div:nth-last-child(2) { align-items: flex-start !important; }
-  .login-demo-access { padding: 13px !important; }
-  .login-demo-access .demo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .register-page { grid-template-columns: minmax(0, 1fr) !important; }
   .register-page .register-aside { position: static; display: block !important; height: auto; padding: 20px 22px !important; }
   .register-page .register-aside-hero { margin: 18px 0 0 !important; }
@@ -914,19 +851,19 @@ input:focus, select:focus, textarea:focus {
 
 /* Touch-friendly sign-in and registration controls. */
 .auth.login-page button, .register-page button, .register-page a { -webkit-tap-highlight-color: transparent; }
-.login-page .login-demo-access button, .login-page .login-portals a, .login-page .login-aside-footer a,
+.login-page .login-portals a, .login-page .login-aside-footer a,
 .register-page .choice, .register-page .form-actions .button, .register-page .form-actions .back-btn { transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease; }
-.login-page .login-demo-access button:active, .register-page .choice:active, .register-page .form-actions .button:active { transform: scale(.985); }
+.register-page .choice:active, .register-page .form-actions .button:active { transform: scale(.985); }
 .login-page button:focus-visible, .login-page a:focus-visible, .register-page button:focus-visible, .register-page a:focus-visible { outline: 3px solid #2375e166; outline-offset: 3px; }
 @media (max-width: 520px) {
   .login-page > div[style*="position: fixed"], .register-page > div[style*="position: fixed"] { align-items: flex-start !important; overflow-y: auto; padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)) !important; }
   .login-page > div[style*="position: fixed"] > .glass-card, .register-page > div[style*="position: fixed"] > .glass-card { max-height: calc(100dvh - 24px); overflow-y: auto; overscroll-behavior: contain; padding: 22px 18px !important; border-radius: 18px !important; }
   .login-card input:not([type="checkbox"]), .register-main input, .register-main select { min-height: 48px; font-size: 16px; }
   .login-card form label > div > button { min-width: 44px; min-height: 44px; }
-  .login-card .login-demo-access button, .login-card .login-portals a { min-height: 42px; }
+  .login-card .login-portals a { min-height: 42px; }
   .register-page .choice { min-height: 48px; }
   .register-page .form-actions .button, .register-page .form-actions .back-btn { min-height: 46px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .login-page .login-demo-access button, .register-page .choice, .register-page .form-actions .button, .register-page .form-actions .back-btn { transition: none; }
+  .register-page .choice, .register-page .form-actions .button, .register-page .form-actions .back-btn { transition: none; }
 }

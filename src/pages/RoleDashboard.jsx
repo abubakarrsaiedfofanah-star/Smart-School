@@ -214,7 +214,7 @@ return <div className={`portal${embedded ? ' portal-embedded' : ''}`} style={{'-
   <aside className={'side '+(mobileOpen?'mobile-open':'') + (sidebarCollapsed?' collapsed':'')}>
     <div className="side-header">
       <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-        <Link className="brand light" to="/">{school?.logo_url ? <img src={school.logo_url} style={{height:'32px', marginRight:'10px'}} /> : null} <span>{school?.name || 'SmartSchool'}</span></Link>
+        <Link className="brand light" to="/">{role === 'super_admin' ? <img src="/smartschool-mark.svg" alt="SmartSchool logo" style={{height:'32px', width:'32px', padding:'2px', marginRight:'10px', background:'#fff', borderRadius:'6px'}} /> : school?.logo_url ? <img src={school.logo_url} alt={`${school.name} logo`} style={{height:'32px', width:'32px', marginRight:'10px', objectFit:'contain'}} /> : null}<span>{school?.name || 'SmartSchool'}</span></Link>
         <button className="side-close-btn" aria-label="Close dashboard menu" onClick={() => setMobileOpen(false)}>{'\u00d7'}</button>
       </div>
       <p className="portal-label">{portalTitle}</p>
@@ -406,10 +406,10 @@ function DashboardHighlights({ role, profile, timezone }) {
   if (role === 'super_admin') return null
   const formatDate = value => new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', timeZone: timezone }).format(new Date(value))
   return <section className="dashboard-highlights">
-    <div className="panel highlight-card glass-card neumorph-flat"><div className="dashboard-panel-title"><div><p className="eyebrow blue-eyebrow">SCHOOL FEED</p><h2>Updates & upcoming work</h2></div><span className="dashboard-panel-mark" aria-hidden="true">↗</span></div>
+    <div className="panel highlight-card glass-card neumorph-flat"><div className="dashboard-panel-title"><div><p className="eyebrow blue-eyebrow">SCHOOL FEED</p><h2>{role === 'parent' ? 'Your child’s upcoming assignments' : 'Updates & upcoming work'}</h2></div><span className="dashboard-panel-mark" aria-hidden="true">↗</span></div>{role === 'parent' && <p className="dashboard-empty-state">This is a reminder for you. Your child opens and submits the work in their student portal.</p>}
       {loading ? <p className="dashboard-empty-state">Loading your latest updates…</p> : notices.length || assignments.length ? <>
         {notices.map(row => <div className="highlight-row" key={`notice-${row.id}`}><i>N</i><span><small>School notice</small>{row.title}</span><time>{formatDate(row.created_at)}</time></div>)}
-        {assignments.map(row => <div className="highlight-row" key={`assignment-${row.id}`}><i>A</i><span><small>Due {formatDate(row.due_date)}</small>{row.title}</span><time>Work</time></div>)}
+        {assignments.map(row => <div className="highlight-row" key={`assignment-${row.id}`}><i>A</i><span><small>{role === 'parent' ? 'Assigned to your learner · due' : 'Due'} {formatDate(row.due_date)}</small>{row.title}</span><time>{role === 'parent' ? 'Reminder' : 'Work'}</time></div>)}
       </> : <p className="dashboard-empty-state">There are no recent notices or upcoming class assignments.</p>}
     </div>
     <div className="panel pulse-card glass-card neumorph-flat"><p className="eyebrow blue-eyebrow">ATTENDANCE TODAY</p><h2>{role === 'parent' ? 'Learner attendance' : role === 'student' ? 'Your attendance' : 'Attendance activity'}</h2><div className="pulse-ring">{loading ? '…' : pulse}</div><p>{pulse === '—' ? 'No attendance today.' : 'Present or late today.'}</p></div>
