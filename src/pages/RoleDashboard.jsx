@@ -332,7 +332,7 @@ function DashboardQuickActions({ role, studentId, onSelect }) {
     parent: [['Timetable', 'See your learner’s schedule', '◷', '/timetable'], ['Meetings', 'Connect with school staff', '▣', '/meetings'], ['Messages', 'Open school messages', '✉', '/chat'], ['Child fees', 'Review payments and balances', '¤', 'select']]
   }
   return <section className="dashboard-actions-section"><div className="dashboard-section-heading"><div><p className="eyebrow">{role === 'teacher' ? 'YOUR CLASSROOM' : 'SHORTCUTS'}</p><h2>{role === 'teacher' ? 'Teaching tools' : 'Quick actions'}</h2></div></div><div className={`dashboard-quick-actions ${role === 'teacher' ? 'teacher-actions' : ''}`}>
-    {(actions[role] || []).map(([title, , icon, target]) => target === 'select' ? <button type="button" className="dashboard-action-card" key={title} onClick={() => onSelect(title)}><i>{icon}</i><span><b>{title}</b></span><em aria-hidden="true">↗</em></button> : <Link className="dashboard-action-card" key={title} to={target}><i>{icon}</i><span><b>{title}</b></span><em aria-hidden="true">↗</em></Link>)}
+    {(actions[role] || []).map(([title, description, icon, target]) => target === 'select' ? <button type="button" className="dashboard-action-card" key={title} onClick={() => onSelect(title)}><i>{icon}</i><span><b>{title}</b><small>{description}</small></span><em aria-hidden="true">↗</em></button> : <Link className="dashboard-action-card" key={title} to={target}><i>{icon}</i><span><b>{title}</b><small>{description}</small></span><em aria-hidden="true">↗</em></Link>)}
   </div></section>
 }
 
