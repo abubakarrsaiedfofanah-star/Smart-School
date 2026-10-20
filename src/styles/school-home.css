@@ -485,3 +485,7 @@
   .school-photo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 520px) { .school-directory-grid, .school-photo-grid { grid-template-columns: 1fr; } }
+
+/* Role summaries are informational; registration and sign-in remain the actions. */
+.school-portal-shortcuts .hero-portal { cursor: default; }
+.school-portal-shortcuts .hero-portal:hover { transform: none; border-color: #e0e7ef; box-shadow: 0 8px 24px #18324b0a; }

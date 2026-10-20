@@ -12,12 +12,12 @@ const workflows = [
 ]
 
 const roles = [
-  ['School Admin', 'Oversee school records, people and daily operations.', '⌂', '/school-admin'],
-  ['Teacher', 'Manage classes, attendance, lessons and student work.', '▤', '/teacher'],
-  ['Student', 'Keep up with assignments, timetables and results.', '✦', '/student'],
-  ['Parent', 'Follow school updates and your learner’s progress.', '♡', '/parent'],
-  ['HR & Payroll', 'Manage staff records and payroll workflows.', '♙', '/login/hr'],
-  ['Finance', 'Manage school expenses and payment reconciliation.', '$', '/login/finance'],
+  ['School Admin', 'Oversee school records, people and daily operations.', '⌂'],
+  ['Teacher', 'Manage classes, attendance, lessons and student work.', '▤'],
+  ['Student', 'Keep up with assignments, timetables and results.', '✦'],
+  ['Parent', 'Follow school updates and your learner’s progress.', '♡'],
+  ['HR & Payroll', 'Manage staff records and payroll workflows.', '♙'],
+  ['Finance', 'Manage school expenses and payment reconciliation.', '$'],
 ]
 
 const tools = [
@@ -93,7 +93,7 @@ export default function Landing() {
         <DashboardPreview/>
       </section>
 
-      <div className="hero-portals school-portal-shortcuts">{roles.map(([name, text, icon, href], index) => <Link className={`hero-portal portal-tone-${index}`} to={href} key={name}><span className="portal-icon">{icon}</span><b>{name}</b><small>{text}</small><span className="portal-link">Open portal →</span></Link>)}</div>
+      <div className="hero-portals school-portal-shortcuts" aria-label="SmartSchool features by role">{roles.map(([name, text, icon], index) => <article className={`hero-portal portal-tone-${index}`} key={name}><span className="portal-icon" aria-hidden="true">{icon}</span><b>{name}</b><small>{text}</small></article>)}</div>
 
       <Reveal><section className="section school-directory-section landing-school-directory" id="schools" aria-labelledby="landing-schools-title">
         <div className="school-directory-heading"><div><p className="eyebrow blue-eyebrow">SCHOOLS USING SMARTSCHOOL</p><h2 id="landing-schools-title">Find your school</h2><p>Open your school’s workspace or register a new school to get started.</p></div><Link to="/portals">View all schools and portals →</Link></div>
