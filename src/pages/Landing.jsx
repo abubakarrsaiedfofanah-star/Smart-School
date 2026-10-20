@@ -4,29 +4,13 @@ import PublicHeader from '../components/PublicHeader'
 import PublicFooter from '../components/PublicFooter'
 import { supabase } from '../lib/supabase'
 
-const workflows = [
-  { label: 'Run today', number: '01', title: 'Know what needs attention today.', copy: 'Check attendance, classes, notices and the school calendar before the day gets busy.', tasks: ['Record and review attendance', 'Check today’s timetable', 'Share a school update'], icon: '◷' },
-  { label: 'Teach & learn', number: '02', title: 'Keep classwork moving.', copy: 'Organise lessons, assignments, submissions, quizzes and results around each class.', tasks: ['Prepare lessons and resources', 'Collect and review assignments', 'Track grades and progress'], icon: '▤' },
-  { label: 'Manage school', number: '03', title: 'Keep records and operations together.', copy: 'Follow admissions, school records, fee activity and the work that keeps a school running.', tasks: ['Review admissions', 'Track fees and invoices', 'Manage school information'], icon: '⌂' },
-  { label: 'Stay connected', number: '04', title: 'Keep the right people informed.', copy: 'Give staff, learners and families a clear place to find relevant school information.', tasks: ['Share announcements', 'Coordinate meetings and events', 'Keep families informed'], icon: '↗' },
-]
-
-const roles = [
-  ['School Admin', 'Oversee school records, people and daily operations.', '⌂'],
-  ['Teacher', 'Manage classes, attendance, lessons and student work.', '▤'],
-  ['Student', 'Keep up with assignments, timetables and results.', '✦'],
-  ['Parent', 'Follow school updates and your learner’s progress.', '♡'],
-  ['HR & Payroll', 'Manage staff records and payroll workflows.', '♙'],
-  ['Finance', 'Manage school expenses and payment reconciliation.', '$'],
-]
-
-const tools = [
-  ['Attendance & timetable', 'Take attendance and keep class schedules visible.'],
-  ['Assignments & results', 'Share classwork, review submissions and follow academic progress.'],
-  ['Fees & invoices', 'Keep payment information and invoices organised.'],
-  ['Admissions & records', 'Bring new admissions and school records into the same workflow.'],
-  ['Calendar & communication', 'Coordinate school dates, meetings and announcements.'],
-  ['Library & courses', 'Give learners and teachers a place for learning resources.'],
+const services = [
+  ['Attendance and timetable', 'Take attendance and keep class schedules clear.'],
+  ['Teaching and assessment', 'Plan lessons, share assignments, and follow results.'],
+  ['Student records and admissions', 'Manage learner information and new applications.'],
+  ['Fees, expenses and payroll', 'Keep school finances and staff payments organised.'],
+  ['School updates and calendar', 'Share announcements, events, and important dates.'],
+  ['Library and courses', 'Keep learning materials easy for your community to find.'],
 ]
 
 function DashboardPreview() {
@@ -72,12 +56,9 @@ function Reveal({ children, className = '' }) {
 }
 
 export default function Landing() {
-  const [activeWorkflow, setActiveWorkflow] = useState(0)
   const [schools, setSchools] = useState([])
   const [schoolsLoading, setSchoolsLoading] = useState(true)
   const [schoolsError, setSchoolsError] = useState('')
-
-  const active = workflows[activeWorkflow]
 
   async function loadSchools() {
     if (!supabase) {
@@ -106,11 +87,10 @@ export default function Landing() {
     <main>
       <section id="home" className="sky-hero screenshot-hero school-hero">
         <div className="hero-product-backdrop"><div/><div/><div/><div/></div><div className="video-wash"/><div className="ambient-grid"/><div className="ambient-ring ring-one"/><div className="ambient-ring ring-two"/>
-        <div className="hero-copy"><p className="eyebrow blue-eyebrow">A PRACTICAL HOME FOR YOUR SCHOOL</p><h1>Run your school.<br/>Keep learning<br/><span>moving.</span></h1><p>Manage the school day, support teaching and keep families connected from one shared system.</p><div className="actions"><Link className="button blue-button" to="/register">Set up your school <b>→</b></Link><Link className="button outline-hero" to="/login">Sign in to your portal</Link></div><div className="hero-role-note"><span>One system</span><i/>School Admin <i/> Teacher <i/> Student <i/> Parent <i/> HR <i/> Finance</div></div>
-        <DashboardPreview/>
+        <div className="hero-copy"><p className="eyebrow blue-eyebrow">A PRACTICAL HOME FOR YOUR SCHOOL</p><h1>Run your school.<br/>Keep learning<br/><span>moving.</span></h1><p>Manage the school day, support teaching and keep families connected from one shared system.</p><div className="actions"><Link className="button blue-button" to="/register">Set up your school <b>→</b></Link><Link className="button outline-hero" to="/login">Sign in to your portal</Link></div></div><DashboardPreview/>
       </section>
 
-      <div className="hero-portals school-portal-shortcuts" aria-label="SmartSchool features by role">{roles.map(([name, text, icon], index) => <article className={`hero-portal portal-tone-${index}`} key={name}><span className="portal-icon" aria-hidden="true">{icon}</span><b>{name}</b><small>{text}</small></article>)}</div>
+
 
       <Reveal><section className="section school-directory-section landing-school-directory" id="schools" aria-labelledby="landing-schools-title">
         <div className="school-directory-heading"><div><p className="eyebrow blue-eyebrow">SCHOOLS USING SMARTSCHOOL</p><h2 id="landing-schools-title">Find your school</h2><p>Open your school’s workspace or register a new school to get started.</p></div><Link to="/portals">View all schools and portals →</Link></div>
@@ -120,27 +100,15 @@ export default function Landing() {
               : <div className="school-directory-empty"><p>No active schools are listed yet. Register your school to create its workspace.</p><Link to="/register">Register a school →</Link></div>}
       </section></Reveal>
 
-      <Reveal><section className="section school-day-section" id="how-it-works"><div className="section-heading"><div><p className="eyebrow blue-eyebrow">A SCHOOL DAY, STEP BY STEP</p><h2>From the first register<br/>to the last update.</h2></div><p className="section-note">Keep the work of running a school connected throughout the day.</p></div>
-        <div className="school-workflow"><div className="workflow-tabs" role="tablist" aria-label="School workflows">{workflows.map((item, index) => <button className={activeWorkflow === index ? 'active' : ''} key={item.number} role="tab" aria-selected={activeWorkflow === index} type="button" onClick={() => setActiveWorkflow(index)}><span>{item.number}</span><b>{item.label}</b><i>↗</i></button>)}</div>
-          <article className="workflow-detail" role="tabpanel" key={active.number}><div className="workflow-copy"><span className="workflow-icon">{active.icon}</span><p className="eyebrow blue-eyebrow">WORKFLOW {active.number}</p><h3>{active.title}</h3><p>{active.copy}</p><Link to="/login" className="text-link blue-text-link">Open your school portal <b>→</b></Link></div><ul>{active.tasks.map((task, index) => <li key={task}><span>0{index + 1}</span><b>{task}</b><i>↗</i></li>)}</ul></article>
-        </div>
-      </section></Reveal>
 
-      <Reveal><section className="section school-photo-section" aria-labelledby="school-photo-title">
-        <div className="section-heading"><div><p className="eyebrow blue-eyebrow">LEARNING, PEOPLE AND RESOURCES</p><h2 id="school-photo-title">A clearer view of the school day.</h2></div><p className="section-note">Keep classwork, school communication and learning resources connected in one workspace.</p></div>
-        <div className="school-photo-grid">
-          <figure className="school-photo-card"><img src="/images/school-day/classroom-learning.jpg" alt="Teacher leading a lesson as students follow along in a classroom" width="1440" height="960" loading="lazy" decoding="async" /><figcaption><b>Teaching and classwork</b><span>Plan lessons, follow attendance and review student work.</span></figcaption></figure>
-          <figure className="school-photo-card"><img src="/images/school-day/school-community.jpg" alt="Students collaborating around a laptop at a library table" width="1100" height="734" loading="lazy" decoding="async" /><figcaption><b>School community</b><span>Help teachers, learners and families stay informed.</span></figcaption></figure>
-          <figure className="school-photo-card"><img src="/images/school-day/school-library.jpg" alt="Rows of books on library shelves" width="1100" height="733" loading="lazy" decoding="async" /><figcaption><b>Learning resources</b><span>Keep course materials and library work easy to find.</span></figcaption></figure>
-        </div>
-        <p className="school-photo-credit">Illustrative school photos from <a href="https://unsplash.com/license" target="_blank" rel="noreferrer">Unsplash</a>; they are not photos of SmartSchool customer schools.</p>
-      </section></Reveal>
 
-      <Reveal><section className="section school-tools-section" id="school-tools"><div className="section-heading"><div><p className="eyebrow blue-eyebrow">SCHOOL OPERATIONS IN ONE PLACE</p><h2>Tools for the work<br/>your school does.</h2></div><p className="section-note">Move between day-to-day school needs without losing sight of the people behind them.</p></div><div className="service-grid">{tools.map(([title, text], index) => <article className="service school-tool" key={title}><span>0{index + 1}</span><h3>{title}</h3><p>{text}</p><Link to="/portals">Choose a portal <b>↗</b></Link></article>)}</div></section></Reveal>
 
-      <Reveal><section className="section about-section school-roles-section"><div className="section-intro"><p className="eyebrow blue-eyebrow">CLEAR ROLES. SHARED SCHOOL.</p><h2>Everyone gets a useful place in the system.</h2></div><div className="about-copy"><p>School leaders, teachers, students and parents each have a portal shaped around their work. Shared information helps the school stay coordinated while each person can focus on what they need to do.</p><p>Start by registering your school, then invite your team and set up the routines your school uses.</p><Link className="text-link blue-text-link" to="/portals">See how the portals work →</Link></div></section></Reveal>
 
-      <Reveal><section className="section school-setup-section"><div className="section-heading"><div><p className="eyebrow blue-eyebrow">GETTING STARTED</p><h2>Set up the system<br/>around your school.</h2></div><p className="section-note">A straightforward path from a new school workspace to everyday use.</p></div><div className="setup-grid"><article><span>01</span><h3>Register your school</h3><p>Create your school workspace and add the details your community needs.</p></article><article><span>02</span><h3>Set up your team</h3><p>Bring in school leaders, teachers, students and families with role based access.</p></article><article><span>03</span><h3>Run your school day</h3><p>Use the portals to keep attendance, learning, records and updates moving.</p></article></div></section></Reveal>
+      <Reveal><section className="section school-tools-section" id="services" aria-labelledby="services-title"><div className="section-heading"><div><p className="eyebrow blue-eyebrow">SERVICES</p><h2 id="services-title">The tools your school needs, together.</h2></div><p className="section-note">One connected system for learning, operations, finance, and communication.</p></div><div className="service-grid">{services.map(([title, text], index) => <article className="service school-tool" key={title}><span>0{index + 1}</span><h3>{title}</h3><p>{text}</p></article>)}</div></section></Reveal>
+
+
+
+
 
       <section className="school-cta-band"><div><p className="eyebrow light-eyebrow">READY WHEN YOUR SCHOOL IS</p><h2>Bring your school’s<br/>everyday work together.</h2><p>Create your school workspace and start organising the routines that matter to you.</p></div><div className="actions"><Link className="button school-light-button" to="/register">Register your school <b>→</b></Link><Link className="school-cta-login" to="/login">Already have an account? Sign in</Link></div></section>
     </main>

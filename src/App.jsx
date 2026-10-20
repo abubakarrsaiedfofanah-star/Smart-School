@@ -98,6 +98,7 @@ export default function App(){
         <Route path="/" element={<Landing/>}/>
         <Route path="/welcome" element={<Landing/>}/>
         <Route path="/features" element={<PublicPage page="features"/>}/>
+        <Route path="/services" element={<PublicPage page="features"/>}/>
         <Route path="/portals" element={<PublicPage page="portals"/>}/>
         <Route path="/pricing" element={<PublicPage page="pricing"/>}/>
         <Route path="/about" element={<PublicPage page="about"/>}/>

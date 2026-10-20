@@ -3,8 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 
 const navigation = [
   ['Home', '/'],
-  ['School tools', '/features'],
-  ['How it works', '/#how-it-works'],
+  ['Services', '/services'],
   ['Portals', '/portals'],
   ['Pricing', '/pricing'],
   ['About', '/about'],
