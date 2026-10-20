@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { roleRoute } from '../lib/roleRoute'
 import { accessibleBrandColor, normalizeBrandColor } from '../lib/brandColor'
+import { hasSchoolPermission } from '../lib/schoolRoles'
 
 const navigation = {
   super_admin: [
@@ -37,6 +38,8 @@ export default function PortalLayout({ children, portal = null }) {
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
+  const [navSearch, setNavSearch] = useState('')
+  const navSearchRef = useRef(null)
   const menuTriggerRef = useRef(null)
   const closeMenuRef = useRef(null)
   const role = profile?.role || 'unknown'
@@ -64,11 +67,38 @@ export default function PortalLayout({ children, portal = null }) {
       : items]) : role === 'teacher'
     ? navigation.teacher
     : navigation[role] || []
+  const roleToolLinks = [
+    ['HR & Payroll', '\u2659', '/hr-payroll', 'school.hr.portal.view', ['teacher', 'staff']],
+    ['Finance operations', '$', '/finance-operations', 'school.finance.portal.view', ['teacher', 'staff']],
+    ['Staff attendance', '\u2713', '/staff-attendance', 'school.staff_attendance.manage', ['staff']],
+    ['Admissions', '\u2197', '/admissions', 'school.admissions.manage', ['staff']],
+    ['Inventory & assets', '\u25a7', '/inventory', 'school.inventory.view', ['staff']],
+    ['Library', '\u25a8', '/library', null, ['staff']],
+  ].filter(([, , , permission, allowedRoles]) => allowedRoles.includes(role) && (!permission || hasSchoolPermission(role, assignedRoles, permission)))
+  const roleGroups = !portal && roleToolLinks.length ? [...groups, ['Assigned responsibilities', roleToolLinks.map(([label, icon, path]) => [label, icon, path])]] : groups
+  const visibleGroups = useMemo(() => {
+    const query = navSearch.trim().toLocaleLowerCase()
+    if (!query) return roleGroups
+    return roleGroups.map(([group, items]) => [group, items.filter(([label]) => label.toLocaleLowerCase().includes(query))]).filter(([, items]) => items.length)
+  }, [roleGroups, navSearch])
+  const visibleNavCount = visibleGroups.reduce((count, [, items]) => count + items.length, 0)
   const home = portal === 'hr' ? '/hr-payroll' : portal === 'finance' ? '/finance-operations' : roleRoute(role)
   const accent = normalizeBrandColor(school?.primary_color)
   const title = portal ? (new URLSearchParams(location.search).get('module') || (portal === 'hr' ? 'HR & Payroll' : 'Finance dashboard')) : location.pathname === home ? (new URLSearchParams(location.search).get('module') || 'Dashboard') : (pageNames[location.pathname] || 'School workspace')
 
-  useEffect(() => { setMobileOpen(false) }, [location.pathname, location.search])
+  useEffect(() => { setMobileOpen(false); setNavSearch('') }, [location.pathname, location.search])
+  useEffect(() => { if (collapsed) setNavSearch('') }, [collapsed])
+  useEffect(() => {
+    const focusNavigationSearch = event => {
+      if (event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey || collapsed || (window.innerWidth <= 800 && !mobileOpen)) return
+      const target = event.target
+      if (target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) return
+      event.preventDefault()
+      navSearchRef.current?.focus()
+    }
+    window.addEventListener('keydown', focusNavigationSearch)
+    return () => window.removeEventListener('keydown', focusNavigationSearch)
+  }, [collapsed, mobileOpen])
   useEffect(() => {
     const close = event => { if (event.key === 'Escape') setMobileOpen(false) }
     window.addEventListener('keydown', close)
@@ -120,7 +150,8 @@ export default function PortalLayout({ children, portal = null }) {
     <aside id="portal-navigation-panel" className={`portal-sidebar ${mobileOpen ? 'portal-sidebar-open' : ''}`} aria-label="Portal navigation">
       <div className="portal-sidebar-brand"><Link to={home} className="tenant-brand">{role === 'super_admin' ? <img className="platform-tenant-mark" src="/smartschool-mark.svg" alt="SmartSchool logo" /> : school?.logo_url ? <img src={school.logo_url} alt={`${school.name} logo`} /> : <span className="tenant-mark">{(school?.name || 'S').slice(0, 1).toUpperCase()}</span>}<span className="tenant-brand-copy"><b>{role === 'super_admin' ? 'SmartSchool' : (school?.name || 'Your school')}</b><small>{portal ? (portal === 'hr' ? 'HR & PAYROLL PORTAL' : 'FINANCE PORTAL') : role === 'staff' ? 'STAFF SELF-SERVICE' : role === 'super_admin' ? 'PLATFORM ADMIN' : 'SCHOOL PORTAL'}</small></span></Link><button ref={closeMenuRef} className="portal-sidebar-close" onClick={() => setMobileOpen(false)} aria-label="Close menu">{'\u00d7'}</button></div>
       <div className="portal-tenant-chip"><span className="tenant-status-dot" />{portal ? `${portal === 'hr' ? 'HR & Payroll' : 'Finance'} workspace` : role === 'staff' ? 'Personal staff workspace' : role === 'super_admin' ? 'Platform workspace' : (school?.school_level || 'School workspace')}</div>
-      <nav className="portal-navigation" aria-label="Portal navigation">{groups.map(([group, items]) => <section className="portal-nav-group" key={group}><h2>{group}</h2>{items.map(([label, icon, suffix]) => <button type="button" key={label} className={activeFor(suffix) ? 'active' : ''} aria-current={activeFor(suffix) ? 'page' : undefined} title={collapsed ? label : undefined} onClick={() => navigate(destination(suffix))}><span className="portal-nav-icon" aria-hidden="true">{icon}</span><span className="portal-nav-label">{label}</span>{activeFor(suffix) && <i className="portal-nav-active-mark" />}</button>)}</section>)}</nav>
+      {!collapsed && <div className="portal-nav-search"><label htmlFor="portal-nav-search-input">Find a page</label><div><span aria-hidden="true">{'\u2315'}</span><input ref={navSearchRef} id="portal-nav-search-input" type="search" placeholder="Search your tools" value={navSearch} onChange={event => setNavSearch(event.target.value)} onKeyDown={event => { if (event.key === 'Escape') setNavSearch(''); if (event.key === 'ArrowDown') document.querySelector('.portal-navigation button')?.focus() }} /><kbd>/</kbd></div></div>}
+      <nav className="portal-navigation" aria-label="Portal navigation" aria-live="polite">{visibleNavCount ? visibleGroups.map(([group, items]) => <section className="portal-nav-group" key={group}><h2>{group}</h2>{items.map(([label, icon, suffix]) => <button type="button" key={label} className={activeFor(suffix) ? 'active' : ''} aria-current={activeFor(suffix) ? 'page' : undefined} title={collapsed ? label : undefined} onClick={() => { setNavSearch(''); navigate(destination(suffix)) }}><span className="portal-nav-icon" aria-hidden="true">{icon}</span><span className="portal-nav-label">{label}</span>{activeFor(suffix) && <i className="portal-nav-active-mark" />}</button>)}</section>) : <p className="portal-nav-no-results" role="status">No pages match &ldquo;{navSearch}&rdquo;.</p>}</nav>
       {role === 'school_admin' && !portal && <Link className="portal-upgrade-link" to="/subscription"><span>{'\u2197'}</span><span><b>School account</b><small>Plan and billing</small></span></Link>}
       <button className="portal-settings-link" type="button" onClick={() => navigate(role === 'school_admin' ? '/settings' : role === 'super_admin' ? '/security' : '/profile')}><span className="portal-nav-icon" aria-hidden="true">⚙</span><span className="portal-nav-label">Settings</span></button>
       <button className="portal-logout" onClick={logout}><span className="portal-nav-icon">{'\u21aa'}</span><span className="portal-nav-label">Sign out</span></button>
