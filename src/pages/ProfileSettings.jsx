@@ -5,13 +5,14 @@ import { useLanguage } from '../context/LanguageContext';
 import toast from 'react-hot-toast';
 
 export default function ProfileSettings() {
-  const { profile, setProfile, demo } = useAuth();
+  const { profile, setProfile, demo, staffRoles } = useAuth();
   const { lang, setLang } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({ full_name: '', phone: '', signature_url: '', notification_preferences: { absences: true, announcements: true, behavior: true, schoolwork: true }, delivery_preferences: { email: false, sms: false, whatsapp: false, push: false } });
 
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
+  const canSignOfficialDocuments = profile?.role === 'teacher' || staffRoles.includes('finance_officer');
 
   useEffect(() => {
     if (profile) {
@@ -81,7 +82,11 @@ export default function ProfileSettings() {
       if (error) throw error;
       const { data: { publicUrl } } = supabase.storage.from('branding').getPublicUrl(fileName);
 
+      const { error: profileError } = await supabase.from('profiles').update({ signature_url: publicUrl }).eq('id', profile.id);
+      if (profileError) throw profileError;
+
       setFormData({ ...formData, signature_url: publicUrl });
+      setProfile(current => ({ ...current, signature_url: publicUrl }));
       toast.success('Signature captured!', { id: toastId });
     } catch (err) {
       toast.error('Upload failed', { id: toastId });
@@ -105,7 +110,7 @@ export default function ProfileSettings() {
         delivery_preferences: formData.delivery_preferences
       }).eq('id', profile.id);
       if (error) throw error;
-      setProfile(current => ({ ...current, full_name: formData.full_name, phone: formData.phone, notification_preferences: formData.notification_preferences, delivery_preferences: formData.delivery_preferences }));
+      setProfile(current => ({ ...current, full_name: formData.full_name, phone: formData.phone, signature_url: formData.signature_url, notification_preferences: formData.notification_preferences, delivery_preferences: formData.delivery_preferences }));
       toast.success('Profile saved successfully');
     } catch (err) {
       toast.error(err.message);
@@ -161,10 +166,10 @@ export default function ProfileSettings() {
           {Object.entries({ email: 'Email', sms: 'SMS', whatsapp: 'WhatsApp', push: 'Push notifications' }).map(([key, label]) => <label key={key}><input type="checkbox" checked={Boolean(formData.delivery_preferences[key])} onChange={event => setFormData(current => ({ ...current, delivery_preferences: { ...current.delivery_preferences, [key]: event.target.checked } }))} /> {label}</label>)}
         </fieldset>
 
-        {profile?.role === 'teacher' && (
+        {canSignOfficialDocuments && (
           <div className="signature-section">
             <b>Draw Your Digital Signature</b>
-            <p style={{fontSize: '0.8rem', color: 'var(--muted)'}}>Sign below with your mouse or finger. This will be used on official reports.</p>
+            <p style={{fontSize: '0.8rem', color: 'var(--muted)'}}>{staffRoles.includes('finance_officer') ? 'This saved signature appears on school fee receipts.' : 'Sign below with your mouse or finger. This saved signature appears on class report cards.'}</p>
 
             <div className="sig-pad-container">
               <canvas

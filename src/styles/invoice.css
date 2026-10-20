@@ -85,6 +85,12 @@
   margin-top: 60px;
   align-items: flex-end;
 }
+.invoice-signatures { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 36px; margin: 38px 0 20px; break-inside: avoid; }
+.invoice-signature { display: flex; min-height: 112px; flex-direction: column; align-items: center; justify-content: flex-end; text-align: center; }
+.invoice-signature img { max-width: 190px; width: 70%; height: 64px; margin: 0 auto 3px; object-fit: contain; }
+.invoice-signature-line { width: min(100%, 260px); border-top: 1px solid #526476; }
+.invoice-signature b { margin-top: 7px; color: #1a2c3b; font-size: .8rem; }
+.invoice-signature small { margin-top: 3px; color: #637587; font-size: .7rem; }
 
 .digital-stamp {
   text-align: center;
@@ -110,4 +116,12 @@
   .no-print { display: none !important; }
   .invoice-page { padding: 0; background: #fff; }
   .invoice-document { box-shadow: none; border: none; padding: 40px; width: 100%; }
+}
+
+@media (max-width: 560px) {
+  .invoice-document { padding: 28px 18px; }
+  .invoice-signatures { gap: 14px; }
+  .invoice-signature img { height: 48px; }
+  .invoice-signature b { font-size: .72rem; }
+  .invoice-signature small { font-size: .62rem; }
 }

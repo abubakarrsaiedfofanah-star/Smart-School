@@ -30,11 +30,14 @@ export default function InvoiceView() {
           .single();
 
         if (error) throw error;
+        const { data: signers, error: signerError } = await supabase.rpc('get_payment_document_signatures', { p_payment_id: paymentId });
+        if (signerError) console.error('Could not load receipt signatures:', signerError.message);
         setData({
           payment: pay,
           fee: pay.fees,
           student: pay.students,
-          school: pay.schools
+          school: pay.schools,
+          signers: signers?.[0] || null
         });
       } catch (err) {
         toast.error('Failed to load invoice');
@@ -49,7 +52,8 @@ export default function InvoiceView() {
   if (loading) return <div className="portal-loading"><div className="spinner"></div></div>;
   if (!data) return <div className="error-state">Invoice not found.</div>;
 
-  const { payment, fee, student, school } = data;
+  const { payment, fee, student, school, signers } = data;
+  const isReceipt = payment.status === 'paid';
 
   return (
     <div className="invoice-page">
@@ -66,9 +70,9 @@ export default function InvoiceView() {
             <p>{school.address}</p>
           </div>
           <div className="invoice-meta">
-            <h1>INVOICE</h1>
-            <p>Invoice #: {payment.reference}</p>
-            <p>Date: {new Date(payment.paid_at || Date.now()).toLocaleDateString()}</p>
+            <h1>{isReceipt ? 'OFFICIAL RECEIPT' : 'INVOICE'}</h1>
+            <p>{isReceipt ? 'Receipt' : 'Invoice'} #: {payment.receipt_number || payment.reference}</p>
+            <p>Date: {new Date(payment.paid_at || payment.created_at || Date.now()).toLocaleDateString()}</p>
             <div className={`status-badge ${payment.status}`}>{payment.status.toUpperCase()}</div>
           </div>
         </header>
@@ -97,14 +101,29 @@ export default function InvoiceView() {
           </tbody>
           <tfoot>
             <tr>
-              <td><b>Total Amount Due</b></td>
+              <td><b>{isReceipt ? 'Amount Paid' : 'Total Amount Due'}</b></td>
               <td className="right"><b>{formatCurrency(payment.amount, school?.currency_code)}</b></td>
             </tr>
           </tfoot>
         </table>
 
+        {isReceipt && <section className="invoice-signatures" aria-label="Receipt approvals">
+          <div className="invoice-signature">
+            {signers?.finance_officer_signature_url && <img src={signers.finance_officer_signature_url} alt="Finance officer digital signature" />}
+            <span className="invoice-signature-line" />
+            <b>{signers?.finance_officer_name || 'Finance officer'}</b>
+            <small>{signers?.finance_officer_signature_url ? 'Finance officer · digital signature' : 'Finance officer · signature not saved'}</small>
+          </div>
+          <div className="invoice-signature">
+            {signers?.principal_signature_url && <img src={signers.principal_signature_url} alt="Principal digital signature" />}
+            <span className="invoice-signature-line" />
+            <b>{signers?.principal_name || 'Principal'}</b>
+            <small>{signers?.principal_signature_url ? 'Principal · digital signature' : 'Principal · signature not saved'}</small>
+          </div>
+        </section>}
+
         <footer className="invoice-footer">
-          <div className="instructions">
+          {!isReceipt && <div className="instructions">
             <h4>Payment Instructions</h4>
             <p>Please use the Reference Number <b>{payment.reference}</b> for all payments.</p>
             <div style={{fontSize: '0.8rem', marginTop: '10px'}}>
@@ -113,7 +132,7 @@ export default function InvoiceView() {
                 <p>Bank: <b>{school.bank_name}</b> | A/C: <b>{school.bank_account_number}</b></p>
               )}
             </div>
-          </div>
+          </div>}
           <div className="digital-stamp">
             <div className="stamp-circle">
               <span>OFFICIAL</span>
