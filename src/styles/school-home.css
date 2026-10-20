@@ -443,8 +443,16 @@
 .school-directory-card p, .school-directory-empty { color: #687d90; font-size: .88rem; line-height: 1.55; }
 .school-directory-card .school-public-portal-link { display: inline-flex; margin-top: 6px; }
 .school-directory-empty { padding: 18px; border: 1px dashed #c8d8e5; border-radius: 12px; background: #f8fbfd; }
+.school-directory-empty p { margin: 0 0 10px; }
+.school-directory-empty button, .school-directory-search input { font: inherit; }
+.school-directory-empty button { padding: 8px 13px; border: 1px solid #c8d8e5; border-radius: 8px; background: #fff; color: #174b75; font-weight: 700; cursor: pointer; }
+.school-directory-search { display: grid; grid-template-columns: auto minmax(220px, 360px); align-items: center; gap: 12px; margin: 0 0 16px; color: #536e85; font-weight: 650; }
+.school-directory-search input { width: 100%; padding: 11px 13px; border: 1px solid #d3e0eb; border-radius: 9px; background: #fff; color: #18364f; }
+.landing-school-directory { padding-top: 0; border-top: 0; }
+.landing-school-directory .school-directory-heading { align-items: center; }
 @media (max-width: 760px) {
   .school-directory-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .school-directory-heading { align-items: flex-start; flex-direction: column; }
+  .school-directory-search { grid-template-columns: 1fr; gap: 6px; }
 }
 @media (max-width: 520px) { .school-directory-grid { grid-template-columns: 1fr; } }

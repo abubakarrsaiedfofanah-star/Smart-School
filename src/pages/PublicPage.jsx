@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PublicHeader from '../components/PublicHeader'
 import PublicFooter from '../components/PublicFooter'
@@ -18,17 +18,37 @@ export default function PublicPage({ page }) {
   const [title, intro, items] = pages[page] || pages.features
   const [schools, setSchools] = useState([])
   const [schoolsLoading, setSchoolsLoading] = useState(page === 'portals')
+  const [schoolsError, setSchoolsError] = useState('')
+  const [schoolSearch, setSchoolSearch] = useState('')
+
+  const filteredSchools = useMemo(() => {
+    const query = schoolSearch.trim().toLocaleLowerCase()
+    return query ? schools.filter(school => school.name.toLocaleLowerCase().includes(query)) : schools
+  }, [schools, schoolSearch])
+
+  async function loadSchools() {
+    if (!supabase) {
+      setSchoolsError('The school directory is temporarily unavailable.')
+      setSchoolsLoading(false)
+      return
+    }
+    setSchoolsLoading(true)
+    setSchoolsError('')
+    const { data, error } = await supabase.rpc('get_public_school_directory')
+    if (error) {
+      console.error('Could not load the public school directory:', error.message)
+      setSchoolsError('We could not load schools right now. Please try again.')
+      setSchools([])
+    } else {
+      setSchools(data || [])
+    }
+    setSchoolsLoading(false)
+  }
 
   useEffect(() => {
-    if (page !== 'portals' || !supabase) { setSchoolsLoading(false); return undefined }
-    let live = true
-    supabase.rpc('get_public_school_directory').then(({ data, error }) => {
-      if (!live) return
-      if (error) console.error('Could not load the public school directory:', error.message)
-      setSchools(data || [])
-      setSchoolsLoading(false)
-    })
-    return () => { live = false }
+    if (page !== 'portals') { setSchoolsLoading(false); return undefined }
+    void loadSchools()
+    return undefined
   }, [page])
 
   return <div className="public-site school-home school-public-page page-transition">
@@ -45,11 +65,12 @@ export default function PublicPage({ page }) {
       </section>
       {page === 'portals' && <section className="school-directory-section" id="schools" aria-labelledby="school-directory-title">
         <div className="school-directory-heading"><div><p className="eyebrow">NEW TO SMARTSCHOOL?</p><h2 id="school-directory-title">Find your school</h2><p>Choose your school to request a student, parent, teacher, HR or Finance account. Your school administrator must approve the request.</p></div><Link to="/register">Register a school</Link></div>
-        {schoolsLoading ? <p className="school-directory-empty">Loading schools…</p>
-          : schools.length ? <div className="school-directory-grid">{schools.map(school => <article className="school-directory-card" key={school.id}><h3>{school.name}</h3><p>Request an account in this school</p><Link className="school-public-portal-link" to={`/join-school/${encodeURIComponent(school.slug)}`}>Choose this school <b aria-hidden="true">→</b></Link></article>)}</div>
-            : <p className="school-directory-empty">No approved schools are listed yet. A school appears here after it has been approved and activated.</p>}
+        {schoolsLoading ? <p className="school-directory-empty" role="status">Loading active schools…</p>
+          : schoolsError ? <div className="school-directory-empty"><p>{schoolsError}</p><button type="button" onClick={() => void loadSchools()}>Try again</button></div>
+            : schools.length ? <><label className="school-directory-search">Search schools<input type="search" value={schoolSearch} onChange={event => setSchoolSearch(event.target.value)} placeholder="Type a school name" aria-label="Search schools by name" /></label>{filteredSchools.length ? <div className="school-directory-grid">{filteredSchools.map(school => <article className="school-directory-card" key={school.id}><h3>{school.name}</h3><p>Request an account in this school</p><Link className="school-public-portal-link" to={`/join-school/${encodeURIComponent(school.slug)}`}>Choose this school <b aria-hidden="true">→</b></Link></article>)}</div> : <p className="school-directory-empty" role="status">No schools match “{schoolSearch}”. Try another name.</p>}</>
+              : <p className="school-directory-empty">No approved schools are listed yet. A school appears here after it has been approved and activated.</p>}
       </section>}
-      <section className={`school-public-grid ${page === 'portals' ? 'school-public-portal-grid' : ''} ${page === 'pricing' ? 'school-pricing-grid' : ''}`} aria-label={page === 'portals' ? 'Choose a role portal' : `${title} information`}>
+      {(page !== 'portals' || schoolsLoading || schoolsError || schools.length > 0) && <section className={`school-public-grid ${page === 'portals' ? 'school-public-portal-grid' : ''} ${page === 'pricing' ? 'school-pricing-grid' : ''}`} aria-label={page === 'portals' ? 'Choose a role portal' : `${title} information`}>
         {items.map(([label, text], index) => (
           <article className="school-public-card" key={label}>
             <span className="school-public-card-number">0{index + 1}</span>
@@ -62,7 +83,7 @@ export default function PublicPage({ page }) {
             {page === 'contact' && label === 'Role portals' && <Link to="/portals">View portals <b aria-hidden="true">→</b></Link>}
           </article>
         ))}
-      </section>
+      </section>}
     </main>
     <PublicFooter />
   </div>

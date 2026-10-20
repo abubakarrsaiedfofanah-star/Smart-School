@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PublicHeader from '../components/PublicHeader'
 import PublicFooter from '../components/PublicFooter'
+import { supabase } from '../lib/supabase'
 
 const workflows = [
   { label: 'Run today', number: '01', title: 'Know what needs attention today.', copy: 'Check attendance, classes, notices and the school calendar before the day gets busy.', tasks: ['Record and review attendance', 'Check today’s timetable', 'Share a school update'], icon: '◷' },
@@ -55,8 +56,32 @@ function Reveal({ children, className = '' }) {
 
 export default function Landing() {
   const [activeWorkflow, setActiveWorkflow] = useState(0)
+  const [schools, setSchools] = useState([])
+  const [schoolsLoading, setSchoolsLoading] = useState(true)
+  const [schoolsError, setSchoolsError] = useState('')
 
   const active = workflows[activeWorkflow]
+
+  async function loadSchools() {
+    if (!supabase) {
+      setSchoolsError('The school directory is temporarily unavailable.')
+      setSchoolsLoading(false)
+      return
+    }
+    setSchoolsLoading(true)
+    setSchoolsError('')
+    const { data, error } = await supabase.rpc('get_public_school_directory')
+    if (error) {
+      console.error('Could not load the public school directory:', error.message)
+      setSchoolsError('We could not load schools right now. Please try again.')
+      setSchools([])
+    } else {
+      setSchools(data || [])
+    }
+    setSchoolsLoading(false)
+  }
+
+  useEffect(() => { void loadSchools() }, [])
 
   return <div className="public-site school-home">
     <PublicHeader />
@@ -69,6 +94,14 @@ export default function Landing() {
       </section>
 
       <div className="hero-portals school-portal-shortcuts">{roles.map(([name, text, icon, href], index) => <Link className={`hero-portal portal-tone-${index}`} to={href} key={name}><span className="portal-icon">{icon}</span><b>{name}</b><small>{text}</small><span className="portal-link">Open portal →</span></Link>)}</div>
+
+      <Reveal><section className="section school-directory-section landing-school-directory" id="schools" aria-labelledby="landing-schools-title">
+        <div className="school-directory-heading"><div><p className="eyebrow blue-eyebrow">SCHOOLS USING SMARTSCHOOL</p><h2 id="landing-schools-title">Find your school</h2><p>Open your school’s workspace or register a new school to get started.</p></div><Link to="/portals">View all schools and portals →</Link></div>
+        {schoolsLoading ? <p className="school-directory-empty" role="status">Loading active schools…</p>
+          : schoolsError ? <div className="school-directory-empty"><p>{schoolsError}</p><button type="button" onClick={() => void loadSchools()}>Try again</button></div>
+            : schools.length ? <div className="school-directory-grid">{schools.slice(0, 3).map(school => <article className="school-directory-card" key={school.id}><h3>{school.name}</h3><p>Sign in or request access to this school.</p><Link className="school-public-portal-link" to={`/join-school/${encodeURIComponent(school.slug)}`}>Open school →</Link></article>)}</div>
+              : <div className="school-directory-empty"><p>No active schools are listed yet. Register your school to create its workspace.</p><Link to="/register">Register a school →</Link></div>}
+      </section></Reveal>
 
       <Reveal><section className="section school-day-section" id="how-it-works"><div className="section-heading"><div><p className="eyebrow blue-eyebrow">A SCHOOL DAY, STEP BY STEP</p><h2>From the first register<br/>to the last update.</h2></div><p className="section-note">Keep the work of running a school connected throughout the day.</p></div>
         <div className="school-workflow"><div className="workflow-tabs" role="tablist" aria-label="School workflows">{workflows.map((item, index) => <button className={activeWorkflow === index ? 'active' : ''} key={item.number} role="tab" aria-selected={activeWorkflow === index} type="button" onClick={() => setActiveWorkflow(index)}><span>{item.number}</span><b>{item.label}</b><i>↗</i></button>)}</div>
