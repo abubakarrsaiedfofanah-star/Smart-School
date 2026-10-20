@@ -88,6 +88,32 @@ export default function RegisterSchool(){
     }, 80)
   }
 
+  const validateStep = index => {
+    const invalid = (fieldId, message) => { focusField(fieldId, message, index); return false }
+    if(index===0&&!form.schoolName.trim()) return invalid('registration-school-name','Enter the school name.')
+    if(index===0&&!form.email.trim()) return invalid('registration-school-email','Enter the school email.')
+    if(index===0&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return invalid('registration-school-email','Enter a valid school email address.')
+    if(index===0&&!form.phone.trim()) return invalid('registration-school-phone','Enter the school phone number.')
+    if(index===0&&(!/^[A-Z]{3}$/.test(form.currencyCode)|| (form.countryCode==='OTHER'&&!/^[A-Z]{2}$/.test(form.customCountryCode)))) return invalid(form.countryCode==='OTHER'&&!/^[A-Z]{2}$/.test(form.customCountryCode)?'registration-country-code':form.countryCode==='OTHER'?'registration-currency-code':'registration-currency','Choose a valid country and 3-letter currency code.')
+    if(index===3&&!form.adminName.trim()) return invalid('registration-admin-name','Enter the administrator’s full name.')
+    if(index===3&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.adminEmail)) return invalid('registration-admin-email','Enter a valid administrator email address.')
+    if(index===3&&!form.password) return invalid('registration-admin-password','Create the administrator password.')
+    if(index===3&&form.password.length<12) return invalid('registration-admin-password','Use a password with at least 12 characters.')
+    if(index===3&&form.password !== form.confirmPassword) return invalid('registration-confirm-password','Passwords do not match.')
+    return true
+  }
+
+  const goToStep = target => {
+    if (target > step) {
+      for (let index = 0; index < target; index++) {
+        if (!validateStep(index)) return
+      }
+    }
+    setFormError('')
+    setStep(target)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   const update=(key,value)=>{ setFormError(''); return setForm(current=>{
     const updated = {...current,[key]:value};
     persistDraft(updated)
@@ -118,16 +144,7 @@ export default function RegisterSchool(){
 
   const next=()=>{
     setFormError('')
-    if(step===0&&!form.schoolName.trim()) return focusField('registration-school-name','Enter the school name.')
-    if(step===0&&!form.email.trim()) return focusField('registration-school-email','Enter the school email.')
-    if(step===0&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return focusField('registration-school-email','Enter a valid school email address.')
-    if(step===0&&!form.phone.trim()) return focusField('registration-school-phone','Enter the school phone number.')
-    if(step===0&&(!/^[A-Z]{3}$/.test(form.currencyCode)|| (form.countryCode==='OTHER'&&!/^[A-Z]{2}$/.test(form.customCountryCode)))) return focusField(form.countryCode==='OTHER'&&!/^[A-Z]{2}$/.test(form.customCountryCode)?'registration-country-code':form.countryCode==='OTHER'?'registration-currency-code':'registration-currency','Choose a valid country and 3-letter currency code.')
-    if(step===3&&!form.adminName.trim()) return focusField('registration-admin-name','Enter the administrator’s full name.')
-    if(step===3&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.adminEmail)) return focusField('registration-admin-email','Enter a valid administrator email address.')
-    if(step===3&&!form.password) return focusField('registration-admin-password','Create the administrator password.')
-    if(step===3&&form.password.length<12) return focusField('registration-admin-password','Use a password with at least 12 characters.')
-    if(step===3&&form.password !== form.confirmPassword) return focusField('registration-confirm-password','Passwords do not match.')
+    if(!validateStep(step)) return
     setStep(current=>Math.min(current+1,5))
   }
   const back=()=>setStep(current=>Math.max(current-1,0))
@@ -351,10 +368,12 @@ export default function RegisterSchool(){
           </div>
         </div>
         <ol className="step-list" style={{ listStyle: 'none', padding: 0, margin: '40px 0 0', display: 'grid', gap: '16px' }}>
-          {steps.map((label, index) => (
+          {steps.slice(0, 6).map((label, index) => (
             <li className={index < step ? 'done' : index === step ? 'current' : ''} key={label} style={{ display: 'flex', alignItems: 'center', gap: '14px', opacity: index === step ? 1 : index < step ? 0.9 : 0.4 }}>
+              <button type="button" className="step-nav-button" onClick={() => goToStep(index)} aria-current={index === step ? 'step' : undefined} aria-label={`Go to ${label} step`}>
               <span className="step-num" style={{ width: '28px', height: '28px', borderRadius: '50%', background: index <= step ? 'var(--green)' : 'rgba(255,255,255,0.2)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.8rem' }}>{index < step ? 'OK' : index + 1}</span>
               <span className="step-label" style={{ fontWeight: index === step ? 700 : 500, fontSize: '0.95rem' }}>{label}</span>
+              </button>
             </li>
           ))}
         </ol>

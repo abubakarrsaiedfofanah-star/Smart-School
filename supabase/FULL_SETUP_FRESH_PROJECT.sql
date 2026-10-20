@@ -207,7 +207,9 @@ alter table public.schools
 add column if not exists logo_url text,
 add column if not exists principal_signature_url text,
 add column if not exists teacher_signature_url text,
-add column if not exists school_motto text;
+add column if not exists school_motto text,
+add column if not exists mission text not null default '',
+add column if not exists vision text not null default '';
 
 -- Policy to allow school admins to update their own school details
 create policy "school admins update their school"

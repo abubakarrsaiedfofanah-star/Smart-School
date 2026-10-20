@@ -10,6 +10,8 @@ export default function SchoolSettings() {
   const [school, setSchool] = useState({
     name: '',
     school_motto: '',
+    mission: '',
+    vision: '',
     school_level: '',
     logo_url: '',
     principal_signature_url: '',
@@ -84,6 +86,8 @@ export default function SchoolSettings() {
       const { error } = await supabase.from('schools').update({
         name: school.name,
         school_motto: school.school_motto,
+        mission: school.mission || '',
+        vision: school.vision || '',
         school_level: school.school_level,
         logo_url: school.logo_url,
         principal_signature_url: school.principal_signature_url,
@@ -176,6 +180,12 @@ export default function SchoolSettings() {
 
           <label style={{marginTop:'20px'}}>School Motto</label>
           <input value={school.school_motto || ''} onChange={e => setSchool({...school, school_motto: e.target.value})} placeholder="e.g. Striving for Excellence" />
+
+          <label style={{marginTop:'20px'}}>Mission</label>
+          <textarea value={school.mission || ''} onChange={e => setSchool({...school, mission: e.target.value})} placeholder="Describe your school's purpose and the work it does for learners." maxLength={2000} rows={4} />
+
+          <label style={{marginTop:'20px'}}>Vision</label>
+          <textarea value={school.vision || ''} onChange={e => setSchool({...school, vision: e.target.value})} placeholder="Describe the future your school aims to create." maxLength={2000} rows={4} />
 
           <label style={{marginTop:'20px'}}>Brand Primary Color</label>
           <div style={{display: 'flex', gap: '15px', alignItems: 'center', marginTop: '10px'}}>

@@ -794,6 +794,9 @@ input:focus, select:focus, textarea:focus {
 .register-page .step-list li { min-height: 34px; margin: 0; }
 .register-page .step-list li.current { color: #fff; }
 .register-page .step-list li.done { color: #b9e4d4; }
+.register-page .step-nav-button { display: flex; width: 100%; min-width: 0; align-items: center; gap: 12px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.register-page .step-nav-button:hover .step-label { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+.register-page .step-nav-button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; border-radius: 6px; }
 .register-page .step-list li.current .step-num { box-shadow: 0 0 0 4px #ffffff20; }
 .register-page .register-main { max-width: 760px !important; padding: clamp(24px, 5vw, 68px) !important; }
 .register-page .register-top-bar { gap: 12px; }
@@ -840,10 +843,11 @@ input:focus, select:focus, textarea:focus {
   .register-page .register-aside-hero { margin: 18px 0 0 !important; }
   .register-page .register-aside-hero h1 { margin: 0 0 8px !important; font-size: 1.6rem !important; }
   .register-page .register-aside-hero > p:last-child { margin: 0; font-size: .82rem !important; }
-  .register-page .step-list { display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px !important; margin: 20px 0 0 !important; }
+  .register-page .step-list { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px !important; margin: 20px 0 0 !important; }
   .register-page .step-list li { display: flex !important; min-width: 0; min-height: 38px; gap: 6px !important; padding: 5px 6px; border: 1px solid #ffffff26; border-radius: 9px; opacity: 1 !important; }
   .register-page .step-list .step-num { flex: 0 0 25px; width: 25px !important; height: 25px !important; font-size: .63rem !important; }
   .register-page .step-list .step-label { min-width: 0; overflow-wrap: anywhere; font-size: .68rem !important; line-height: 1.05; }
+  .register-page .step-nav-button { gap: 5px; }
   .register-page .register-main { padding: 22px 18px !important; }
   .register-page .register-top-bar { align-items: flex-start !important; flex-direction: column; margin-bottom: 14px !important; }
   .register-page .progress-bar-wrapper { margin-bottom: 22px !important; }
