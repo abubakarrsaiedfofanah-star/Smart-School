@@ -2170,7 +2170,7 @@ do $$ begin
   end if;
   if not exists (select 1 from pg_constraint where conname = 'schools_timezone_check' and conrelid = 'public.schools'::regclass) then
     alter table public.schools add constraint schools_timezone_check
-      check (timezone in ('Africa/Nairobi','Africa/Kampala','Africa/Dar_es_Salaam','Africa/Johannesburg','UTC'));
+      check (timezone in ('Africa/Nairobi','Africa/Freetown','Africa/Kampala','Africa/Dar_es_Salaam','Africa/Accra','Africa/Lagos','Africa/Kigali','Africa/Lusaka','Africa/Blantyre','Africa/Johannesburg','Africa/Monrovia','Africa/Banjul','Africa/Dakar','Africa/Abidjan','Africa/Douala','Africa/Addis_Ababa','Africa/Cairo','America/New_York','Europe/London','UTC'));
   end if;
   if not exists (select 1 from pg_constraint where conname = 'schools_academic_terms_count_check' and conrelid = 'public.schools'::regclass) then
     alter table public.schools add constraint schools_academic_terms_count_check
