@@ -184,6 +184,14 @@
 .school-public-card p { margin: 0 0 18px; color: #62768a; font-size: .86rem; line-height: 1.65; }
 .school-public-card a { margin-top: auto; color: #35516b; font-size: .82rem; font-weight: 750; }
 .school-public-card a b { margin-left: 5px; }
+.school-service-grid { align-items: stretch; }
+.school-service-card { min-height: 290px; }
+.school-service-card h2 { margin-top: 20px; }
+.school-service-card p { margin-bottom: 10px; }
+.school-service-card ul { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; color: #536a80; font-size: .84rem; line-height: 1.5; }
+.school-service-card li { position: relative; padding-left: 16px; }
+.school-service-card li::before { position: absolute; top: .52em; left: 0; width: 6px; height: 6px; border-radius: 50%; background: #2780d8; content: ''; }
+.school-service-note { grid-column: 1 / -1; margin: 4px 0 0; color: #6b7f92; font-size: .82rem; line-height: 1.6; }
 .school-pricing-grid .school-public-card { min-height: 235px; }
 .school-pricing-grid .school-public-card .school-public-portal-link { display: inline-flex; min-height: 42px; align-items: center; gap: 7px; padding: 0 13px; border: 1px solid #d2dfeb; border-radius: 8px; color: #164f87; text-decoration: none; }
 .school-pricing-grid .school-public-card .school-public-portal-link:hover { background: #1e67b9; border-color: #1e67b9; color: #fff; }
