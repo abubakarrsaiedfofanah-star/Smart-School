@@ -109,6 +109,16 @@ export default function Landing() {
         </div>
       </section></Reveal>
 
+      <Reveal><section className="section school-photo-section" aria-labelledby="school-photo-title">
+        <div className="section-heading"><div><p className="eyebrow blue-eyebrow">LEARNING, PEOPLE AND RESOURCES</p><h2 id="school-photo-title">A clearer view of the school day.</h2></div><p className="section-note">Keep classwork, school communication and learning resources connected in one workspace.</p></div>
+        <div className="school-photo-grid">
+          <figure className="school-photo-card"><img src="/images/school-day/classroom-learning.jpg" alt="Teacher leading a lesson as students follow along in a classroom" width="1440" height="960" loading="lazy" decoding="async" /><figcaption><b>Teaching and classwork</b><span>Plan lessons, follow attendance and review student work.</span></figcaption></figure>
+          <figure className="school-photo-card"><img src="/images/school-day/school-community.jpg" alt="Students collaborating around a laptop at a library table" width="1100" height="734" loading="lazy" decoding="async" /><figcaption><b>School community</b><span>Help teachers, learners and families stay informed.</span></figcaption></figure>
+          <figure className="school-photo-card"><img src="/images/school-day/school-library.jpg" alt="Rows of books on library shelves" width="1100" height="733" loading="lazy" decoding="async" /><figcaption><b>Learning resources</b><span>Keep course materials and library work easy to find.</span></figcaption></figure>
+        </div>
+        <p className="school-photo-credit">Illustrative school photos from <a href="https://unsplash.com/license" target="_blank" rel="noreferrer">Unsplash</a>; they are not photos of SmartSchool customer schools.</p>
+      </section></Reveal>
+
       <Reveal><section className="section school-tools-section" id="school-tools"><div className="section-heading"><div><p className="eyebrow blue-eyebrow">SCHOOL OPERATIONS IN ONE PLACE</p><h2>Tools for the work<br/>your school does.</h2></div><p className="section-note">Move between day-to-day school needs without losing sight of the people behind them.</p></div><div className="service-grid">{tools.map(([title, text], index) => <article className="service school-tool" key={title}><span>0{index + 1}</span><h3>{title}</h3><p>{text}</p><Link to="/portals">Choose a portal <b>↗</b></Link></article>)}</div></section></Reveal>
 
       <Reveal><section className="section about-section school-roles-section"><div className="section-intro"><p className="eyebrow blue-eyebrow">CLEAR ROLES. SHARED SCHOOL.</p><h2>Everyone gets a useful place in the system.</h2></div><div className="about-copy"><p>School leaders, teachers, students and parents each have a portal shaped around their work. Shared information helps the school stay coordinated while each person can focus on what they need to do.</p><p>Start by registering your school, then invite your team and set up the routines your school uses.</p><Link className="text-link blue-text-link" to="/portals">See how the portals work →</Link></div></section></Reveal>

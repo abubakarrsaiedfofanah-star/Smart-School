@@ -64,6 +64,15 @@
 .workflow-detail li { display: grid; grid-template-columns: 30px 1fr 18px; align-items: center; gap: 9px; min-height: 57px; padding: 10px; border-bottom: 1px solid #e8eef4; color: #334e68; }
 .workflow-detail li > span { color: #8ba2b5; font-size: .65rem; font-weight: 800; }.workflow-detail li > b { font-size: .74rem; }.workflow-detail li > i { color: #2375e1; font-style: normal; }
 .school-tools-section { background: #f1f7fc; }
+.school-photo-section { background: #f5f8fb; }
+.school-photo-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.school-photo-card { min-width: 0; margin: 0; overflow: hidden; border: 1px solid #e0e7ef; border-radius: 14px; background: #fff; box-shadow: 0 8px 24px #18324b0a; }
+.school-photo-card img { display: block; width: 100%; height: clamp(190px, 22vw, 290px); object-fit: cover; background: #eaf0f5; }
+.school-photo-card figcaption { display: grid; gap: 6px; padding: 18px 20px 20px; }
+.school-photo-card figcaption b { color: var(--page-ink); font-size: .95rem; }
+.school-photo-card figcaption span { color: #62788c; font-size: .79rem; line-height: 1.55; }
+.school-photo-credit { margin: 15px 0 0; color: #73869a; font-size: .68rem; }
+.school-photo-credit a { color: #35516b; text-decoration: underline; text-underline-offset: 2px; }
 .school-tools-section .service-grid { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 17px; }
 .school-tool { min-height: 230px; padding: 25px; border-radius: 12px; box-shadow: 0 5px 16px rgba(16,42,67,.04); }
 .school-tool > span { display: inline-grid; width: 30px; height: 30px; place-items: center; border-radius: 50%; background: #e8f4ff; color: #2375e1; font-size: .67rem; }
@@ -103,6 +112,7 @@
   .school-portal-shortcuts { grid-template-columns: repeat(2,minmax(0,1fr)); width: calc(100% - 28px); margin-top: -20px; gap: 8px; }.school-portal-shortcuts .hero-portal { min-height: 155px; padding: 12px 8px; }.school-portal-shortcuts .hero-portal .portal-icon { width: 38px; height: 38px; flex-basis: 38px; font-size: 1.1rem; }.school-portal-shortcuts .hero-portal b { font-size: .73rem; }.school-portal-shortcuts .hero-portal small { font-size: .59rem; }.school-portal-shortcuts .hero-portal .portal-link { font-size: .6rem; }
   .school-day-section, .school-tools-section, .school-roles-section, .school-setup-section { padding: 65px 18px; }.school-day-section .section-heading, .school-tools-section .section-heading, .school-setup-section .section-heading { display: block; margin-bottom: 25px; }.school-day-section .section-note, .school-tools-section .section-note, .school-setup-section .section-note { margin-top: 12px; }.school-workflow { grid-template-columns: 1fr; gap: 12px; padding: 12px; }.workflow-tabs { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 5px; }.workflow-tabs button { grid-template-columns: 23px 1fr 14px; min-height: 50px; gap: 5px; padding: 7px; }.workflow-tabs button > b { font-size: .68rem; }.workflow-detail { min-height: 0; padding: 16px 12px; }.workflow-copy { grid-template-columns: 38px 1fr; column-gap: 8px; }.workflow-icon { width: 35px; height: 35px; font-size: 1rem; }.workflow-copy h3 { font-size: 1.15rem; }.workflow-copy > p:not(.eyebrow) { font-size: .74rem; }.workflow-detail li { min-height: 48px; }.workflow-detail li > b { font-size: .68rem; }
   .school-tools-section .service-grid { grid-template-columns: 1fr; gap: 10px; }.school-tool { min-height: 0; padding: 20px; }.school-tool h3 { margin-top: 13px; }.school-tool p { min-height: 0; }
+  .school-photo-grid { grid-template-columns: 1fr; gap: 12px; }.school-photo-card img { height: min(62vw, 320px); }
   .school-roles-section .about-section, .school-roles-section { gap: 30px; }.school-roles-section .section-intro h2 { font-size: 2rem; }.setup-grid { grid-template-columns: 1fr; gap: 10px; }.setup-grid article { min-height: 0; padding: 19px; }.setup-grid h3 { margin: 14px 0 7px; }
   .school-cta-band { display: block; padding: 55px 20px; }.school-cta-band .actions { align-items: flex-start; flex-direction: column; gap: 9px; }.school-cta-login { text-align: left; }
   .school-footer .footer-container { grid-template-columns: 1fr 1fr; gap: 28px 18px; }.school-footer .footer-bottom { align-items: flex-start; flex-direction: column; gap: 7px; }
@@ -454,5 +464,6 @@
   .school-directory-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .school-directory-heading { align-items: flex-start; flex-direction: column; }
   .school-directory-search { grid-template-columns: 1fr; gap: 6px; }
+  .school-photo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@media (max-width: 520px) { .school-directory-grid { grid-template-columns: 1fr; } }
+@media (max-width: 520px) { .school-directory-grid, .school-photo-grid { grid-template-columns: 1fr; } }
