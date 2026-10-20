@@ -185,13 +185,31 @@
 .school-public-card a { margin-top: auto; color: #35516b; font-size: .82rem; font-weight: 750; }
 .school-public-card a b { margin-left: 5px; }
 .school-service-grid { align-items: stretch; }
-.school-service-card { min-height: 290px; }
+.school-service-card { position: relative; min-height: 290px; overflow: hidden; border-color: #e3eaf1; transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+.school-service-card::after { position: absolute; top: -37px; right: -36px; width: 105px; height: 105px; border-radius: 50%; background: var(--service-tint, #edf5ff); content: ''; opacity: .72; }
+.school-service-card:hover { transform: translateY(-4px); border-color: #c9d9e8; box-shadow: 0 16px 36px #18324b12; }
+.school-service-card-top { position: relative; z-index: 1; display: flex; width: 100%; align-items: center; justify-content: space-between; }
+.school-service-icon { display: grid; width: 48px; height: 48px; place-items: center; border: 1px solid color-mix(in srgb, var(--service-color, #2780d8) 18%, white); border-radius: 15px; background: var(--service-tint, #edf5ff); color: var(--service-color, #2780d8); font-size: 1.35rem; font-weight: 750; }
+.school-service-card .school-public-card-number { background: #f4f7fa; color: #8797a6; }
 .school-service-card h2 { margin-top: 20px; }
 .school-service-card p { margin-bottom: 10px; }
 .school-service-card ul { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; color: #536a80; font-size: .84rem; line-height: 1.5; }
 .school-service-card li { position: relative; padding-left: 16px; }
 .school-service-card li::before { position: absolute; top: .52em; left: 0; width: 6px; height: 6px; border-radius: 50%; background: #2780d8; content: ''; }
 .school-service-note { grid-column: 1 / -1; margin: 4px 0 0; color: #6b7f92; font-size: .82rem; line-height: 1.6; }
+.school-service-card-1 { --service-color: #2478cf; --service-tint: #eaf4ff; }
+.school-service-card-2 { --service-color: #7d57c2; --service-tint: #f2edff; }
+.school-service-card-3 { --service-color: #139775; --service-tint: #e7f7f1; }
+.school-service-card-4 { --service-color: #d06a3a; --service-tint: #fff1e9; }
+.school-service-card-5 { --service-color: #248a9c; --service-tint: #e8f6f7; }
+.school-service-card-6 { --service-color: #bc7c17; --service-tint: #fff5df; }
+.school-service-card-7 { --service-color: #4d6dc2; --service-tint: #edf0ff; }
+.school-service-card-8 { --service-color: #36845e; --service-tint: #eaf6ed; }
+.school-service-card-9 { --service-color: #425c7e; --service-tint: #edf2f8; }
+@media (prefers-reduced-motion: reduce) {
+  .school-service-card { transition: none; }
+  .school-service-card:hover { transform: none; }
+}
 .school-pricing-grid .school-public-card { min-height: 235px; }
 .school-pricing-grid .school-public-card .school-public-portal-link { display: inline-flex; min-height: 42px; align-items: center; gap: 7px; padding: 0 13px; border: 1px solid #d2dfeb; border-radius: 8px; color: #164f87; text-decoration: none; }
 .school-pricing-grid .school-public-card .school-public-portal-link:hover { background: #1e67b9; border-color: #1e67b9; color: #fff; }

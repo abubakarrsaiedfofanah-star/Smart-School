@@ -7,15 +7,15 @@ import { supabase } from '../lib/supabase'
 const portalPaths = { 'School Admin': '/login/school_admin', Teacher: '/login/teacher', Staff: '/login/staff', Student: '/login/student', Parent: '/login/parent', 'HR & Payroll': '/login/hr', Finance: '/login/finance' }
 
 const serviceCatalog = [
-  { title: 'Teaching and learning', summary: 'Plan teaching and keep classwork moving.', features: ['Classes, subjects and timetables', 'Lesson plans and course materials', 'Assignments, submissions and quizzes', 'Exams, gradebook and results'] },
-  { title: 'Student records and admissions', summary: 'Keep learner information and school entry organised.', features: ['Student and guardian profiles', 'Admissions and applications', 'School account requests and approvals', 'Behaviour records and learner progress'] },
-  { title: 'Attendance and daily operations', summary: 'Coordinate the routines that keep a school running.', features: ['Student and staff attendance', 'School calendar, events and notices', 'Inventory and asset records', 'School settings and staff access'] },
-  { title: 'Family and school communication', summary: 'Help school teams and families stay connected.', features: ['Announcements and broadcasts', 'Direct messages', 'Parent and teacher meetings', 'Role based portals for families and staff'] },
-  { title: 'Fees and finance', summary: 'Manage school charges and follow payment activity.', features: ['Fees, invoices and payment records', 'Expense tracking and reconciliation', 'Finance workspace and approved payouts', 'Payment and finance reporting'] },
-  { title: 'Human resources and payroll', summary: 'Support staff administration and payroll workflows.', features: ['Staff records, recruitment and contracts', 'Leave and staff attendance', 'Payroll preparation and approvals', 'Payslips and salary history'] },
-  { title: 'Library and digital courses', summary: 'Bring learning resources into the school workspace.', features: ['Library catalogue', 'Online courses and course builder', 'Learner course progress', 'Course completion certificates'] },
-  { title: 'Transport and school resources', summary: 'Coordinate operational resources and transport workflows.', features: ['Transport routes and driver tools', 'Vehicle and trip information', 'School inventory and asset condition', 'Role based access to operational tools'] },
-  { title: 'Reports and school oversight', summary: 'Give authorised leaders a view of activity and performance.', features: ['School and platform dashboards', 'Student, teacher and academic reports', 'Subscription and payment oversight', 'Audit trail and security settings'] },
+  { icon: '✎', title: 'Teaching and learning', summary: 'Plan teaching and keep classwork moving.', features: ['Classes, subjects and timetables', 'Lesson plans and course materials', 'Assignments, submissions and quizzes', 'Exams, gradebook and results'] },
+  { icon: '♧', title: 'Student records and admissions', summary: 'Keep learner information and school entry organised.', features: ['Student and guardian profiles', 'Admissions and applications', 'School account requests and approvals', 'Behaviour records and learner progress'] },
+  { icon: '✓', title: 'Attendance and daily operations', summary: 'Coordinate the routines that keep a school running.', features: ['Student and staff attendance', 'School calendar, events and notices', 'Inventory and asset records', 'School settings and staff access'] },
+  { icon: '✉', title: 'Family and school communication', summary: 'Help school teams and families stay connected.', features: ['Announcements and broadcasts', 'Direct messages', 'Parent and teacher meetings', 'Role based portals for families and staff'] },
+  { icon: '$', title: 'Fees and finance', summary: 'Manage school charges and follow payment activity.', features: ['Fees, invoices and payment records', 'Expense tracking and reconciliation', 'Finance workspace and approved payouts', 'Payment and finance reporting'] },
+  { icon: '♙', title: 'Human resources and payroll', summary: 'Support staff administration and payroll workflows.', features: ['Staff records, recruitment and contracts', 'Leave and staff attendance', 'Payroll preparation and approvals', 'Payslips and salary history'] },
+  { icon: '▤', title: 'Library and digital courses', summary: 'Bring learning resources into the school workspace.', features: ['Library catalogue', 'Online courses and course builder', 'Learner course progress', 'Course completion certificates'] },
+  { icon: '➜', title: 'Transport and school resources', summary: 'Coordinate operational resources and transport workflows.', features: ['Transport routes and driver tools', 'Vehicle and trip information', 'School inventory and asset condition', 'Role based access to operational tools'] },
+  { icon: '◷', title: 'Reports and school oversight', summary: 'Give authorised leaders a view of activity and performance.', features: ['School and platform dashboards', 'Student, teacher and academic reports', 'Subscription and payment oversight', 'Audit trail and security settings'] },
 ]
 
 const pages = {
@@ -27,7 +27,7 @@ const pages = {
 }
 
 export default function PublicPage({ page }) {
-const [title, intro, items] = pages[page] || pages.features
+  const [title, intro, items] = pages[page] || pages.features
   const [schools, setSchools] = useState([])
   const [schoolsLoading, setSchoolsLoading] = useState(page === 'portals')
   const [schoolsError, setSchoolsError] = useState('')
@@ -83,8 +83,8 @@ const [title, intro, items] = pages[page] || pages.features
               : <p className="school-directory-empty">No approved schools are listed yet. A school appears here after it has been approved and activated.</p>}
       </section>}
       {page === 'features' && <section className="school-public-grid school-service-grid" aria-label="SmartSchool services and features">
-        {serviceCatalog.map(({ title: serviceTitle, summary, features }, index) => <article className="school-public-card school-service-card" key={serviceTitle}>
-          <span className="school-public-card-number">{String(index + 1).padStart(2, '0')}</span>
+        {serviceCatalog.map(({ icon, title: serviceTitle, summary, features }, index) => <article className={`school-public-card school-service-card school-service-card-${index + 1}`} key={serviceTitle}>
+          <div className="school-service-card-top"><span className="school-service-icon" aria-hidden="true">{icon}</span><span className="school-public-card-number">{String(index + 1).padStart(2, '0')}</span></div>
           <h2>{serviceTitle}</h2>
           <p>{summary}</p>
           <ul>{features.map(feature => <li key={feature}>{feature}</li>)}</ul>
