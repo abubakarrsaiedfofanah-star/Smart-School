@@ -30,13 +30,30 @@ const tools = [
 ]
 
 function DashboardPreview() {
-  return <div className="floating-dashboard glass-card" aria-label="Example school operations dashboard">
-    <div className="dash-bar"><b>School overview</b><span className="live-indicator">● Example workspace</span></div>
-    <div className="school-day-heading"><span>MONDAY · SCHOOL DAY</span><b>Good morning</b><small>Here’s what your team can keep in view.</small></div>
-    <div className="dash-cards"><article><b>Attendance</b><small>Review today’s register</small><i>Open task ↗</i></article><article><b>Classwork</b><small>Assignments to review</small><i>View classes ↗</i></article><article><b>School updates</b><small>Notices and events</small><i>See calendar ↗</i></article></div>
-    <div className="dash-chart"><div><p>Today at school</p><b>One clear view</b></div><div className="school-day-dots"><i>✓</i><i>02</i><i>03</i><i>04</i></div></div>
-    <div className="dash-list"><span><i/> For school leaders, teachers, learners and families</span><span><i/> Each person sees the tools for their role</span></div>
-  </div>
+  const features = [
+    ['Attendance', "Today's register", '01'],
+    ['Classwork', 'Assignments & results', '02'],
+    ['School updates', 'Calendar & notices', '03'],
+    ['School records', 'People & operations', '04'],
+  ]
+
+  return <figure className="hero-feature-showcase" aria-label="SmartSchool features for a connected school day">
+    <img src="/images/school-day/school-community.jpg" alt="Students working together around a laptop in the school library" width="1100" height="734" fetchPriority="high" />
+    <div className="hero-feature-shade" aria-hidden="true" />
+    <div className="hero-feature-image-label"><span className="hero-feature-live-dot" /> A connected school day</div>
+    <figcaption className="hero-feature-panel">
+      <div className="hero-feature-brand"><span className="hero-feature-brand-mark" aria-hidden="true">S</span><div><small>SMARTSCHOOL</small><b>School overview</b></div><span className="hero-feature-status"><i /> Example workspace</span></div>
+      <p className="hero-feature-eyebrow">YOUR SCHOOL, IN ONE VIEW</p>
+      <h2>Keep the day moving.</h2>
+      <p className="hero-feature-intro">The key tools your school team needs, together.</p>
+      <ul className="hero-feature-list">{features.map(([title, detail, icon], index) => <li key={title}>
+        <span className={'hero-feature-icon hero-feature-icon-' + index} aria-hidden="true">{icon}</span>
+        <span><b>{title}</b><small>{detail}</small></span>
+        <i aria-hidden="true" />
+      </li>)}</ul>
+      <div className="hero-feature-footnote"><span aria-hidden="true" /> For school leaders, teachers, learners and families</div>
+    </figcaption>
+  </figure>
 }
 
 function Reveal({ children, className = '' }) {
