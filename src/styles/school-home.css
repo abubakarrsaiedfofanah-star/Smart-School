@@ -513,6 +513,22 @@
 @media (max-width: 520px) { .school-directory-grid, .school-photo-grid { grid-template-columns: 1fr; } }
 
 /* Full public overview sections on Home. */
+.school-start-section { padding-top: clamp(52px, 7vw, 82px); padding-bottom: clamp(52px, 7vw, 82px); }
+.school-start-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.school-start-steps article { display: grid; min-height: 178px; grid-template-columns: 38px 1fr; align-content: start; gap: 14px; padding: 23px; border: 1px solid #dce7f0; border-radius: 14px; background: #fff; box-shadow: 0 8px 24px #18324b08; }
+.school-start-steps article > span { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 11px; background: #eaf3fb; color: #2872bd; font-size: .68rem; font-weight: 850; }
+.school-start-steps h3 { margin: 3px 0 8px; color: #1d3b55; font-size: 1rem; }
+.school-start-steps p { margin: 0; color: #687d90; font-size: .84rem; line-height: 1.65; }
+.school-start-section > .school-home-section-link { margin-top: 20px; }
+.school-home-jump-nav { width: min(1160px, calc(100% - 48px)); margin: 28px auto 8px; padding: 20px; border: 1px solid #e0e8f0; border-radius: 16px; background: #fff; box-shadow: 0 8px 24px #18324b08; }
+.school-home-jump-nav > p { margin: 0 0 13px; color: #60778e; font-size: .68rem; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
+.school-home-jump-nav > div { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.school-home-jump-nav a { display: grid; min-width: 0; min-height: 62px; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; padding: 9px 10px; border: 1px solid #e7edf3; border-radius: 10px; color: #23435f; font-size: .73rem; font-weight: 750; text-decoration: none; transition: border-color .18s ease, background .18s ease, transform .18s ease; }
+.school-home-jump-nav a:hover { transform: translateY(-2px); border-color: #b9d3e8; background: #f4f9fd; }
+.school-home-jump-nav a span { color: #7c91a4; font-size: .63rem; font-weight: 850; }
+.school-home-jump-nav a b { color: #2872bd; font-size: .85rem; }
+.school-home-jump-nav a:focus-visible { outline: 3px solid #78b7ff; outline-offset: 2px; }
+.school-home section[id] { scroll-margin-top: 94px; }
 .school-home-section-link { display: inline-flex; align-items: center; gap: 8px; margin-top: 22px; color: #1c5b91; font-size: .92rem; font-weight: 750; text-decoration: none; }
 .school-home-section-link:hover { color: #123d68; text-decoration: underline; }
 .school-home-story, .school-home-pricing { display: grid; width: min(1160px, calc(100% - 48px)); grid-template-columns: 1.05fr .95fr; align-items: center; gap: clamp(28px, 5vw, 64px); margin: 0 auto; padding: clamp(48px, 7vw, 88px) 0; scroll-margin-top: 96px; }
@@ -537,6 +553,10 @@
 .school-home-pricing { grid-template-columns: 1fr .9fr; }
 .school-home-pricing > img { height: clamp(240px, 30vw, 360px); }
 @media (max-width: 760px) {
+  .school-start-steps { grid-template-columns: 1fr; }
+  .school-start-steps article { min-height: 0; }
+  .school-home-jump-nav > div { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .school-home-jump-nav a { min-height: 54px; }
   .school-home-story, .school-home-pricing { grid-template-columns: 1fr; gap: 22px; padding: 46px 0; }
   .school-home-pricing > img { grid-row: 1; }
   .school-home-photo-strip { gap: 9px; }
@@ -544,6 +564,8 @@
   .school-home-photo-strip figcaption { right: 9px; bottom: 9px; left: 9px; font-size: .75rem; }
 }
 @media (max-width: 560px) {
+  .school-home-jump-nav { width: calc(100% - 36px); padding: 14px; }
+  .school-home-jump-nav > div { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .school-home-story, .school-home-pricing { width: calc(100% - 36px); }
   .school-home-photo-strip { grid-template-columns: 1fr; }
   .school-home-photo-strip figure { aspect-ratio: 1.7; }
@@ -572,7 +594,7 @@
   .school-public-photo-strip { grid-template-columns: 1fr; }
   .school-public-photo-strip figure { aspect-ratio: 1.7; }
 }
-@media (prefers-reduced-motion: reduce) { .school-public-photo-strip img { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .school-public-photo-strip img, .school-home-jump-nav a { transition: none; } }
 
 /* Role summaries are informational; registration and sign-in remain the actions. */
 .school-portal-shortcuts .hero-portal { cursor: default; }

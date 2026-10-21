@@ -83,6 +83,17 @@ export default function Landing() {
         <div className="hero-copy"><p className="eyebrow blue-eyebrow">A PRACTICAL HOME FOR YOUR SCHOOL</p><h1>Run your school.<br/>Keep learning<br/><span>moving.</span></h1><p>Manage the school day, support teaching and keep families connected from one shared system.</p><div className="actions"><Link className="button blue-button" to="/register">Set up your school <b>→</b></Link><Link className="button outline-hero" to="/login">Sign in to your portal</Link></div></div><DashboardPreview/>
       </section>
 
+      <nav className="school-home-jump-nav" aria-label="Explore the public website">
+        <p>Explore SmartSchool</p>
+        <div>
+          <a href="#schools"><span>01</span>Find your school <b aria-hidden="true">↓</b></a>
+          <a href="#services"><span>02</span>Services <b aria-hidden="true">↓</b></a>
+          <a href="#about"><span>03</span>About <b aria-hidden="true">↓</b></a>
+          <a href="#portals"><span>04</span>Portals <b aria-hidden="true">↓</b></a>
+          <a href="#pricing"><span>05</span>Plans <b aria-hidden="true">↓</b></a>
+          <a href="#contact"><span>06</span>Contact <b aria-hidden="true">↓</b></a>
+        </div>
+      </nav>
 
 
       <Reveal><section className="section school-directory-section landing-school-directory" id="schools" aria-labelledby="landing-schools-title">
@@ -91,6 +102,16 @@ export default function Landing() {
           : schoolsError ? <div className="school-directory-empty"><p>{schoolsError}</p><button type="button" onClick={() => void loadSchools()}>Try again</button></div>
             : schools.length ? <div className="school-directory-grid">{schools.slice(0, 3).map(school => <article className="school-directory-card" key={school.id}><h3>{school.name}</h3><p>Sign in or request access to this school.</p><Link className="school-public-portal-link" to={`/join-school/${encodeURIComponent(school.slug)}`}>Open school →</Link></article>)}</div>
               : <div className="school-directory-empty"><p>No active schools are listed yet. Register your school to create its workspace.</p><Link to="/register">Register a school →</Link></div>}
+      </section></Reveal>
+
+      <Reveal><section className="section school-start-section" aria-labelledby="school-start-title">
+        <div className="section-heading"><div><p className="eyebrow blue-eyebrow">GETTING STARTED</p><h2 id="school-start-title">A clear path to your school workspace.</h2></div><p className="section-note">Start with your school details, then use the portal that matches your role.</p></div>
+        <div className="school-start-steps">
+          <article><span>01</span><div><h3>Register your school</h3><p>Share the school and administrator details to create a setup request.</p></div></article>
+          <article><span>02</span><div><h3>Submit it for review</h3><p>SmartSchool reviews the school and plan request before activation.</p></div></article>
+          <article><span>03</span><div><h3>Open your role portal</h3><p>Once your school is active, sign in using the workspace for your role.</p></div></article>
+        </div>
+        <Link className="school-home-section-link" to="/register">Start your school registration <b aria-hidden="true">→</b></Link>
       </section></Reveal>
 
 

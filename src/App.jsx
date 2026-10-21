@@ -136,7 +136,7 @@ export default function App(){
         <Route path="/finance-operations" element={<ProtectedRoute roles={['teacher', 'staff']} permission="school.finance.portal.view" portal="finance"><FinanceOperations portalMode /></ProtectedRoute>} />
         <Route path="/quizzes" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student']}><QuizPortal /></ProtectedRoute>} />
         <Route path="/audit-trail" element={<ProtectedRoute roles={['super_admin', 'school_admin']}><AuditTrail /></ProtectedRoute>} />
-        <Route path="/security" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><SecuritySettings /></ProtectedRoute>} />
+        <Route path="/security" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'staff', 'student', 'parent']}><SecuritySettings /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'staff', 'student', 'parent']}><ProfileSettings /></ProtectedRoute>} />
         <Route path="/lessons" element={<ProtectedRoute roles={['school_admin', 'teacher', 'student']}><LessonPlans /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute roles={['school_admin']}><SchoolSettings /></ProtectedRoute>} />
