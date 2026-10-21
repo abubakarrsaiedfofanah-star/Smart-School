@@ -5,38 +5,31 @@ import PublicFooter from '../components/PublicFooter'
 import { supabase } from '../lib/supabase'
 
 const services = [
-  ['Attendance and timetable', 'Take attendance and keep class schedules clear.'],
-  ['Teaching and assessment', 'Plan lessons, share assignments, and follow results.'],
-  ['Student records and admissions', 'Manage learner information and new applications.'],
-  ['Fees, expenses and payroll', 'Keep school finances and staff payments organised.'],
-  ['School updates and calendar', 'Share announcements, events, and important dates.'],
-  ['Library and courses', 'Keep learning materials easy for your community to find.'],
+  ['Teaching and learning', 'Plan lessons, manage classes, share assignments and follow results.'],
+  ['Student records and admissions', 'Keep learner profiles, family links and applications organised.'],
+  ['Attendance and daily operations', 'Coordinate attendance, timetables, calendars and school resources.'],
+  ['Family and school communication', 'Connect families and staff with notices, messages and meetings.'],
+  ['Fees and finance', 'Manage fee records, expenses and payment follow-up.'],
+  ['Human resources and payroll', 'Support staff records, leave, payroll and payslips.'],
+  ['Library and digital courses', 'Make learning materials, courses and certificates easy to find.'],
+  ['Transport and school resources', 'Coordinate routes, vehicles, inventory and assets.'],
+  ['Reports and school oversight', 'Give authorised leaders a clear view of school activity.'],
+]
+
+const homePortals = [
+  ['School Admin', 'Manage your school, staff and day-to-day operations.', '/login/school_admin'],
+  ['Teacher', 'Plan teaching, attendance and classwork.', '/login/teacher'],
+  ['Student', 'Keep up with assignments, timetable and results.', '/login/student'],
+  ['Parent / guardian', 'Follow school updates and your learner’s progress.', '/login/parent'],
+  ['Staff', 'View payslips and manage leave requests.', '/login/staff'],
+  ['HR & Finance', 'Use assigned workspaces for people and finance tasks.', '/login'],
 ]
 
 function DashboardPreview() {
-  const features = [
-    ['Attendance', "Today's register", '01'],
-    ['Classwork', 'Assignments & results', '02'],
-    ['School updates', 'Calendar & notices', '03'],
-    ['School records', 'People & operations', '04'],
-  ]
-
-  return <figure className="hero-feature-showcase" aria-label="SmartSchool features for a connected school day">
+  return <figure className="hero-feature-showcase" aria-label="A connected school day">
     <img src="/images/school-day/classroom-learning.jpg" alt="Students learning together in a bright classroom" width="1440" height="810" fetchPriority="high" />
     <div className="hero-feature-shade" aria-hidden="true" />
     <div className="hero-feature-image-label"><span className="hero-feature-live-dot" /> A connected school day</div>
-    <figcaption className="hero-feature-panel">
-      <div className="hero-feature-brand"><span className="hero-feature-brand-mark" aria-hidden="true">S</span><div><small>SMARTSCHOOL</small><b>School overview</b></div><span className="hero-feature-status"><i /> Example workspace</span></div>
-      <p className="hero-feature-eyebrow">YOUR SCHOOL, IN ONE VIEW</p>
-      <h2>Keep the day moving.</h2>
-      <p className="hero-feature-intro">The key tools your school team needs, together.</p>
-      <ul className="hero-feature-list">{features.map(([title, detail, icon], index) => <li key={title}>
-        <span className={'hero-feature-icon hero-feature-icon-' + index} aria-hidden="true">{icon}</span>
-        <span><b>{title}</b><small>{detail}</small></span>
-        <i aria-hidden="true" />
-      </li>)}</ul>
-      <div className="hero-feature-footnote"><span aria-hidden="true" /> For school leaders, teachers, learners and families</div>
-    </figcaption>
   </figure>
 }
 
@@ -104,13 +97,19 @@ export default function Landing() {
 
 
 
-      <Reveal><section className="section school-tools-section" id="services" aria-labelledby="services-title"><div className="section-heading"><div><p className="eyebrow blue-eyebrow">SERVICES</p><h2 id="services-title">The tools your school needs, together.</h2></div><p className="section-note">One connected system for learning, operations, finance, and communication.</p></div><div className="service-grid">{services.map(([title, text], index) => <article className="service school-tool" key={title}><span>0{index + 1}</span><h3>{title}</h3><p>{text}</p></article>)}</div></section></Reveal>
+      <Reveal><section className="section school-tools-section" id="services" aria-labelledby="services-title"><div className="section-heading"><div><p className="eyebrow blue-eyebrow">SERVICES</p><h2 id="services-title">The tools your school needs, together.</h2></div><p className="section-note">One connected system for learning, operations, finance, and communication.</p></div><div className="service-grid">{services.map(([title, text], index) => <article className="service school-tool" key={title}><span>{String(index + 1).padStart(2, '0')}</span><h3>{title}</h3><p>{text}</p></article>)}</div><Link className="school-home-section-link" to="/services">Explore all services <b aria-hidden="true">→</b></Link></section></Reveal>
+
+      <Reveal><section className="school-home-story" id="about" aria-labelledby="school-home-story-title"><img src="/images/school-day/school-community.jpg" alt="School community members sharing ideas in a library" loading="lazy" /><div><p className="eyebrow blue-eyebrow">ABOUT SMARTSCHOOL</p><h2 id="school-home-story-title">One connected place for your school community.</h2><p>SmartSchool brings school leaders, teachers, students, families and staff into a shared workspace, with access shaped around each role.</p><Link className="school-home-section-link" to="/about">Learn about SmartSchool <b aria-hidden="true">→</b></Link></div></section></Reveal>
+
+      <Reveal><section className="section school-home-portals" id="portals" aria-labelledby="school-home-portals-title"><div className="section-heading"><div><p className="eyebrow blue-eyebrow">ROLE BASED ACCESS</p><h2 id="school-home-portals-title">A workspace for every part of school life.</h2></div><p className="section-note">Each person sees the tools and records assigned to their role.</p></div><div className="school-home-photo-strip" aria-label="Learning and school life"><figure><img src="/images/school-day/classroom-learning.jpg" alt="Students learning together in class" loading="lazy"/><figcaption>Teaching and learning</figcaption></figure><figure><img src="/images/school-day/school-community.jpg" alt="School community working together" loading="lazy"/><figcaption>School community</figcaption></figure><figure><img src="/images/school-day/school-library.jpg" alt="Books in a school library" loading="lazy"/><figcaption>Learning resources</figcaption></figure></div><div className="school-home-portal-grid">{homePortals.map(([title, text, path]) => <article key={title}><span aria-hidden="true">{title.slice(0, 1)}</span><div><h3>{title}</h3><p>{text}</p></div><Link to={path} aria-label={`Open ${title} sign in`}>Sign in <b aria-hidden="true">→</b></Link></article>)}</div><Link className="school-home-section-link" to="/portals">Find a school and view all portals <b aria-hidden="true">→</b></Link></section></Reveal>
+
+      <Reveal><section className="school-home-pricing" id="pricing" aria-labelledby="school-home-pricing-title"><div><p className="eyebrow blue-eyebrow">PLANS FOR YOUR SCHOOL</p><h2 id="school-home-pricing-title">Start with the plan that fits.</h2><p>Choose a plan request when you register. The SmartSchool team will share subscription details with your school.</p><Link className="school-home-section-link" to="/pricing">See plans and request a trial <b aria-hidden="true">→</b></Link></div><img src="/images/school-day/school-library.jpg" alt="Shelves of books in a school library" loading="lazy" /></section></Reveal>
 
 
 
 
 
-      <section className="school-cta-band"><div><p className="eyebrow light-eyebrow">READY WHEN YOUR SCHOOL IS</p><h2>Bring your school’s<br/>everyday work together.</h2><p>Create your school workspace and start organising the routines that matter to you.</p></div><div className="actions"><Link className="button school-light-button" to="/register">Register your school <b>→</b></Link><Link className="school-cta-login" to="/login">Already have an account? Sign in</Link></div></section>
+      <section className="school-cta-band" id="contact"><div><p className="eyebrow light-eyebrow">READY WHEN YOUR SCHOOL IS</p><h2>Bring your school’s<br/>everyday work together.</h2><p>Create your school workspace and start organising the routines that matter to you.</p></div><div className="actions"><Link className="button school-light-button" to="/register">Register your school <b>→</b></Link><Link className="school-cta-login" to="/login">Already have an account? Sign in</Link><Link className="school-cta-login" to="/contact">Contact SmartSchool</Link></div></section>
     </main>
 
     <PublicFooter />

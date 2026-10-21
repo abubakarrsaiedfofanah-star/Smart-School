@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 const Landing = lazy(() => import('./pages/Landing'))
 const Login = lazy(() => import('./pages/Login'))
 const RegisterSchool = lazy(() => import('./pages/RegisterSchool'))
@@ -60,7 +60,17 @@ function Guard() { const {session,profile,loading}=useAuth(); if(loading)return 
 const roleRoutes=[['super-admin','super_admin'],['school-admin','school_admin'],['teacher','teacher'],['staff','staff'],['student','student'],['parent','parent']]
 export default function App(){
   const { profile } = useAuth()
+  const location = useLocation()
   const [theme, setTheme] = useState(readTheme);
+
+  useEffect(() => {
+    if (!location.hash) {
+      window.scrollTo(0, 0)
+      return
+    }
+    const targetId = decodeURIComponent(location.hash.slice(1))
+    requestAnimationFrame(() => document.getElementById(targetId)?.scrollIntoView())
+  }, [location.pathname, location.hash]);
 
   useEffect(() => {
     let active = true

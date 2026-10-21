@@ -6,6 +6,19 @@ import { supabase } from '../lib/supabase'
 
 const portalPaths = { 'School Admin': '/login/school_admin', Teacher: '/login/teacher', Staff: '/login/staff', Student: '/login/student', Parent: '/login/parent', 'HR & Payroll': '/login/hr', Finance: '/login/finance' }
 
+const publicPhotos = [
+  { src: '/images/school-day/classroom-learning.jpg', alt: 'Students learning together in a classroom', caption: 'Learning together' },
+  { src: '/images/school-day/school-community.jpg', alt: 'School community sharing a learning day', caption: 'A connected community' },
+  { src: '/images/school-day/school-library.jpg', alt: 'Books and learning resources in a school library', caption: 'Resources for every learner' },
+]
+const pagePhotoCopy = {
+  features: ['Teaching and learning', 'A school community', 'Learning resources'],
+  portals: ['A place to learn', 'Families and school teams', 'Explore and study'],
+  pricing: ['Support for classrooms', 'Plans for your school', 'Room to grow'],
+  about: ['Learning in action', 'People at the heart of school', 'A place to discover'],
+  contact: ['Start in the classroom', 'Connect your school', 'Make learning accessible'],
+}
+
 const serviceCatalog = [
   { icon: '✎', title: 'Teaching and learning', summary: 'Plan teaching and keep classwork moving.', features: ['Classes, subjects and timetables', 'Lesson plans and course materials', 'Assignments, submissions and quizzes', 'Exams, gradebook and results'] },
   { icon: '♧', title: 'Student records and admissions', summary: 'Keep learner information and school entry organised.', features: ['Student and guardian profiles', 'Admissions and applications', 'School account requests and approvals', 'Behaviour records and learner progress'] },
@@ -66,7 +79,8 @@ export default function PublicPage({ page }) {
   return <div className="public-site school-home school-public-page page-transition">
     <PublicHeader />
     <main className="school-public-content">
-      <section className="school-public-intro">
+      <section className="school-public-hero">
+        <div className="school-public-intro">
         <p className="eyebrow">SMARTSCHOOL · {page === 'features' ? 'SERVICES' : page.replaceAll('-', ' ').toUpperCase()}</p>
         <h1>{title}</h1>
         <p>{intro}</p>
@@ -74,6 +88,17 @@ export default function PublicPage({ page }) {
           {page === 'pricing' && <Link className="button blue-button" to="/register?trial=1">Start a school trial <b aria-hidden="true">→</b></Link>}
           <Link className="button outline-hero" to="/login">{page === 'portals' ? 'Sign in to your school' : 'Sign in'}</Link>
         </div>
+        </div>
+        <figure className="school-public-hero-photo">
+          <img src={publicPhotos[page === 'about' ? 1 : page === 'pricing' ? 2 : 0].src} alt={publicPhotos[page === 'about' ? 1 : page === 'pricing' ? 2 : 0].alt} />
+          <figcaption>{page === 'portals' ? 'Every role has a place' : page === 'pricing' ? 'Tools that grow with your school' : 'A connected school day'}</figcaption>
+        </figure>
+      </section>
+      <section className="school-public-photo-strip" aria-label="Life and learning at school">
+        {publicPhotos.map((photo, index) => <figure key={photo.src}>
+          <img src={photo.src} alt={photo.alt} loading="lazy" />
+          <figcaption>{pagePhotoCopy[page]?.[index] || photo.caption}</figcaption>
+        </figure>)}
       </section>
       {page === 'portals' && <section className="school-directory-section" id="schools" aria-labelledby="school-directory-title">
         <div className="school-directory-heading"><div><p className="eyebrow">NEW TO SMARTSCHOOL?</p><h2 id="school-directory-title">Find your school</h2><p>Choose your school to request a student, parent, teacher, HR or Finance account. Your school administrator must approve the request.</p></div><Link to="/register">Register a school</Link></div>

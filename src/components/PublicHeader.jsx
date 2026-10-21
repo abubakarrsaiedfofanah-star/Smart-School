@@ -14,6 +14,10 @@ export default function PublicHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
   const { pathname, hash } = useLocation()
   const closeMenu = () => setMenuOpen(false)
+  const handleHomeClick = () => {
+    closeMenu()
+    if (pathname === '/') window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   useEffect(() => {
     const closeOnEscape = event => { if (event.key === 'Escape') closeMenu() }
@@ -36,7 +40,7 @@ export default function PublicHeader() {
   return <>
     {menuOpen && <button className="public-menu-scrim" type="button" aria-label="Close navigation menu" onClick={closeMenu} />}
     <header className="nav blue-nav sticky-nav school-nav">
-      <Link className="brand school-logo" to="/" aria-label="SmartSchool home">
+      <Link className="brand school-logo" to="/" onClick={handleHomeClick} aria-label="SmartSchool home">
         <img className="platform-logo" src="/smartschool-logo.svg" alt="" aria-hidden="true" />
       </Link>
       <button className="public-menu" type="button" onClick={() => setMenuOpen(open => !open)} aria-expanded={menuOpen} aria-controls="public-navigation" aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}>
@@ -47,7 +51,7 @@ export default function PublicHeader() {
           const [targetPath, targetHash] = to.split('#')
           const target = targetPath || '/'
           const active = pathname === target && (targetHash ? hash === `#${targetHash}` : (target !== '/' || (!hash && label === 'Home')))
-          return <Link key={label} className={active ? 'active' : ''} to={to} onClick={closeMenu}>{label}</Link>
+          return <Link key={label} className={active ? 'active' : ''} to={to} onClick={() => { closeMenu(); if (target === '/' && pathname === '/') window.scrollTo({ top: 0, behavior: 'smooth' }) }}>{label}</Link>
         })}
         <Link className="header-login" to="/login" onClick={closeMenu}>Login</Link>
         <Link className="button small blue-button header-register" to="/register" onClick={closeMenu}>Register school <b aria-hidden="true">→</b></Link>
