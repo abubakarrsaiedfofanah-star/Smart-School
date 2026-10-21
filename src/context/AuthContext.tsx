@@ -43,6 +43,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
       const { data: profileData, error: profileError } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
       if (profileError) throw profileError
       const nextProfile = profileData as UserProfile | null
+      if (nextProfile?.avatar_url && !/^https?:\/\//i.test(nextProfile.avatar_url)) {
+        nextProfile.avatar_path = nextProfile.avatar_url
+        const { data: photo, error: photoError } = await supabase.storage.from('profile-photos').createSignedUrl(nextProfile.avatar_path, 604800)
+        if (photo?.signedUrl) nextProfile.avatar_url = photo.signedUrl
+        else {
+          if (photoError) console.warn('Could not load the profile photo:', photoError.message)
+          nextProfile.avatar_url = null
+        }
+      }
       setProfile(nextProfile)
       await loadStaffRoles(nextProfile)
       if (nextProfile?.school_id) {

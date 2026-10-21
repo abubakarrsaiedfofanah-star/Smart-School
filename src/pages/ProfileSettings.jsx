@@ -11,8 +11,65 @@ export default function ProfileSettings() {
   const [formData, setFormData] = useState({ full_name: '', phone: '', signature_url: '', notification_preferences: { absences: true, announcements: true, behavior: true, schoolwork: true }, delivery_preferences: { email: false, sms: false, whatsapp: false, push: false } });
 
   const canvasRef = useRef(null);
+  const photoInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const canSignOfficialDocuments = profile?.role === 'teacher' || staffRoles.includes('finance_officer');
+
+  async function uploadProfilePhoto(file) {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return toast.error('Choose an image file.');
+    if (file.size > 5 * 1024 * 1024) return toast.error('Choose an image smaller than 5 MB.');
+    if (!supabase || !profile?.id) return toast.error('Profile photo upload is unavailable.');
+    setPhotoUploading(true);
+    const toastId = toast.loading('Uploading profile photo…');
+    let uploadedPath = null;
+    try {
+      const extension = ({ 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' })[file.type];
+      if (!extension) throw new Error('Use a JPG, PNG, WebP, or GIF image.');
+      const filePath = `${profile.id}/${crypto.randomUUID()}.${extension}`;
+      const { error: uploadError } = await supabase.storage.from('profile-photos').upload(filePath, file, { contentType: file.type, upsert: false });
+      if (uploadError) throw uploadError;
+      uploadedPath = filePath;
+      const { data: photo, error: photoError } = await supabase.storage.from('profile-photos').createSignedUrl(filePath, 604800);
+      if (photoError || !photo?.signedUrl) throw photoError || new Error('Could not prepare the uploaded photo.');
+      const { error: profileError } = await supabase.from('profiles').update({ avatar_url: filePath }).eq('id', profile.id);
+      if (profileError) throw profileError;
+      const previousPhotoPath = profile.avatar_path;
+      setProfile(current => ({ ...current, avatar_url: photo.signedUrl, avatar_path: filePath }));
+      if (previousPhotoPath && previousPhotoPath !== filePath) {
+        const { error: removeError } = await supabase.storage.from('profile-photos').remove([previousPhotoPath]);
+        if (removeError) console.warn('Could not remove the previous profile photo:', removeError.message);
+      }
+      toast.success('Profile photo updated.', { id: toastId });
+    } catch (error) {
+      if (uploadedPath) await supabase.storage.from('profile-photos').remove([uploadedPath]);
+      toast.error(error.message || 'Could not upload the profile photo.', { id: toastId });
+    } finally {
+      setPhotoUploading(false);
+      if (photoInputRef.current) photoInputRef.current.value = '';
+      if (cameraInputRef.current) cameraInputRef.current.value = '';
+    }
+  }
+
+  async function removeProfilePhoto() {
+    if (!supabase || !profile?.id || !profile?.avatar_path) return;
+    setPhotoUploading(true);
+    const toastId = toast.loading('Removing profile photo…');
+    try {
+      const { error: profileError } = await supabase.from('profiles').update({ avatar_url: null }).eq('id', profile.id);
+      if (profileError) throw profileError;
+      setProfile(current => ({ ...current, avatar_url: null, avatar_path: null }));
+      const { error: removeError } = await supabase.storage.from('profile-photos').remove([profile.avatar_path]);
+      if (removeError) console.warn('Could not remove the old profile photo file:', removeError.message);
+      toast.success('Profile photo removed.', { id: toastId });
+    } catch (error) {
+      toast.error(error.message || 'Could not remove the profile photo.', { id: toastId });
+    } finally {
+      setPhotoUploading(false);
+    }
+  }
 
   useEffect(() => {
     if (profile) {
@@ -132,10 +189,28 @@ export default function ProfileSettings() {
         .notification-preferences legend { padding:0 6px; font-weight:750; }
         .notification-preferences label { display:flex; align-items:flex-start; gap:10px; color:var(--ink); font-size:.88rem; line-height:1.45; }
         .notification-preferences input { width:18px; height:18px; flex:0 0 18px; margin:1px 0 0; }
+        .profile-photo-editor { display:flex; align-items:center; gap:18px; padding:20px; border:1px solid var(--line); border-radius:16px; background:linear-gradient(140deg, var(--panel), color-mix(in srgb, var(--green) 5%, var(--panel))); }
+        .profile-photo-preview { display:grid; width:96px; height:96px; flex:0 0 96px; place-items:center; overflow:hidden; border:3px solid var(--panel); border-radius:50%; background:var(--cream); color:var(--green); font-size:2rem; font-weight:800; box-shadow:0 0 0 1px var(--line), 0 8px 22px #122b4017; }
+        .profile-photo-preview img { width:100%; height:100%; object-fit:cover; }
+        .profile-photo-actions { display:flex; flex-wrap:wrap; gap:9px; }
+        @media(max-width:520px) { .profile-photo-editor { align-items:flex-start; flex-direction:column; } }
       `}</style>
 
       <p className="eyebrow">Personal Account</p>
       <h1>My Profile Settings</h1>
+
+      <section className="glass-card profile-photo-editor" aria-label="Profile photo" style={{ marginTop: '20px' }}>
+        <div className="profile-photo-preview">{profile?.avatar_url ? <img src={profile.avatar_url} alt="Your profile" /> : profile?.full_name?.trim()?.[0]?.toUpperCase() || 'U'}</div>
+        <div><b>Profile photo</b><p style={{ margin: '5px 0 12px', color: 'var(--muted)', fontSize: '.88rem' }}>Upload a new picture or take one with your device camera. Your photo is private to your account. Maximum 5 MB.</p>
+          <div className="profile-photo-actions">
+            <button type="button" className="button small blue-button" onClick={() => photoInputRef.current?.click()} disabled={photoUploading}>{photoUploading ? 'Uploading…' : 'Upload photo'}</button>
+            <button type="button" className="button small outline" onClick={() => cameraInputRef.current?.click()} disabled={photoUploading}>Take a photo</button>
+            {profile?.avatar_path && <button type="button" className="button small outline" onClick={() => void removeProfilePhoto()} disabled={photoUploading}>Remove photo</button>}
+          </div>
+          <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden onChange={event => void uploadProfilePhoto(event.target.files?.[0])} />
+          <input ref={cameraInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" capture="user" hidden onChange={event => void uploadProfilePhoto(event.target.files?.[0])} />
+        </div>
+      </section>
 
       <form onSubmit={handleSave} className="glass-card" style={{ marginTop: '30px', display: 'grid', gap: '20px' }}>
         <label>Full Name

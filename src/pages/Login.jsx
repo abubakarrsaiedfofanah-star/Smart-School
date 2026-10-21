@@ -12,6 +12,7 @@ export default function Login(){
   const [remember,setRemember]=useState(() => Boolean(localStorage.getItem('smartschool_remembered_email')))
   const [showPassword,setShowPassword]=useState(false)
   const [loading,setLoading]=useState(false)
+  const [googleLoading,setGoogleLoading]=useState(false)
   const [showForgotModal,setShowForgotModal]=useState(false)
   const [forgotEmail,setForgotEmail]=useState('')
   const [forgotLoading,setForgotLoading]=useState(false)
@@ -68,6 +69,19 @@ export default function Login(){
     }
   }
 
+  async function handleGoogleSignIn(){
+    if(!supabase) return toast.error('Google sign-in is unavailable until the school backend is connected.')
+    setGoogleLoading(true)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}${portalRole ? `/login/${encodeURIComponent(portalRole)}` : '/login'}` }
+    })
+    if(error){
+      setGoogleLoading(false)
+      toast.error(error.message || 'Could not start Google sign-in.')
+    }
+  }
+
   async function handleReset(e){
     e.preventDefault();
     if(!forgotEmail) return toast.error('Please enter your email address.');
@@ -88,6 +102,7 @@ export default function Login(){
   if(authLoading) return <div className="portal-loading"><div className="spinner"/><p>Loading your account...</p></div>;
   if(session&&profile&&sessionMatchesRequestedRole) return <Navigate to={portalDestination(profile, staffRoles)} replace/>;
   if(session&&profile) return <main className="portal-loading"><section><p className="eyebrow">PORTAL ACCESS</p><h1>You are signed in to a different portal</h1><p>This account is assigned to the {roleLabels[profile.role] || 'current'} portal. To open {roleLabels[requestedRole] || 'the selected'} portal, sign out and sign in with an account that has that role.</p><button className="button blue-button" type="button" onClick={() => void logout()}>Sign out and switch account</button><Link className="outline-button" to={roleRoute(profile.role)}>Return to your portal</Link></section></main>;
+  if(session&&!profile) return <main className="portal-loading"><section><p className="eyebrow">ACCOUNT NOT READY</p><h1>No school account is linked</h1><p>This Google account has no approved SmartSchool profile. Ask your school administrator to create or approve your account, then try again.</p><button className="button blue-button" type="button" onClick={() => void logout()}>Sign out</button></section></main>;
 
   return (
     <div className="auth page-transition login-page" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'radial-gradient(circle at 50% 20%, rgba(35, 117, 225, 0.12) 0%, transparent 60%)' }}>
@@ -112,6 +127,11 @@ export default function Login(){
             <p style={{ color: 'var(--muted)', margin: 0, fontSize: '0.95rem' }}>Sign in with the account your school issued. Your school and portal access are determined by that account.</p>
             {!supabase && <p role="status" style={{ margin: '12px 0 0', padding: '10px 12px', borderRadius: '10px', background: '#fff7ed', color: '#9a3412', fontSize: '.82rem' }}>Sign-in is unavailable until the school backend is connected.</p>}
           </div>
+
+          <button type="button" className="outline-button full" onClick={handleGoogleSignIn} disabled={googleLoading || !supabase} style={{ width: '100%', borderRadius: '14px', padding: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontWeight: 700 }}>
+            <GoogleMark />{googleLoading ? 'Connecting to Google…' : 'Continue with Google'}
+          </button>
+          <div aria-hidden="true" style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '18px 0', color: 'var(--muted)', fontSize: '.8rem' }}><span style={{ height: '1px', background: 'var(--line)', flex: 1 }} />or sign in with email<span style={{ height: '1px', background: 'var(--line)', flex: 1 }} /></div>
 
           <form onSubmit={handleLogin} style={{ display: 'grid', gap: '18px' }}>
             <label style={{ fontWeight: 600, fontSize: '0.9rem', display: 'grid', gap: '6px' }}>
@@ -212,4 +232,6 @@ export default function Login(){
     </div>
   )
 }
+
+function GoogleMark(){return <svg aria-hidden="true" width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.7c3.9-3.6 6-8.8 6-15Z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.7-5.1c-1.8 1.2-4 1.9-6.8 1.9-5.2 0-9.6-3.5-11.2-8.2H5.9v5.2A20 20 0 0 0 24 44Z"/><path fill="#4A90E2" d="M12.8 27.8a12 12 0 0 1 0-7.6V15H5.9a20 20 0 0 0 0 18Z"/><path fill="#EA4335" d="M24 12.1c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 6.1 29.5 4 24 4A20 20 0 0 0 5.9 15l6.9 5.2c1.6-4.7 6-8.1 11.2-8.1Z"/></svg>}
 

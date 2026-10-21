@@ -22,7 +22,7 @@ function DashboardPreview() {
   ]
 
   return <figure className="hero-feature-showcase" aria-label="SmartSchool features for a connected school day">
-    <img src="/images/school-day/school-community.jpg" alt="Students working together around a laptop in the school library" width="1100" height="734" fetchPriority="high" />
+    <img src="/images/school-day/classroom-learning.jpg" alt="Students learning together in a bright classroom" width="1440" height="810" fetchPriority="high" />
     <div className="hero-feature-shade" aria-hidden="true" />
     <div className="hero-feature-image-label"><span className="hero-feature-live-dot" /> A connected school day</div>
     <figcaption className="hero-feature-panel">
