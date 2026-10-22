@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 const Landing = lazy(() => import('./pages/Landing'))
 const Login = lazy(() => import('./pages/Login'))
+const PasswordRecovery = lazy(() => import('./pages/PasswordRecovery'))
 const RegisterSchool = lazy(() => import('./pages/RegisterSchool'))
 const SuperAdminBootstrap = lazy(() => import('./pages/SuperAdminBootstrap'))
 const SchoolMemberSignup = lazy(() => import('./pages/SchoolMemberSignup'))
@@ -131,6 +132,7 @@ export default function App(){
         <Route path="/join-school/:schoolSlug" element={<SchoolMemberSignup/>}/>
         <Route path="/school/:schoolSlug" element={<PublicSchoolPortal/>}/>
         <Route path="/login" element={<Login/>}/>
+        <Route path="/reset-password" element={<PasswordRecovery/>}/>
         <Route path="/login/:portalRole" element={<Login/>}/>
         <Route path="/chat" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><Chat /></ProtectedRoute>} />
         <Route path="/broadcast" element={<ProtectedRoute roles={['school_admin']}><Broadcast /></ProtectedRoute>} />

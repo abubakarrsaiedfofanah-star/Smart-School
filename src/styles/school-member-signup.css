@@ -10,3 +10,23 @@
 .school-member-signup-card button:disabled { opacity: .58; cursor: not-allowed; }
 .school-member-signup-back { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; font-size: .82rem; }
 .school-member-signup-error { margin: 0; color: #a52626; font-size: .85rem; }
+.school-registration-portal-picker { margin-top: 28px; }
+.school-registration-steps { display: flex; gap: 10px; margin: 0 0 22px; padding: 0; list-style: none; }
+.school-registration-steps li { display: flex; flex: 1; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid #e0e9f1; border-radius: 9px; color: #8393a1; font-size: .72rem; font-weight: 650; }
+.school-registration-steps li[aria-current="step"] { border-color: #b9d7ef; background: #f1f8fe; color: #23577f; }
+.school-registration-steps li b { display: grid; width: 23px; height: 23px; flex: 0 0 23px; place-items: center; border-radius: 50%; background: #edf1f4; color: #718598; font-size: .67rem; }
+.school-registration-steps li[aria-current="step"] b { background: #2375e1; color: #fff; }
+.school-registration-portal-picker h2 { margin: 0; color: #173b55; font-size: 1.2rem; }
+.school-registration-portal-picker > p { margin: 7px 0 16px; color: #718598; font-size: .86rem; line-height: 1.5; }
+.school-registration-portal-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.school-member-signup-card .school-registration-portal-card { display: grid; width: 100%; min-height: 128px; align-content: space-between; justify-items: start; gap: 12px; margin: 0; padding: 16px; border: 1px solid #dce7ef; border-radius: 12px; background: linear-gradient(145deg, #fff, #f7fbff); color: #21445f; text-align: left; transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
+.school-member-signup-card .school-registration-portal-card:hover { transform: translateY(-2px); border-color: #8ebbe0; box-shadow: 0 9px 24px #193b5512; }
+.school-registration-portal-number { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 9px; background: #e8f3fc; color: #2375e1; font-size: .68rem; font-weight: 800; }
+.school-member-signup-card .school-registration-portal-card > b { font-size: .96rem; }
+.school-member-signup-card .school-registration-portal-card > span:last-child { color: #2375e1; font-size: .75rem; font-weight: 700; }
+.school-registration-selected-portal { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 22px; padding: 13px 15px; border: 1px solid #dce7ef; border-radius: 11px; background: #f7fbff; }
+.school-registration-selected-portal > div { display: grid; gap: 4px; }
+.school-registration-selected-portal > div > span { color: #7b8e9f; font-size: .61rem; font-weight: 800; letter-spacing: .12em; }
+.school-registration-selected-portal > div > b { color: #21445f; font-size: .9rem; }
+.school-member-signup-card .school-registration-selected-portal > button { width: auto; min-height: 34px; margin: 0; padding: 7px 10px; border-color: #d4e1eb; font-size: .7rem; }
+@media (max-width: 520px) { .school-registration-portal-grid { grid-template-columns: 1fr; gap: 9px; }.school-member-signup-card .school-registration-portal-card { min-height: 105px; padding: 14px; }.school-registration-selected-portal { align-items: flex-start; flex-direction: column; }.school-member-signup-card .school-registration-selected-portal > button { width: 100%; } }

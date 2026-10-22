@@ -14,13 +14,20 @@ const portalCatalog = [
   { value: 'finance', label: 'Finance', profileRole: 'staff', access: 'finance' },
 ]
 
+function readGoogleSignupDraft(key) {
+  try { return JSON.parse(sessionStorage.getItem(key) || '{}') }
+  catch { return {} }
+}
+
 export default function SchoolMemberSignup() {
   const { schoolSlug } = useParams()
   const [searchParams] = useSearchParams()
   const isGoogleRegistration = searchParams.get('google_signup') === '1'
   const googlePortal = searchParams.get('portal') || 'student'
-  const googleFullName = searchParams.get('full_name') || ''
-  const googleAdmissionNumber = searchParams.get('admission_number') || ''
+  const googleDraftKey = `smartschool_google_signup:${schoolSlug}`
+  const googleDraft = isGoogleRegistration ? readGoogleSignupDraft(googleDraftKey) : {}
+  const googleFullName = googleDraft.fullName || ''
+  const googleAdmissionNumber = googleDraft.admissionNumber || ''
   const [school, setSchool] = useState(null)
   const [classes, setClasses] = useState([])
   const [availablePortals, setAvailablePortals] = useState([])
@@ -29,9 +36,10 @@ export default function SchoolMemberSignup() {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [googleSubmitted, setGoogleSubmitted] = useState(false)
-  const [form, setForm] = useState(() => ({ fullName: googleFullName, email: '', password: '', portal: portalCatalog.some(option => option.value === googlePortal) ? googlePortal : 'student', admissionNumber: googleAdmissionNumber, requestedClassId: searchParams.get('requested_class_id') || '' }))
+  const [chosenPortal, setChosenPortal] = useState(() => isGoogleRegistration && portalCatalog.some(option => option.value === googlePortal) ? googlePortal : '')
+  const [form, setForm] = useState(() => ({ fullName: googleFullName, email: '', password: '', admissionNumber: googleAdmissionNumber, requestedClassId: googleDraft.requestedClassId || '' }))
   const googleRequestStarted = useRef(false)
-  const selectedPortal = availablePortals.find(option => option.value === form.portal) || null
+  const selectedPortal = availablePortals.find(option => option.value === chosenPortal) || null
   const googlePortalUnavailable = isGoogleRegistration && !loading && !portalLoadError
     && availablePortals.length > 0 && !availablePortals.some(option => option.value === googlePortal)
 
@@ -63,10 +71,7 @@ export default function SchoolMemberSignup() {
         } else {
           const options = (portalRows || []).map(row => portalCatalog.find(option => option.value === row.portal)).filter(Boolean)
           setAvailablePortals(options)
-          setForm(current => ({
-            ...current,
-            portal: options.some(option => option.value === current.portal) ? current.portal : options[0]?.value || '',
-          }))
+          setChosenPortal(current => options.some(option => option.value === current) ? current : '')
         }
       }
       setLoading(false)
@@ -89,7 +94,7 @@ export default function SchoolMemberSignup() {
         p_requested_role: googleSelectedPortal.profileRole,
         p_requested_access: googleSelectedPortal.access,
         p_admission_number: googleAdmissionNumber,
-        p_requested_class_id: searchParams.get('requested_class_id') || null,
+        p_requested_class_id: googleDraft.requestedClassId || null,
       })
       if (!live) return
       setSubmitting(false)
@@ -99,13 +104,14 @@ export default function SchoolMemberSignup() {
       } else {
         setGoogleSubmitted(true)
         setSubmitted(true)
+        try { sessionStorage.removeItem(googleDraftKey) } catch { /* Ignore unavailable browser storage. */ }
         toast.success('Your request is waiting for school administrator approval.')
       }
     }
     void supabase.auth.getSession().then(({ data }) => submitGoogleRequest(data.session))
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => { void submitGoogleRequest(session) })
     return () => { live = false; subscription.unsubscribe() }
-  }, [availablePortals, googleAdmissionNumber, googleFullName, googlePortal, isGoogleRegistration, loading, school, schoolSlug, searchParams])
+  }, [availablePortals, googleAdmissionNumber, googleDraft.requestedClassId, googleDraftKey, googleFullName, googlePortal, isGoogleRegistration, loading, school, schoolSlug])
 
   async function submit(event) {
     event.preventDefault()
@@ -142,14 +148,21 @@ export default function SchoolMemberSignup() {
     if (!selectedPortal) return toast.error('Choose a portal currently available at this school.')
     if (['student', 'parent'].includes(selectedPortal.profileRole) && !form.admissionNumber.trim()) return toast.error('Enter the learner admission number provided by the school.')
     if (['student', 'parent'].includes(selectedPortal.profileRole) && !form.requestedClassId) return toast.error('Choose the learner’s current class or level.')
-    const callback = new URLSearchParams({
-      google_signup: '1', portal: selectedPortal.value,
-      full_name: form.fullName.trim(), admission_number: form.admissionNumber.trim(),
-      requested_class_id: form.requestedClassId || '',
-    })
+    try {
+      sessionStorage.setItem(googleDraftKey, JSON.stringify({
+        fullName: form.fullName.trim(), admissionNumber: form.admissionNumber.trim(),
+        requestedClassId: form.requestedClassId || '',
+      }))
+    } catch {
+      return toast.error('Could not save this registration for the Google sign-in step. Check your browser storage settings and try again.')
+    }
+    const callback = new URLSearchParams({ google_signup: '1', portal: selectedPortal.value })
     const redirectTo = `${window.location.origin}/join-school/${encodeURIComponent(school.slug)}?${callback.toString()}`
     const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } })
-    if (error) toast.error(error.message || 'Could not start Google registration.')
+    if (error) {
+      try { sessionStorage.removeItem(googleDraftKey) } catch { /* Ignore unavailable browser storage. */ }
+      toast.error(error.message || 'Could not start Google registration.')
+    }
   }
 
   return <div className="public-site school-home school-member-signup">
@@ -166,10 +179,18 @@ export default function SchoolMemberSignup() {
           <p className="eyebrow">JOIN A SCHOOL</p><h1>Register with {school.name}</h1>
           <p>Your request goes only to this school. Choose a portal this school has enabled. The administrator must approve your request before you can access school data.</p>
           {portalLoadError ? <p className="school-member-signup-error" role="alert">{portalLoadError}</p> : !availablePortals.length ? <p className="school-member-signup-error" role="status">This school is not accepting public portal registrations right now. Contact the school administrator.</p> : <>
-          {googlePortalUnavailable && <p className="school-member-signup-error" role="alert">The portal selected before signing in with Google is no longer available. Choose an available portal and continue with Google again.</p>}
-          <button className="outline-button full" type="button" onClick={() => void continueWithGoogle()} disabled={!supabase || submitting || !selectedPortal}>Continue with Google</button>
+          {googlePortalUnavailable && <p className="school-member-signup-error" role="alert">The portal selected before signing in with Google is no longer available. Choose another portal below.</p>}
+          {!selectedPortal ? <div className="school-registration-portal-picker">
+            <ol className="school-registration-steps" aria-label="Registration steps"><li aria-current="step"><b>1</b>Choose a portal</li><li><b>2</b>Enter your details</li></ol>
+            <h2>Choose a portal</h2><p>Select the account type you need at {school.name}.</p>
+            <div className="school-registration-portal-grid">{availablePortals.map((option, index) => <button className="school-registration-portal-card" type="button" key={option.value} onClick={() => setChosenPortal(option.value)}>
+              <span className="school-registration-portal-number">{String(index + 1).padStart(2, '0')}</span><b>{option.label}</b><span>Register for this portal <span aria-hidden="true">→</span></span>
+            </button>)}</div>
+          </div> : <>
+          <ol className="school-registration-steps" aria-label="Registration steps"><li><b>1</b>Choose a portal</li><li aria-current="step"><b>2</b>Enter your details</li></ol>
+          <div className="school-registration-selected-portal"><div><span>REGISTERING AS</span><b>{selectedPortal.label}</b></div><button type="button" onClick={() => setChosenPortal('')} disabled={submitting}>Choose another portal</button></div>
+          <button className="outline-button full" type="button" onClick={() => void continueWithGoogle()} disabled={!supabase || submitting}>Continue with Google</button>
           <form onSubmit={submit}>
-            <label>Portal<select value={form.portal} onChange={event => setForm(current => ({ ...current, portal: event.target.value }))}>{availablePortals.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
             <label>Full name<input required minLength="2" maxLength="160" autoComplete="name" value={form.fullName} onChange={event => setForm(current => ({ ...current, fullName: event.target.value }))} /></label>
             <label>Email<input required type="email" maxLength="254" autoComplete="email" value={form.email} onChange={event => setForm(current => ({ ...current, email: event.target.value }))} /></label>
             {selectedPortal && ['student', 'parent'].includes(selectedPortal.profileRole) && <>
@@ -181,6 +202,7 @@ export default function SchoolMemberSignup() {
             {!supabase && <p className="school-member-signup-error">Supabase is not connected. Registration is unavailable.</p>}
             <button className="button blue-button" type="submit" disabled={submitting || !supabase || !selectedPortal}>{submitting ? 'Submitting…' : 'Request school account'}</button>
           </form>
+          </>}
           </>}
           <p className="school-member-signup-back"><Link to="/portals">Choose another school</Link> · <Link to={`/login?school=${encodeURIComponent(schoolSlug)}`}>Already have an account? Login</Link></p>
         </section>}

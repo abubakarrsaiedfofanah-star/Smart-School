@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import type { Dispatch, PropsWithChildren, SetStateAction } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { publicAppOrigin } from '../lib/siteUrl'
 import type { SchoolWorkspace, UserProfile } from '../types/portal'
 import { clearOfflineDataForUser } from '../lib/offlineQueue'
 
@@ -118,7 +119,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const resetPassword = async (email: string): Promise<void> => {
     if (!supabase) throw new Error('Password reset is unavailable until Supabase is connected.')
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/login` })
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${publicAppOrigin}/reset-password` })
     if (error) throw error
   }
 
