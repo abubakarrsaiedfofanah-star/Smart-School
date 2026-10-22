@@ -12,6 +12,8 @@ export default function SuperAdminBootstrap() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [bootstrapToken, setBootstrapToken] = useState('')
   const [busy, setBusy] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
@@ -86,8 +88,8 @@ export default function SuperAdminBootstrap() {
           {availability === 'available' && !accountCreated && <form onSubmit={submit}>
             <label>Full name<input autoComplete="name" maxLength={160} required value={fullName} onChange={event => setFullName(event.target.value)} /></label>
             <label>Email address<input type="email" autoComplete="email" maxLength={254} required value={email} onChange={event => setEmail(event.target.value)} /></label>
-            <label>Password<input type="password" autoComplete="new-password" minLength={14} maxLength={72} required value={password} onChange={event => setPassword(event.target.value)} /></label>
-            <label>Confirm password<input type="password" autoComplete="new-password" minLength={14} maxLength={72} required value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} /></label>
+            <label>Password<div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}><input type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={14} maxLength={72} required value={password} onChange={event => setPassword(event.target.value)} style={{ width: '100%', paddingRight: '52px' }} /><button type="button" onClick={() => setShowPassword(value => !value)} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} style={{ position: 'absolute', right: '8px', display: 'grid', placeItems: 'center', width: '40px', height: '40px', padding: 0, border: 0, background: 'transparent', color: 'var(--muted)', cursor: 'pointer' }}><PasswordEye visible={showPassword} /></button></div></label>
+            <label>Confirm password<div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}><input type={showConfirmPassword ? 'text' : 'password'} autoComplete="new-password" minLength={14} maxLength={72} required value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} style={{ width: '100%', paddingRight: '52px' }} /><button type="button" onClick={() => setShowConfirmPassword(value => !value)} aria-label={showConfirmPassword ? 'Hide confirmation password' : 'Show confirmation password'} aria-pressed={showConfirmPassword} style={{ position: 'absolute', right: '8px', display: 'grid', placeItems: 'center', width: '40px', height: '40px', padding: 0, border: 0, background: 'transparent', color: 'var(--muted)', cursor: 'pointer' }}><PasswordEye visible={showConfirmPassword} /></button></div></label>
             <label>One-time setup key<input type="password" autoComplete="off" minLength={32} required value={bootstrapToken} onChange={event => setBootstrapToken(event.target.value)} /></label>
             {errorMessage && <p role="alert">{errorMessage}</p>}
             <button className="button blue-button" type="submit" disabled={busy}>{busy ? 'Creating secure account…' : 'Create Super Admin account'}</button>
@@ -97,5 +99,15 @@ export default function SuperAdminBootstrap() {
         </section>
       </div>
     </main>
+  )
+}
+
+function PasswordEye({ visible }) {
+  return (
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="3" />
+      {!visible && <path d="m3 3 18 18" />}
+    </svg>
   )
 }
