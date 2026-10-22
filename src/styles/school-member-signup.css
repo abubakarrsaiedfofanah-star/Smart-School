@@ -6,6 +6,16 @@
 .school-member-signup-card label { display: grid; gap: 7px; color: #25445f; font-size: .88rem; font-weight: 700; }
 .school-member-signup-card input, .school-member-signup-card select { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #ccd9e4; border-radius: 8px; background: #fff; color: #173953; font: inherit; }
 .school-member-signup-card label small { color: #718598; font-size: .78rem; font-weight: 400; }
+.school-password-field { display: flex; min-height: 46px; overflow: hidden; border: 1px solid #ccd9e4; border-radius: 9px; background: #fff; }
+.school-password-field:focus-within { border-color: #2375e1; box-shadow: 0 0 0 3px #2375e126; }
+.school-member-signup-card .school-password-field input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; }
+.school-member-signup-card .school-password-field input:focus { box-shadow: none; }
+.school-member-signup-card .school-password-visibility { display: grid; width: 46px; min-width: 46px; min-height: 44px; place-items: center; margin: 0; padding: 10px; border: 0; border-left: 1px solid #e3eaf0; border-radius: 0; background: #f8fbfd; color: #526d82; cursor: pointer; }
+.school-member-signup-card .school-password-visibility:hover { background: #edf5fb; color: #1769be; }
+.school-password-visibility svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+.school-member-signup-card .school-registration-selected-portal > button { border: 1px solid #d4e1eb; border-radius: 8px; background: #fff; color: #315873; font: inherit; font-weight: 700; cursor: pointer; }
+.school-member-signup-card .school-registration-selected-portal > button:hover:not(:disabled) { border-color: #8ebbe0; background: #f1f8fe; }
+.school-member-signup-card .school-registration-selected-portal > button:focus-visible, .school-member-signup-card .school-password-visibility:focus-visible { outline: 3px solid #8dc4fa; outline-offset: 2px; }
 .school-member-signup-card button { width: 100%; min-height: 46px; margin-top: 3px; }
 .school-member-signup-card button:disabled { opacity: .58; cursor: not-allowed; }
 .school-member-signup-back { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; font-size: .82rem; }
