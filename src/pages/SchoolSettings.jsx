@@ -4,6 +4,15 @@ import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { detectLogoColor, normalizeBrandColor } from '../lib/brandColor';
 
+const registrationPortalOptions = [
+  { value: 'student', label: 'Student', description: 'Learners may request their own accounts.' },
+  { value: 'parent', label: 'Parent / guardian', description: 'Families may request linked accounts.' },
+  { value: 'teacher', label: 'Teacher', description: 'Teachers may request accounts.' },
+  { value: 'hr', label: 'HR & Payroll', description: 'HR staff may request access.' },
+  { value: 'finance', label: 'Finance', description: 'Finance staff may request access.' },
+];
+const defaultRegistrationPortals = registrationPortalOptions.map(option => option.value);
+
 export default function SchoolSettings() {
   const { profile, setSchool: setTenant, demo } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -31,6 +40,7 @@ export default function SchoolSettings() {
     grading_scale: []
   });
   const [saving, setSaving] = useState(false);
+  const [registrationPortals, setRegistrationPortals] = useState(defaultRegistrationPortals);
 
   useEffect(() => {
     if (demo || !profile || !supabase || !profile.school_id) {
@@ -52,6 +62,9 @@ export default function SchoolSettings() {
 
       if (error) throw error;
       if (data) setSchool(data);
+      const { data: portalData, error: portalError } = await supabase.rpc('get_my_school_registration_portals');
+      if (portalError) throw portalError;
+      setRegistrationPortals(Array.isArray(portalData) ? portalData : defaultRegistrationPortals);
     } catch (err) {
       console.error('Failed to fetch school settings:', err);
       toast.error('Using offline settings.');
@@ -81,6 +94,7 @@ export default function SchoolSettings() {
       return;
     }
     if (demo || !supabase || !profile?.school_id) { toast.error('Connect a school account to save these settings.'); return }
+    if (!registrationPortals.length) { toast.error('Keep at least one school registration portal enabled.'); return }
     setSaving(true);
     try {
       const { error } = await supabase.from('schools').update({
@@ -108,6 +122,8 @@ export default function SchoolSettings() {
         grading_scale: school.grading_scale || [{ min: 80, grade: 'A' }, { min: 70, grade: 'B' }, { min: 60, grade: 'C' }, { min: 50, grade: 'D' }, { min: 0, grade: 'E' }]
       }).eq('id', profile.school_id);
       if (error) throw error;
+      const { error: portalsError } = await supabase.rpc('set_my_school_registration_portals', { p_enabled_portals: registrationPortals });
+      if (portalsError) throw portalsError;
       setTenant({ ...school, academic_terms: terms });
       toast.success('School settings updated!');
     } catch (err) {
@@ -160,6 +176,11 @@ export default function SchoolSettings() {
         .grading-scale-editor > b, .grading-scale-editor > p { grid-column:1/-1; }
         .grading-scale-editor label { display:grid; gap:6px; color:var(--muted); font-size:.78rem; }
         .grading-scale-editor input { min-height:40px; padding:8px 10px; border-radius:8px; }
+        .registration-portal-options { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px; margin-top:16px; }
+        .registration-portal-option { display:flex; align-items:flex-start; gap:10px; padding:13px; border:1px solid var(--line); border-radius:10px; background:var(--panel); cursor:pointer; }
+        .registration-portal-option input { flex:0 0 18px; width:18px; height:18px; margin-top:2px; accent-color:var(--green); }
+        .registration-portal-option span { display:grid; gap:4px; }
+        .registration-portal-option small { color:var(--muted); font-size:.75rem; line-height:1.4; }
       `}</style>
 
       <p className="eyebrow blue-eyebrow">ADMINISTRATION</p>
@@ -242,6 +263,17 @@ export default function SchoolSettings() {
           <div className="grading-scale-editor"><b>Grade boundaries</b><p>Set grade minimums from 0 to 100%. Include a grade starting at 0%.</p>
             {(school.grading_scale || []).map((band, index) => <label key={`${band.grade}-${index}`}>{band.grade} starts at
               <input type="number" min="0" max="100" value={band.min} onChange={event => setSchool({...school, grading_scale:school.grading_scale.map((item, itemIndex) => itemIndex === index ? {...item, min:Number(event.target.value)} : item)})} />%
+            </label>)}
+          </div>
+        </div>
+
+        <div className="glass-card school-local-settings">
+          <h3>Public registration portals</h3>
+          <p style={{fontSize:'.85rem', color:'var(--muted)'}}>Choose which account types people can request from this school’s public registration page. Requests still need school approval.</p>
+          <div className="registration-portal-options">
+            {registrationPortalOptions.map(option => <label className="registration-portal-option" key={option.value}>
+              <input type="checkbox" checked={registrationPortals.includes(option.value)} onChange={event => setRegistrationPortals(current => event.target.checked ? [...current, option.value] : current.filter(value => value !== option.value))} />
+              <span><b>{option.label}</b><small>{option.description}</small></span>
             </label>)}
           </div>
         </div>

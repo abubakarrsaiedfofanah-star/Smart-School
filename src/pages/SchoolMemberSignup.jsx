@@ -6,7 +6,7 @@ import PublicFooter from '../components/PublicFooter'
 import { supabase } from '../lib/supabase'
 import '../styles/school-member-signup.css'
 
-const portalOptions = [
+const portalCatalog = [
   { value: 'student', label: 'Student', profileRole: 'student', access: null },
   { value: 'parent', label: 'Parent / guardian', profileRole: 'parent', access: null },
   { value: 'teacher', label: 'Teacher', profileRole: 'teacher', access: null },
@@ -23,13 +23,17 @@ export default function SchoolMemberSignup() {
   const googleAdmissionNumber = searchParams.get('admission_number') || ''
   const [school, setSchool] = useState(null)
   const [classes, setClasses] = useState([])
+  const [availablePortals, setAvailablePortals] = useState([])
+  const [portalLoadError, setPortalLoadError] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [googleSubmitted, setGoogleSubmitted] = useState(false)
-  const [form, setForm] = useState(() => ({ fullName: googleFullName, email: '', password: '', portal: portalOptions.some(option => option.value === googlePortal) ? googlePortal : 'student', admissionNumber: googleAdmissionNumber, requestedClassId: searchParams.get('requested_class_id') || '' }))
+  const [form, setForm] = useState(() => ({ fullName: googleFullName, email: '', password: '', portal: portalCatalog.some(option => option.value === googlePortal) ? googlePortal : 'student', admissionNumber: googleAdmissionNumber, requestedClassId: searchParams.get('requested_class_id') || '' }))
   const googleRequestStarted = useRef(false)
-  const selectedPortal = portalOptions.find(option => option.value === form.portal) || portalOptions[0]
+  const selectedPortal = availablePortals.find(option => option.value === form.portal) || null
+  const googlePortalUnavailable = isGoogleRegistration && !loading && !portalLoadError
+    && availablePortals.length > 0 && !availablePortals.some(option => option.value === googlePortal)
 
   useEffect(() => {
     let live = true
@@ -37,6 +41,8 @@ export default function SchoolMemberSignup() {
       setLoading(true)
       setClasses([])
       setSchool(null)
+      setAvailablePortals([])
+      setPortalLoadError('')
       if (!supabase) { setLoading(false); return }
       const { data, error } = await supabase.rpc('get_public_school_directory')
       if (!live) return
@@ -44,10 +50,24 @@ export default function SchoolMemberSignup() {
       const selectedSchool = (data || []).find(item => item.slug === schoolSlug) || null
       setSchool(selectedSchool)
       if (selectedSchool) {
-        const { data: classRows, error: classError } = await supabase.rpc('get_public_school_classes', { p_school_slug: schoolSlug })
+        const [{ data: classRows, error: classError }, { data: portalRows, error: portalError }] = await Promise.all([
+          supabase.rpc('get_public_school_classes', { p_school_slug: schoolSlug }),
+          supabase.rpc('get_public_school_registration_portals', { p_school_slug: schoolSlug }),
+        ])
         if (!live) return
         if (classError) toast.error(classError.message || 'Could not load school classes.')
         setClasses(classRows || [])
+        if (portalError) {
+          setPortalLoadError('Could not load this school’s registration portals. Please try again later.')
+          toast.error(portalError.message || 'Could not load school registration portals.')
+        } else {
+          const options = (portalRows || []).map(row => portalCatalog.find(option => option.value === row.portal)).filter(Boolean)
+          setAvailablePortals(options)
+          setForm(current => ({
+            ...current,
+            portal: options.some(option => option.value === current.portal) ? current.portal : options[0]?.value || '',
+          }))
+        }
       }
       setLoading(false)
     }
@@ -56,7 +76,8 @@ export default function SchoolMemberSignup() {
   }, [schoolSlug])
 
   useEffect(() => {
-    if (!isGoogleRegistration || loading || !school || !supabase || googleRequestStarted.current) return undefined
+    const googleSelectedPortal = availablePortals.find(option => option.value === googlePortal)
+    if (!isGoogleRegistration || loading || !school || !supabase || !googleSelectedPortal || googleRequestStarted.current) return undefined
     let live = true
     const submitGoogleRequest = async session => {
       if (!session || googleRequestStarted.current) return
@@ -65,8 +86,8 @@ export default function SchoolMemberSignup() {
       const { error } = await supabase.rpc('submit_google_school_portal_signup', {
         p_school_slug: schoolSlug,
         p_full_name: googleFullName,
-        p_requested_role: selectedPortal.profileRole,
-        p_requested_access: selectedPortal.access,
+        p_requested_role: googleSelectedPortal.profileRole,
+        p_requested_access: googleSelectedPortal.access,
         p_admission_number: googleAdmissionNumber,
         p_requested_class_id: searchParams.get('requested_class_id') || null,
       })
@@ -84,11 +105,12 @@ export default function SchoolMemberSignup() {
     void supabase.auth.getSession().then(({ data }) => submitGoogleRequest(data.session))
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => { void submitGoogleRequest(session) })
     return () => { live = false; subscription.unsubscribe() }
-  }, [googleAdmissionNumber, googleFullName, isGoogleRegistration, loading, school, schoolSlug, selectedPortal.access, selectedPortal.profileRole, searchParams])
+  }, [availablePortals, googleAdmissionNumber, googleFullName, googlePortal, isGoogleRegistration, loading, school, schoolSlug, searchParams])
 
   async function submit(event) {
     event.preventDefault()
     if (!supabase || !school) return toast.error('This school is not accepting portal registration right now.')
+    if (!selectedPortal) return toast.error('Choose a portal currently available at this school.')
     if (form.password.length < 12) return toast.error('Use a password with at least 12 characters.')
     if (['student', 'parent'].includes(selectedPortal.profileRole) && !form.admissionNumber.trim()) return toast.error('Enter the learner admission number provided by the school.')
     if (['student', 'parent'].includes(selectedPortal.profileRole) && !form.requestedClassId) return toast.error('Choose the learner’s current class or level.')
@@ -117,6 +139,7 @@ export default function SchoolMemberSignup() {
 
   async function continueWithGoogle() {
     if (!supabase || !school) return toast.error('Google registration is unavailable right now.')
+    if (!selectedPortal) return toast.error('Choose a portal currently available at this school.')
     if (['student', 'parent'].includes(selectedPortal.profileRole) && !form.admissionNumber.trim()) return toast.error('Enter the learner admission number provided by the school.')
     if (['student', 'parent'].includes(selectedPortal.profileRole) && !form.requestedClassId) return toast.error('Choose the learner’s current class or level.')
     const callback = new URLSearchParams({
@@ -141,21 +164,24 @@ export default function SchoolMemberSignup() {
         : !school ? <section className="school-member-signup-card"><p className="eyebrow">SCHOOL PORTAL</p><h1>School not found</h1><p>This school is unavailable or is not accepting new portal registrations.</p><Link to="/portals">View portals</Link></section>
         : <section className="school-member-signup-card">
           <p className="eyebrow">JOIN A SCHOOL</p><h1>Register with {school.name}</h1>
-          <p>Your request goes only to this school. The administrator must approve it before you can access school data. School administrators cannot register from this page.</p>
-          <button className="outline-button full" type="button" onClick={() => void continueWithGoogle()} disabled={!supabase || submitting}>Continue with Google</button>
+          <p>Your request goes only to this school. Choose a portal this school has enabled. The administrator must approve your request before you can access school data.</p>
+          {portalLoadError ? <p className="school-member-signup-error" role="alert">{portalLoadError}</p> : !availablePortals.length ? <p className="school-member-signup-error" role="status">This school is not accepting public portal registrations right now. Contact the school administrator.</p> : <>
+          {googlePortalUnavailable && <p className="school-member-signup-error" role="alert">The portal selected before signing in with Google is no longer available. Choose an available portal and continue with Google again.</p>}
+          <button className="outline-button full" type="button" onClick={() => void continueWithGoogle()} disabled={!supabase || submitting || !selectedPortal}>Continue with Google</button>
           <form onSubmit={submit}>
-            <label>Portal<select value={form.portal} onChange={event => setForm(current => ({ ...current, portal: event.target.value }))}>{portalOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+            <label>Portal<select value={form.portal} onChange={event => setForm(current => ({ ...current, portal: event.target.value }))}>{availablePortals.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
             <label>Full name<input required minLength="2" maxLength="160" autoComplete="name" value={form.fullName} onChange={event => setForm(current => ({ ...current, fullName: event.target.value }))} /></label>
             <label>Email<input required type="email" maxLength="254" autoComplete="email" value={form.email} onChange={event => setForm(current => ({ ...current, email: event.target.value }))} /></label>
-            {['student', 'parent'].includes(selectedPortal.profileRole) && <>
+            {selectedPortal && ['student', 'parent'].includes(selectedPortal.profileRole) && <>
               <label>Class or level<select required value={form.requestedClassId || ''} onChange={event => setForm(current => ({ ...current, requestedClassId: event.target.value }))}><option value="">Choose current class or level</option>{classes.map(item => <option key={item.id} value={item.id}>{item.name}{item.grade ? ` · ${item.grade}` : ''}</option>)}</select><small>This helps the school match the request and show the right class activities.</small></label>
               <label>Learner admission number<input required maxLength="80" value={form.admissionNumber} onChange={event => setForm(current => ({ ...current, admissionNumber: event.target.value }))} /><small>For a parent account, enter your child’s admission number.</small></label>
               {!classes.length && <small>The school has not added any classes yet. Contact the school administrator before registering.</small>}
             </>}
             <label>Password<input required minLength="12" type="password" autoComplete="new-password" value={form.password} onChange={event => setForm(current => ({ ...current, password: event.target.value }))} /><small>At least 12 characters.</small></label>
             {!supabase && <p className="school-member-signup-error">Supabase is not connected. Registration is unavailable.</p>}
-            <button className="button blue-button" type="submit" disabled={submitting || !supabase}>{submitting ? 'Submitting…' : 'Request school account'}</button>
+            <button className="button blue-button" type="submit" disabled={submitting || !supabase || !selectedPortal}>{submitting ? 'Submitting…' : 'Request school account'}</button>
           </form>
+          </>}
           <p className="school-member-signup-back"><Link to="/portals">Choose another school</Link> · <Link to={`/login?school=${encodeURIComponent(schoolSlug)}`}>Already have an account? Login</Link></p>
         </section>}
     </main>
