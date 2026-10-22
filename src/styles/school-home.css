@@ -506,8 +506,6 @@
 .school-directory-empty button { padding: 8px 13px; border: 1px solid #c8d8e5; border-radius: 8px; background: #fff; color: #174b75; font-weight: 700; cursor: pointer; }
 .school-directory-search { display: grid; grid-template-columns: auto minmax(220px, 360px); align-items: center; gap: 12px; margin: 0 0 16px; color: #536e85; font-weight: 650; }
 .school-directory-search input { width: 100%; padding: 11px 13px; border: 1px solid #d3e0eb; border-radius: 9px; background: #fff; color: #18364f; }
-.landing-school-directory { padding-top: 0; border-top: 0; }
-.landing-school-directory .school-directory-heading { align-items: center; }
 @media (max-width: 760px) {
   .school-directory-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .school-directory-heading { align-items: flex-start; flex-direction: column; }
@@ -535,11 +533,11 @@
 .school-home section[id] { scroll-margin-top: 94px; }
 .school-home-section-link { display: inline-flex; align-items: center; gap: 8px; margin-top: 22px; color: #1c5b91; font-size: .92rem; font-weight: 750; text-decoration: none; }
 .school-home-section-link:hover { color: #123d68; text-decoration: underline; }
-.school-home-story, .school-home-pricing { display: grid; width: min(1160px, calc(100% - 48px)); grid-template-columns: 1.05fr .95fr; align-items: center; gap: clamp(28px, 5vw, 64px); margin: 0 auto; padding: clamp(48px, 7vw, 88px) 0; scroll-margin-top: 96px; }
+.school-home-story, .school-home-pricing { display: grid; width: min(1160px, calc(100% - 48px)); grid-template-columns: 1.05fr .95fr; align-items: center; column-gap: clamp(28px, 5vw, 64px); row-gap: 28px; margin: 0 auto; padding: clamp(48px, 7vw, 88px) 0; scroll-margin-top: 96px; }
 .school-home-story > img, .school-home-pricing > img { display: block; width: 100%; height: clamp(260px, 34vw, 420px); border-radius: 22px; object-fit: cover; box-shadow: 0 18px 44px #18324b18; }
-.school-home-story > div, .school-home-pricing > div { max-width: 520px; }
-.school-home-story h2, .school-home-pricing h2 { margin: 10px 0 14px; color: #18364f; font-size: clamp(1.8rem, 3.6vw, 2.8rem); letter-spacing: -.035em; line-height: 1.1; }
-.school-home-story p:not(.eyebrow), .school-home-pricing p:not(.eyebrow) { color: #62788d; font-size: 1rem; line-height: 1.75; }
+.school-home-story > div:not(.school-public-grid), .school-home-pricing > div:not(.school-public-grid) { max-width: 520px; }
+.school-home-story > div:not(.school-public-grid) h2, .school-home-pricing > div:not(.school-public-grid) h2 { margin: 10px 0 14px; color: #18364f; font-size: clamp(1.8rem, 3.6vw, 2.8rem); letter-spacing: -.035em; line-height: 1.1; }
+.school-home-story > div:not(.school-public-grid) p:not(.eyebrow), .school-home-pricing > div:not(.school-public-grid) p:not(.eyebrow) { color: #62788d; font-size: 1rem; line-height: 1.75; }
 .school-home-portals { scroll-margin-top: 96px; }
 .school-home-photo-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 24px 0 28px; }
 .school-home-photo-strip figure { position: relative; min-width: 0; aspect-ratio: 1.55; margin: 0; overflow: hidden; border-radius: 14px; background: #dce8f1; }
@@ -576,30 +574,16 @@
   .school-home-portal-grid { grid-template-columns: 1fr; }
 }
 
-/* Photo-led introductions for the public information pages. */
+/* Text-led introductions for the public information pages. */
 .school-public-hero { display: grid; width: 100%; min-width: 0; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); align-items: center; gap: clamp(24px, 4vw, 52px); margin-bottom: clamp(30px, 5vw, 54px); }
 .school-public-hero .school-public-intro { width: 100%; min-width: 0; max-width: 700px; margin: 0; }
-.school-public-hero-photo { position: relative; min-width: 0; aspect-ratio: 1.28; margin: 0; overflow: hidden; border: 1px solid #fff; border-radius: 20px; background: #dce8f1; box-shadow: 0 18px 44px #18324b18; }
-.school-public-hero-photo::after { position: absolute; inset: 45% 0 0; background: linear-gradient(transparent, #0b2138a8); content: ''; }
-.school-public-hero-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.school-public-hero-photo figcaption { position: absolute; z-index: 1; right: 18px; bottom: 18px; left: 18px; color: #fff; font-size: 1rem; font-weight: 750; text-shadow: 0 1px 4px #07152288; }
-.school-public-photo-strip { display: grid; width: 100%; min-width: 0; box-sizing: border-box; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; margin: 0 0 clamp(40px, 6vw, 68px); }
-.school-public-photo-strip figure { position: relative; min-width: 0; aspect-ratio: 1.65; margin: 0; overflow: hidden; border-radius: 13px; background: #dce8f1; }
-.school-public-photo-strip figure::after { position: absolute; inset: 40% 0 0; background: linear-gradient(transparent, #0b2138a8); content: ''; }
-.school-public-photo-strip img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .3s ease; }
-.school-public-photo-strip figure:hover img { transform: scale(1.035); }
-.school-public-photo-strip figcaption { position: absolute; z-index: 1; right: 13px; bottom: 13px; left: 13px; color: #fff; font-size: .85rem; font-weight: 750; text-shadow: 0 1px 4px #07152288; }
+.school-public-hero-text-only { grid-template-columns: minmax(0, 1fr); }
+.school-public-hero-text-only .school-public-intro { max-width: 850px; }
 @media (max-width: 760px) {
   .school-public-content { width: calc(100vw - 36px); }
   .school-public-hero { grid-template-columns: 1fr; gap: 24px; }
-  .school-public-hero-photo { grid-row: 1; aspect-ratio: 1.6; }
-  .school-public-photo-strip { gap: 9px; }
 }
-@media (max-width: 520px) {
-  .school-public-photo-strip { grid-template-columns: 1fr; }
-  .school-public-photo-strip figure { aspect-ratio: 1.7; }
-}
-@media (prefers-reduced-motion: reduce) { .school-public-photo-strip img, .school-home-jump-nav a { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .school-home-jump-nav a { transition: none; } }
 
 /* Role summaries are informational; registration and sign-in remain the actions. */
 .school-portal-shortcuts .hero-portal { cursor: default; }
@@ -616,4 +600,24 @@
 }
 @media (max-width: 600px) {
   .school-hero .hero-feature-showcase { width: 100%; margin-top: 28px; aspect-ratio: .9; border-radius: 20px; }
+}
+
+/* Keep the dedicated public page details available on the landing page scroll. */
+.school-home-about-grid,
+.school-home-pricing > .school-public-grid { grid-column: 1 / -1; width: 100%; }
+.school-home-about-grid { margin-top: 0; }
+.school-home-story { row-gap: 12px; }
+.school-home-contact { padding-bottom: 0; }
+.school-contact-grid { margin: 22px 0 42px; }
+.school-home-contact .school-cta-band { width: 100vw; margin-left: calc(50% - 50vw); box-sizing: border-box; }
+.school-home-contact .school-cta-band > div { min-width: 0; }
+.school-contact-methods { display: grid; justify-items: start; gap: 9px; margin-top: 20px; }
+.school-contact-methods a { color: #174e89; font-size: .95rem; font-weight: 700; overflow-wrap: anywhere; text-underline-offset: 3px; }
+.school-cta-band .school-contact-methods a { color: #174e89; }
+.school-contact-methods a:focus-visible { outline: 3px solid #78b7ff; outline-offset: 3px; }
+.school-public-contact-methods { margin: 0 0 52px; padding: 22px; border: 1px solid #dce7f0; border-radius: 14px; background: #fff; }
+@media (max-width: 760px) {
+  .school-home-about-grid,
+  .school-home-pricing > .school-public-grid { grid-column: auto; }
+  .school-home-contact .school-cta-band { margin-left: calc(50% - 50vw); }
 }

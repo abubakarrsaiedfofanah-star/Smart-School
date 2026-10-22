@@ -1,20 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PublicHeader from '../components/PublicHeader'
 import PublicFooter from '../components/PublicFooter'
+import ContactMethods from '../components/ContactMethods'
 import { supabase } from '../lib/supabase'
-
-const services = [
-  ['Teaching and learning', 'Plan lessons, manage classes, share assignments and follow results.'],
-  ['Student records and admissions', 'Keep learner profiles, family links and applications organised.'],
-  ['Attendance and daily operations', 'Coordinate attendance, timetables, calendars and school resources.'],
-  ['Family and school communication', 'Connect families and staff with notices, messages and meetings.'],
-  ['Fees and finance', 'Manage fee records, expenses and payment follow-up.'],
-  ['Human resources and payroll', 'Support staff records, leave, payroll and payslips.'],
-  ['Library and digital courses', 'Make learning materials, courses and certificates easy to find.'],
-  ['Transport and school resources', 'Coordinate routes, vehicles, inventory and assets.'],
-  ['Reports and school oversight', 'Give authorised leaders a clear view of school activity.'],
-]
+import { aboutHighlights, contactOptions, pricingPlans, serviceCatalog } from '../data/publicSiteContent'
 
 function DashboardPreview() {
   return <figure className="hero-feature-showcase" aria-label="A connected school day">
@@ -43,6 +33,12 @@ export default function Landing() {
   const [schools, setSchools] = useState([])
   const [schoolsLoading, setSchoolsLoading] = useState(true)
   const [schoolsError, setSchoolsError] = useState('')
+  const [schoolSearch, setSchoolSearch] = useState('')
+
+  const filteredSchools = useMemo(() => {
+    const query = schoolSearch.trim().toLocaleLowerCase()
+    return query ? schools.filter(school => school.name.toLocaleLowerCase().includes(query)) : schools
+  }, [schools, schoolSearch])
 
   async function loadSchools() {
     if (!supabase) {
@@ -52,7 +48,7 @@ export default function Landing() {
     }
     setSchoolsLoading(true)
     setSchoolsError('')
-    const { data, error } = await supabase.rpc('get_public_school_directory')
+    const { data, error } = await supabase.rpc('get_public_school_login_directory')
     if (error) {
       console.error('Could not load the public school directory:', error.message)
       setSchoolsError('We could not load schools right now. Please try again.')
@@ -77,7 +73,7 @@ export default function Landing() {
       <nav className="school-home-jump-nav" aria-label="Explore the public website">
         <p>Explore SmartSchool</p>
         <div>
-          <a href="#schools"><span>01</span>Find your school <b aria-hidden="true">↓</b></a>
+          <a href="#start"><span>01</span>Getting started <b aria-hidden="true">↓</b></a>
           <a href="#services"><span>02</span>Services <b aria-hidden="true">↓</b></a>
           <a href="#about"><span>03</span>About <b aria-hidden="true">↓</b></a>
           <a href="#portals"><span>04</span>Portals <b aria-hidden="true">↓</b></a>
@@ -87,16 +83,8 @@ export default function Landing() {
       </nav>
 
 
-      <Reveal><section className="section school-directory-section landing-school-directory" id="schools" aria-labelledby="landing-schools-title">
-        <div className="school-directory-heading"><div><p className="eyebrow blue-eyebrow">SCHOOLS USING SMARTSCHOOL</p><h2 id="landing-schools-title">Find your school</h2><p>Open your school’s workspace or register a new school to get started.</p></div><Link to="/portals">View all schools and portals →</Link></div>
-        {schoolsLoading ? <p className="school-directory-empty" role="status">Loading active schools…</p>
-          : schoolsError ? <div className="school-directory-empty"><p>{schoolsError}</p><button type="button" onClick={() => void loadSchools()}>Try again</button></div>
-            : schools.length ? <div className="school-directory-grid">{schools.slice(0, 3).map(school => <article className="school-directory-card" key={school.id}><h3><Link to={`/school/${encodeURIComponent(school.slug)}`}>{school.name}</Link></h3><div className="school-directory-actions"><Link className="button blue-button" to={'/login?school=' + encodeURIComponent(school.slug)}>Login</Link><Link className="school-public-portal-link" to={`/join-school/${encodeURIComponent(school.slug)}`}>Register for this school</Link></div></article>)}</div>
-              : <div className="school-directory-empty"><p>No active schools are listed yet. Register your school to create its workspace.</p><Link to="/register">Register a school →</Link></div>}
-      </section></Reveal>
-
-      <Reveal><section className="section school-start-section" aria-labelledby="school-start-title">
-        <div className="section-heading"><div><p className="eyebrow blue-eyebrow">GETTING STARTED</p><h2 id="school-start-title">A clear path to your school workspace.</h2></div><p className="section-note">Start with your school details, then use the portal that matches your role.</p></div>
+      <Reveal><section className="section school-start-section" id="start" aria-labelledby="school-start-title">
+        <div className="section-heading"><div><p className="eyebrow blue-eyebrow">GETTING STARTED</p><h2 id="school-start-title">A clear path to your school workspace.</h2></div></div>
         <div className="school-start-steps">
           <article><span>01</span><div><h3>Register your school</h3><p>Share the school and administrator details to create a setup request.</p></div></article>
           <article><span>02</span><div><h3>Submit it for review</h3><p>SmartSchool reviews the school and plan request before activation.</p></div></article>
@@ -109,19 +97,25 @@ export default function Landing() {
 
 
 
-      <Reveal><section className="section school-tools-section" id="services" aria-labelledby="services-title"><div className="section-heading"><div><p className="eyebrow blue-eyebrow">SERVICES</p><h2 id="services-title">The tools your school needs, together.</h2></div><p className="section-note">One connected system for learning, operations, finance, and communication.</p></div><div className="service-grid">{services.map(([title, text], index) => <article className="service school-tool" key={title}><span>{String(index + 1).padStart(2, '0')}</span><h3>{title}</h3><p>{text}</p></article>)}</div><Link className="school-home-section-link" to="/services">Explore all services <b aria-hidden="true">→</b></Link></section></Reveal>
+      <Reveal><section className="section school-tools-section" id="services" aria-labelledby="services-title"><div className="section-heading"><div><p className="eyebrow blue-eyebrow">SERVICES</p><h2 id="services-title">The tools your school needs, together.</h2></div><p className="section-note">Explore the learning, operations, finance, and communication tools available across SmartSchool.</p></div><div className="school-public-grid school-service-grid" aria-label="SmartSchool services and features">{serviceCatalog.map(({ title, summary, features }, index) => <article className={`school-public-card school-service-card school-service-card-${index + 1}`} key={title}><div className="school-service-card-top"><span className="school-service-icon" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span><span className="school-public-card-number">{String(index + 1).padStart(2, '0')}</span></div><h2>{title}</h2><p>{summary}</p><ul>{features.map(feature => <li key={feature}>{feature}</li>)}</ul></article>)}<p className="school-service-note">Tools are shown according to each person's role and the services enabled for their school.</p></div></section></Reveal>
 
-      <Reveal><section className="school-home-story" id="about" aria-labelledby="school-home-story-title"><img src="/images/school-day/school-community.jpg" alt="School community members sharing ideas in a library" loading="lazy" /><div><p className="eyebrow blue-eyebrow">ABOUT SMARTSCHOOL</p><h2 id="school-home-story-title">One connected place for your school community.</h2><p>SmartSchool brings school leaders, teachers, students, families and staff into a shared workspace, with access shaped around each role.</p><Link className="school-home-section-link" to="/about">Learn about SmartSchool <b aria-hidden="true">→</b></Link></div></section></Reveal>
+      <Reveal><section className="school-home-story" id="about" aria-labelledby="school-home-story-title"><img src="/images/school-day/school-community.jpg" alt="School community members sharing ideas in a library" loading="lazy" /><div><p className="eyebrow blue-eyebrow">ABOUT SMARTSCHOOL</p><h2 id="school-home-story-title">One connected place for your school community.</h2><p>SmartSchool brings school leaders, teachers, students, families and staff into a shared workspace, with access shaped around each role.</p></div><div className="school-public-grid school-home-about-grid">{aboutHighlights.map(([title, text], index) => <article className="school-public-card" key={title}><span className="school-public-card-number">0{index + 1}</span><h2>{title}</h2><p>{text}</p></article>)}</div></section></Reveal>
 
-      <Reveal><section className="section school-home-portals" id="portals" aria-labelledby="school-home-portals-title"><div className="section-heading"><div><p className="eyebrow blue-eyebrow">SCHOOL PORTALS</p><h2 id="school-home-portals-title">Sign in through your school.</h2></div><p className="section-note">Choose your school first. SmartSchool will open the portal assigned to your account.</p></div><Link className="school-home-section-link" to="/portals">Choose a school to sign in or register <b aria-hidden="true">→</b></Link></section></Reveal>
+      <Reveal><section className="section school-home-portals" id="portals" aria-labelledby="school-home-portals-title">
+        <div className="section-heading"><div><p className="eyebrow blue-eyebrow">SCHOOL PORTALS</p><h2 id="school-home-portals-title">Find your school and open your portal.</h2></div><p className="section-note">Choose your school to sign in or request an account. Your access stays with the school you choose.</p></div>
+        {schools.length > 0 && <label className="school-directory-search">Search schools<input type="search" value={schoolSearch} onChange={event => setSchoolSearch(event.target.value)} placeholder="Type a school name" aria-label="Search schools by name" /></label>}
+        {schoolsLoading ? <p className="school-directory-empty" role="status">Loading schools...</p>
+          : schoolsError ? <div className="school-directory-empty"><p>{schoolsError}</p><button type="button" onClick={() => void loadSchools()}>Try again</button></div>
+            : schools.length ? filteredSchools.length ? <div className="school-directory-grid">{filteredSchools.map(school => <article className="school-directory-card" key={school.id}><h3>{school.status === 'active' ? <Link to={`/school/${encodeURIComponent(school.slug)}`}>{school.name}</Link> : school.name}</h3>{school.status === 'suspended' && <p className="school-directory-paused">Subscription payment is overdue. School access is paused.</p>}<div className="school-directory-actions"><Link className="button blue-button" to={'/login?school=' + encodeURIComponent(school.slug)}>Login</Link>{school.status === 'active' ? <Link className="school-public-portal-link" to={`/join-school/${encodeURIComponent(school.slug)}`}>Register for this school</Link> : <span className="school-directory-paused-label">New registrations paused</span>}</div></article>)}</div> : <p className="school-directory-empty" role="status">No schools match that name. Try another search.</p> : <p className="school-directory-empty">No approved schools are listed yet. A school appears here after approval and activation.</p>}
+      </section></Reveal>
 
-      <Reveal><section className="school-home-pricing" id="pricing" aria-labelledby="school-home-pricing-title"><div><p className="eyebrow blue-eyebrow">PLANS FOR YOUR SCHOOL</p><h2 id="school-home-pricing-title">Start with the plan that fits.</h2><p>Choose a plan request when you register. The SmartSchool team will share subscription details with your school.</p><Link className="school-home-section-link" to="/pricing">See plans and request a trial <b aria-hidden="true">→</b></Link></div><img src="/images/school-day/school-library.jpg" alt="Shelves of books in a school library" loading="lazy" /></section></Reveal>
+      <Reveal><section className="school-home-pricing" id="pricing" aria-labelledby="school-home-pricing-title"><div><p className="eyebrow blue-eyebrow">PLANS FOR YOUR SCHOOL</p><h2 id="school-home-pricing-title">Start with the plan that fits your school.</h2><p>Request a 14-day free trial. Subscription pricing is shared during registration.</p></div><img src="/images/school-day/school-library.jpg" alt="Shelves of books in a school library" loading="lazy" /><div className="school-public-grid school-pricing-grid">{pricingPlans.map(([plan, description]) => <article className="school-public-card" key={plan}><span className="school-public-card-number">{plan === 'Starter' ? '01' : plan === 'Professional' ? '02' : '03'}</span><h2>{plan}</h2><p>{description}</p><Link className="school-public-portal-link" to={`/register?trial=1&plan=${encodeURIComponent(plan)}`}>Choose {plan} for your school <b aria-hidden="true">&rarr;</b></Link></article>)}</div></section></Reveal>
 
 
 
 
 
-      <section className="school-cta-band" id="contact"><div><p className="eyebrow light-eyebrow">READY WHEN YOUR SCHOOL IS</p><h2>Bring your school’s<br/>everyday work together.</h2><p>Create your school workspace and start organising the routines that matter to you.</p></div><div className="actions"><Link className="button school-light-button" to="/register">Register your school <b>→</b></Link><Link className="school-cta-login" to="/portals">Already have an account? Choose your school</Link><Link className="school-cta-login" to="/contact">Contact SmartSchool</Link></div></section>
+      <Reveal><section className="section school-home-contact" id="contact" aria-labelledby="school-home-contact-title"><div className="section-heading"><div><p className="eyebrow blue-eyebrow">CONTACT</p><h2 id="school-home-contact-title">Get started with SmartSchool</h2></div><p className="section-note">Create a school workspace or sign in to a portal your school has already set up.</p></div><div className="school-public-grid school-contact-grid">{contactOptions.map(([title, text], index) => <article className="school-public-card" key={title}><span className="school-public-card-number">0{index + 1}</span><h2>{title}</h2><p>{text}</p>{index === 0 ? <Link to="/register">Start registration <b aria-hidden="true">→</b></Link> : <Link to="/portals">{index === 1 ? 'Open sign in' : 'View portals'} <b aria-hidden="true">→</b></Link>}</article>)}</div><div className="school-cta-band"><div><p className="eyebrow light-eyebrow">CONTACT SMARTSCHOOL DIRECTLY</p><ContactMethods /></div></div></section></Reveal>
     </main>
 
     <PublicFooter />

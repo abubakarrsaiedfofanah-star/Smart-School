@@ -45,7 +45,7 @@ export default function ClassHistory() {
         if (!alive) return
         if (resultError) setMessage(resultError.message)
         setMarks((resultRows || []).filter(row => row.exams?.class_id === period.class_id &&
-          (!period.ended_at || (row.exams.exam_date && new Date(`${row.exams.exam_date}T23:59:59`) <= new Date(period.ended_at))))
+          (!period.ended_at || (row.exams.exam_date && new Date(`${row.exams.exam_date}T23:59:59`) <= new Date(period.ended_at)))));
         const beforeEnd = value => !period.ended_at || (value && new Date(value) < new Date(period.ended_at))
         setLessons((lessonRows || []).filter(row => beforeEnd(row.created_at)))
         setAssignments((assignmentRows || []).filter(row => beforeEnd(row.due_date)))

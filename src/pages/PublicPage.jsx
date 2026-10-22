@@ -2,39 +2,16 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PublicHeader from '../components/PublicHeader'
 import PublicFooter from '../components/PublicFooter'
+import ContactMethods from '../components/ContactMethods'
 import { supabase } from '../lib/supabase'
-
-const publicPhotos = [
-  { src: '/images/school-day/classroom-learning.jpg', alt: 'Students learning together in a classroom', caption: 'Learning together' },
-  { src: '/images/school-day/school-community.jpg', alt: 'School community sharing a learning day', caption: 'A connected community' },
-  { src: '/images/school-day/school-library.jpg', alt: 'Books and learning resources in a school library', caption: 'Resources for every learner' },
-]
-const pagePhotoCopy = {
-  features: ['Teaching and learning', 'A school community', 'Learning resources'],
-  portals: ['A place to learn', 'Families and school teams', 'Explore and study'],
-  pricing: ['Support for classrooms', 'Plans for your school', 'Room to grow'],
-  about: ['Learning in action', 'People at the heart of school', 'A place to discover'],
-  contact: ['Start in the classroom', 'Connect your school', 'Make learning accessible'],
-}
-
-const serviceCatalog = [
-  { icon: '✎', title: 'Teaching and learning', summary: 'Plan teaching and keep classwork moving.', features: ['Classes, subjects and timetables', 'Lesson plans and course materials', 'Assignments, submissions and quizzes', 'Exams, gradebook and results'] },
-  { icon: '♧', title: 'Student records and admissions', summary: 'Keep learner information and school entry organised.', features: ['Student and guardian profiles', 'Admissions and applications', 'School account requests and approvals', 'Behaviour records and learner progress'] },
-  { icon: '✓', title: 'Attendance and daily operations', summary: 'Coordinate the routines that keep a school running.', features: ['Student and staff attendance', 'School calendar, events and notices', 'Inventory and asset records', 'School settings and staff access'] },
-  { icon: '✉', title: 'Family and school communication', summary: 'Help school teams and families stay connected.', features: ['Announcements and broadcasts', 'Direct messages', 'Parent and teacher meetings', 'Role based portals for families and staff'] },
-  { icon: '$', title: 'Fees and finance', summary: 'Manage school charges and follow payment activity.', features: ['Fees, invoices and payment records', 'Expense tracking and reconciliation', 'Finance workspace and approved payouts', 'Payment and finance reporting'] },
-  { icon: '♙', title: 'Human resources and payroll', summary: 'Support staff administration and payroll workflows.', features: ['Staff records, recruitment and contracts', 'Leave and staff attendance', 'Payroll preparation and approvals', 'Payslips and salary history'] },
-  { icon: '▤', title: 'Library and digital courses', summary: 'Bring learning resources into the school workspace.', features: ['Library catalogue', 'Online courses and course builder', 'Learner course progress', 'Course completion certificates'] },
-  { icon: '➜', title: 'Transport and school resources', summary: 'Coordinate operational resources and transport workflows.', features: ['Transport routes and driver tools', 'Vehicle and trip information', 'School inventory and asset condition', 'Role based access to operational tools'] },
-  { icon: '◷', title: 'Reports and school oversight', summary: 'Give authorised leaders a view of activity and performance.', features: ['School and platform dashboards', 'Student, teacher and academic reports', 'Subscription and payment oversight', 'Audit trail and security settings'] },
-]
+import { aboutHighlights, contactOptions, pricingPlans, serviceCatalog } from '../data/publicSiteContent'
 
 const pages = {
   features: ['Services', 'Explore the tools SmartSchool brings together for learning, school operations and family engagement.'],
   portals: ['Choose your school', 'Sign in to your school or request an account.'],
-  pricing: ['Plans for your school', 'Request a 14-day free trial. Subscription pricing is shared during registration.', [['Starter', 'Core tools for school routines.'], ['Professional', 'Tools for connected school teams.'], ['Enterprise', 'Options for larger schools and groups.']]],
-  about: ['About SmartSchool', 'A shared system for the people who make a school work.', [['Built around schools', 'Bring everyday school operations into a practical workspace.'], ['Clear roles', 'Give school leaders, teachers, students and parents the tools they need.'], ['One school workspace', 'Keep school information organised under each school’s own portal.']]],
-  contact: ['Get started with SmartSchool', 'Create a school workspace or sign in to a portal your school has already set up.', [['Register a school', 'Set up a new school workspace and its administrator account.'], ['Existing school', 'Sign in with the account credentials provided by your school.'], ['Role portals', 'Each role opens a separate workspace with its own access.']]],
+  pricing: ['Plans for your school', 'Request a 14-day free trial. Subscription pricing is shared during registration.', pricingPlans],
+  about: ['About SmartSchool', 'A shared system for the people who make a school work.', aboutHighlights],
+  contact: ['Get started with SmartSchool', 'Create a school workspace or sign in to a portal your school has already set up.', contactOptions],
 }
 
 export default function PublicPage({ page }) {
@@ -44,9 +21,6 @@ export default function PublicPage({ page }) {
   const [schoolsLoading, setSchoolsLoading] = useState(page === 'portals')
   const [schoolsError, setSchoolsError] = useState('')
   const [schoolSearch, setSchoolSearch] = useState('')
-  const heroPhotoIndex = page === 'about' ? 1 : page === 'pricing' ? 2 : 0
-  const heroPhoto = publicPhotos[heroPhotoIndex]
-  const galleryPhotos = publicPhotos.map((photo, index) => ({ ...photo, index })).filter(photo => photo.index !== heroPhotoIndex)
 
   const filteredSchools = useMemo(() => {
     const query = schoolSearch.trim().toLocaleLowerCase()
@@ -81,7 +55,7 @@ export default function PublicPage({ page }) {
   return <div className="public-site school-home school-public-page page-transition">
     <PublicHeader />
     <main className="school-public-content">
-      {page !== 'portals' && <section className="school-public-hero">
+      {page !== 'portals' && <section className="school-public-hero school-public-hero-text-only">
         <div className="school-public-intro">
         <p className="eyebrow">SMARTSCHOOL · {page === 'features' ? 'SERVICES' : page.replaceAll('-', ' ').toUpperCase()}</p>
         <h1>{title}</h1>
@@ -91,22 +65,12 @@ export default function PublicPage({ page }) {
           <Link className="button outline-hero" to="/portals">Sign in</Link>
         </div>
         </div>
-        <figure className="school-public-hero-photo">
-          <img src={heroPhoto.src} alt={heroPhoto.alt} />
-          <figcaption>{page === 'portals' ? 'Every role has a place' : page === 'pricing' ? 'Tools that grow with your school' : 'A connected school day'}</figcaption>
-        </figure>
       </section>}
       {page === 'portals' && <section className="school-public-intro school-directory-intro">
         <p className="eyebrow">SMARTSCHOOL · SCHOOL PORTALS</p>
         <h1>Find your school</h1>
         <p>Choose your school to sign in or request an account. Your access stays with the school you choose.</p>
         <div className="school-public-actions"><Link className="button blue-button" to="/register">Register a new school</Link></div>
-      </section>}
-      {page !== 'portals' && <section className="school-public-photo-strip" aria-label="Life and learning at school">
-        {galleryPhotos.map(photo => <figure key={photo.src}>
-          <img src={photo.src} alt={photo.alt} loading="lazy" />
-          <figcaption>{pagePhotoCopy[page]?.[photo.index] || photo.caption}</figcaption>
-        </figure>)}
       </section>}
       {page === 'portals' && <section className="school-directory-section" id="schools" aria-labelledby="school-directory-title">
         <div className="school-directory-heading"><div><p className="eyebrow">SCHOOL DIRECTORY</p><h2 id="school-directory-title">Choose a school</h2><p>Use Login for an existing account, or register for access to the selected school.</p></div></div>
@@ -137,6 +101,7 @@ export default function PublicPage({ page }) {
           </article>
         ))}
       </section>}
+      {page === 'contact' && <ContactMethods className="school-public-contact-methods" />}
     </main>
     <PublicFooter />
   </div>
