@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { roleRoute } from '../lib/roleRoute'
 import { hasSchoolPermission } from '../lib/schoolRoles'
@@ -16,6 +16,10 @@ export default function Login(){
   const [showForgotModal,setShowForgotModal]=useState(false)
   const [forgotEmail,setForgotEmail]=useState('')
   const [forgotLoading,setForgotLoading]=useState(false)
+  const [searchParams] = useSearchParams()
+  const selectedSchoolSlug = searchParams.get('school') || ''
+  const [selectedSchool,setSelectedSchool]=useState(null)
+  const [schoolLookup,setSchoolLookup]=useState(() => searchParams.get('school') ? 'loading' : 'idle')
 
   const {login,resetPassword,logout,session,profile,staffRoles,loading:authLoading}=useAuth(),navigate=useNavigate(),{portalRole}=useParams();
   const roleLabels={school_admin:'School Admin',teacher:'Teacher',staff:'Staff',student:'Student',parent:'Parent',hr:'HR & Payroll',finance:'Finance'};
@@ -28,6 +32,22 @@ export default function Login(){
     if (!specialistPermission || !hasSchoolPermission(account?.role, assignedRoles, specialistPermission)) return roleRoute(account?.role);
     return requestedRole === 'hr' ? '/hr-payroll' : '/finance-operations';
   };
+
+  useEffect(() => {
+    if (!selectedSchoolSlug) { setSelectedSchool(null); setSchoolLookup('idle'); return undefined }
+    if (!supabase) { setSchoolLookup('error'); return undefined }
+    let active = true
+    setSchoolLookup('loading')
+    supabase.rpc('get_public_school_login_directory').then(({ data, error }) => {
+      if (error) throw error
+      const school = (data || []).find(item => item.slug === selectedSchoolSlug)
+      if (!school) throw new Error('This school is not available in the directory.')
+      if (active) { setSelectedSchool(school); setSchoolLookup('ready') }
+    }).catch(error => {
+      if (active) { setSelectedSchool(null); setSchoolLookup('error'); toast.error(error.message || 'Could not confirm the selected school.') }
+    })
+    return () => { active = false }
+  }, [selectedSchoolSlug])
 
   useEffect(() => {
     if (remember && email) {
@@ -54,6 +74,15 @@ export default function Login(){
     const id = toast.loading('Signing in to SmartSchool...');
     try{
       const {profile,staffRoles:assignedRoles}=await login(email,password);
+      if (selectedSchoolSlug && profile.role !== 'super_admin' && profile.school_id !== selectedSchool?.id) {
+        await logout()
+        throw new Error(`This account is not linked to ${selectedSchool?.name || 'the selected school'}. Choose the school connected to your account.`)
+      }
+      if (profile.is_active === false) {
+        toast.success(profile.billing_suspended_at ? 'School access is paused until billing is restored.' : 'Your registration is waiting for school administrator approval.', { id });
+        navigate(profile.role === 'school_admin' && profile.billing_suspended_at ? '/subscription' : roleRoute(profile.role));
+        return;
+      }
       if (specialistPermission && (profile.role !== 'staff' || !hasSchoolPermission(profile.role, assignedRoles, specialistPermission))) {
         toast.error(`This account has not been assigned the ${roleLabels[requestedRole]} portal. Ask your school administrator to grant access.`, { id });
         navigate(roleRoute(profile.role), { replace: true });
@@ -74,7 +103,7 @@ export default function Login(){
     setGoogleLoading(true)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}${portalRole ? `/login/${encodeURIComponent(portalRole)}` : '/login'}` }
+      options: { redirectTo: `${window.location.origin}${portalRole ? `/login/${encodeURIComponent(portalRole)}` : '/login'}${selectedSchoolSlug ? `?school=${encodeURIComponent(selectedSchoolSlug)}` : ''}` }
     })
     if(error){
       setGoogleLoading(false)
@@ -99,7 +128,12 @@ export default function Login(){
     }
   }
 
-  if(authLoading) return <div className="portal-loading"><div className="spinner"/><p>Loading your account...</p></div>;
+  if(authLoading || (selectedSchoolSlug && schoolLookup === 'loading')) return <div className="portal-loading"><div className="spinner"/><p>Checking your school account...</p></div>;
+  if(!selectedSchoolSlug&&!session) return <Navigate to="/portals" replace/>;
+  if(selectedSchoolSlug && schoolLookup === 'error') return <main className="portal-loading"><section><p className="eyebrow">SCHOOL NOT AVAILABLE</p><h1>Choose an active school</h1><p>The selected school could not be confirmed. Return to the school directory and choose an active school.</p><Link className="button blue-button" to="/portals">Choose a school</Link></section></main>;
+  if(session&&profile&&selectedSchoolSlug&&profile.role!=='super_admin'&&!profile.school_id) return <main className="portal-loading"><section><p className="eyebrow">SCHOOL REGISTRATION</p><h1>Complete your school request</h1><p>This Google account is not linked to a school yet. Choose a portal and submit a registration request to {selectedSchool?.name}; access will stay locked until its administrator approves it.</p><Link className="button blue-button" to={`/join-school/${encodeURIComponent(selectedSchool.slug)}`}>Register with {selectedSchool?.name}</Link><button className="outline-button" type="button" onClick={() => void logout()}>Sign out</button></section></main>;
+  if(session&&profile&&selectedSchoolSlug&&profile.role!=='super_admin'&&profile.school_id!==selectedSchool?.id) return <main className="portal-loading"><section><p className="eyebrow">SCHOOL ACCOUNT</p><h1>This account belongs to another school</h1><p>Sign out, then choose the school linked to your account to continue.</p><button className="button blue-button" type="button" onClick={() => void logout()}>Sign out and choose a school</button><Link className="outline-button" to="/portals">Choose a school</Link></section></main>;
+  if(session&&profile&&profile.role==='school_admin'&&profile.billing_suspended_at) return <Navigate to="/subscription" replace/>;
   if(session&&profile&&sessionMatchesRequestedRole) return <Navigate to={portalDestination(profile, staffRoles)} replace/>;
   if(session&&profile) return <main className="portal-loading"><section><p className="eyebrow">PORTAL ACCESS</p><h1>You are signed in to a different portal</h1><p>This account is assigned to the {roleLabels[profile.role] || 'current'} portal. To open {roleLabels[requestedRole] || 'the selected'} portal, sign out and sign in with an account that has that role.</p><button className="button blue-button" type="button" onClick={() => void logout()}>Sign out and switch account</button><Link className="outline-button" to={roleRoute(profile.role)}>Return to your portal</Link></section></main>;
   if(session&&!profile) return <main className="portal-loading"><section><p className="eyebrow">ACCOUNT NOT READY</p><h1>No school account is linked</h1><p>This Google account has no approved SmartSchool profile. Ask your school administrator to create or approve your account, then try again.</p><button className="button blue-button" type="button" onClick={() => void logout()}>Sign out</button></section></main>;
@@ -123,8 +157,8 @@ export default function Login(){
 
           <div className="login-heading" style={{ marginBottom: '25px' }}>
             <span className="eyebrow" style={{ display: 'inline-block', marginBottom: '8px' }}>{requestedRole ? roleLabels[requestedRole].toUpperCase()+' PORTAL' : 'SECURE SCHOOL PORTAL'}</span>
-            <h1 style={{ fontSize: '1.9rem', fontWeight: 800, marginBottom: '8px', letterSpacing: '-0.5px' }}>{requestedRole ? roleLabels[requestedRole]+' sign in' : 'Welcome Back'}</h1>
-            <p style={{ color: 'var(--muted)', margin: 0, fontSize: '0.95rem' }}>Sign in with the account your school issued. Your school and portal access are determined by that account.</p>
+            <h1 style={{ fontSize: '1.9rem', fontWeight: 800, marginBottom: '8px', letterSpacing: '-0.5px' }}>{selectedSchool ? `Login to ${selectedSchool.name}` : requestedRole ? roleLabels[requestedRole]+' sign in' : 'Welcome Back'}</h1>
+            <p style={{ color: 'var(--muted)', margin: 0, fontSize: '0.95rem' }}>{selectedSchool ? `Sign in with an account registered with ${selectedSchool.name}. You will open only the portal assigned to your account.` : 'Sign in with the account your school issued. Your school and portal access are determined by that account.'}</p>
             {!supabase && <p role="status" style={{ margin: '12px 0 0', padding: '10px 12px', borderRadius: '10px', background: '#fff7ed', color: '#9a3412', fontSize: '.82rem' }}>Sign-in is unavailable until the school backend is connected.</p>}
           </div>
 
@@ -190,11 +224,11 @@ export default function Login(){
             </button>
           </form>
 
-          <nav className="login-portals" aria-label="Choose a role portal"><span>Choose a portal</span><div>{[['school_admin','School Admin'],['teacher','Teacher'],['staff','Staff'],['student','Student'],['parent','Parent'],['hr','HR & Payroll'],['finance','Finance']].map(([role,label])=><Link className={requestedRole===role?'active':''} to={'/login/'+role} key={role}>{label}</Link>)}</div></nav>
-          <div style={{ marginTop: '25px', textAlign: 'center', fontSize: '0.9rem', borderTop: '1px solid var(--line)', paddingTop: '20px' }}>
+          {selectedSchool && <div style={{ marginTop: '25px', textAlign: 'center', fontSize: '0.9rem', borderTop: '1px solid var(--line)', paddingTop: '20px' }}><span style={{ color: 'var(--muted)' }}>Need an account at this school? </span><Link to={`/join-school/${encodeURIComponent(selectedSchool.slug)}`} className="text-link" style={{ fontWeight: 700, color: 'var(--green)' }}>Register with this school</Link></div>}
+          {!selectedSchool && <div style={{ marginTop: '25px', textAlign: 'center', fontSize: '0.9rem', borderTop: '1px solid var(--line)', paddingTop: '20px' }}>
             <span style={{ color: 'var(--muted)' }}>New educational institution? </span>
             <Link to="/register" className="text-link" style={{ fontWeight: 700, color: 'var(--green)' }}>Register your school →</Link>
-          </div>
+          </div>}
         </main>
       </div>
 

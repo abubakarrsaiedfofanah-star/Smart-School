@@ -6,6 +6,7 @@ export interface UserProfile {
   role: PortalRole
   school_id: string | null
   is_active?: boolean
+  billing_suspended_at?: string | null
   email?: string
   [field: string]: any
 }
@@ -15,6 +16,8 @@ export interface SchoolWorkspace {
   name: string
   slug?: string
   status?: string
+  suspension_reason?: string | null
+  currency_code?: string
   school_level?: string
   logo_url?: string | null
   primary_color?: string

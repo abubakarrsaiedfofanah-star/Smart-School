@@ -1,4 +1,4 @@
-﻿-- Protect the public school-registration endpoint from bulk account and tenant spam.
+-- Protect the public school-registration endpoint from bulk account and tenant spam.
 create table if not exists private.school_registration_attempts (
   requester_hash text not null,
   created_at timestamptz not null default now()

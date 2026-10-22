@@ -102,10 +102,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
     if (profileError) throw profileError
     if (!nextProfileData) throw new Error('Your account is active but has no school profile yet. Contact an administrator.')
     const nextProfile = nextProfileData as UserProfile
-    if (nextProfile.is_active === false) {
-      await supabase.auth.signOut()
-      throw new Error('This account is disabled. Contact your school administrator.')
-    }
     setProfile(nextProfile)
     const { data: assigned, error: rolesError } = nextProfile.school_id && ['teacher', 'staff'].includes(nextProfile.role)
       ? await supabase.from('school_staff_role_assignments').select('role_key').eq('school_id', nextProfile.school_id).eq('profile_id', nextProfile.id)

@@ -1,4 +1,4 @@
-﻿-- Add explicit academic period metadata so published school reports do not mix years or terms.
+-- Add explicit academic period metadata so published school reports do not mix years or terms.
 alter table public.exams
   add column if not exists academic_year text,
   add column if not exists term text;

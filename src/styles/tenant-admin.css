@@ -7,3 +7,21 @@
 
 @media (max-width: 900px) { .platform-record { grid-template-columns: 1fr; gap: 12px; }.platform-record-meta { justify-content: flex-start; }.platform-record-actions { justify-content: flex-start; }.platform-record-actions button { min-height: 36px; }.subscription-overview { padding: 19px; } }
 @media (max-width: 600px) { .platform-management-heading { align-items: flex-start; }.platform-refresh { padding: 8px; font-size: .7rem; }.platform-tabs { overflow-x: auto; }.platform-tabs a { flex: 0 0 auto; padding: 0 9px; font-size: .68rem; }.platform-record { padding: 12px; }.subscription-overview { flex-direction: column; }.subscription-status { width: 100%; }.subscription-current { gap: 15px; padding: 13px; }.requested-plan { flex-basis: 100%; margin: 0; }.subscription-heading { display: block; }.subscription-heading > p { margin-top: 8px; }.subscription-plans { grid-template-columns: 1fr; }.subscription-plan { min-height: 180px; } }
+.subscription-plan .subscription-monthly-price { flex: 0 0 auto; color: #193a56; font-size: .9rem; font-weight: 800; }
+.subscription-plan > small { margin-top: 9px; color: #71869a; font-size: .65rem; }
+.subscription-billing-history { margin-top: 28px; padding: 18px; border: 1px solid #dfe8ef; border-radius: 9px; background: #fff; }
+.subscription-billing-history h3 { margin: 0 0 12px; color: #193a56; font-size: 1rem; }
+.subscription-billing-history > div { display: grid; gap: 8px; }
+.subscription-billing-history article { display: grid; grid-template-columns: 1.2fr 1fr .8fr 1fr; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #edf1f4; color: #526a7c; font-size: .73rem; }
+.subscription-billing-history p { margin: 0; color: #71869a; font-size: .75rem; }
+.platform-billing-prices { display: grid; gap: 14px; margin-bottom: 20px; padding: 18px; border: 1px solid #dfe8ef; border-radius: 10px; background: #fff; }
+.platform-billing-prices h3 { margin: 0 0 6px; color: #193a56; }
+.platform-billing-prices > div:first-child > p:last-child { margin: 0; color: #71869a; font-size: .75rem; }
+.platform-billing-prices form { display: grid; grid-template-columns: repeat(4,minmax(120px,1fr)) auto; align-items: end; gap: 10px; }
+.platform-billing-prices label { display: grid; gap: 5px; color: #60778a; font-size: .67rem; font-weight: 700; }
+.platform-billing-prices input, .platform-billing-prices select { min-width: 0; min-height: 36px; padding: 7px 9px; border: 1px solid #d9e3eb; border-radius: 6px; background: #fff; color: #193a56; }
+.platform-billing-prices form button { min-height: 36px; padding: 0 12px; border: 0; border-radius: 6px; background: #1769be; color: #fff; font-size: .7rem; font-weight: 750; cursor: pointer; }
+.platform-billing-price-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.platform-billing-price-list article { display: grid; gap: 4px; min-width: 160px; padding: 10px; border: 1px solid #e4ebf0; border-radius: 7px; color: #536a7e; font-size: .68rem; }
+.platform-billing-price-list small { color: #8193a1; }
+@media (max-width: 900px) { .platform-billing-prices form { grid-template-columns: repeat(2,minmax(120px,1fr)); }.platform-billing-prices form button { grid-column: 1/-1; } }

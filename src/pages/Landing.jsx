@@ -16,15 +16,6 @@ const services = [
   ['Reports and school oversight', 'Give authorised leaders a clear view of school activity.'],
 ]
 
-const homePortals = [
-  ['School Admin', 'Manage your school, staff and day-to-day operations.', '/login/school_admin'],
-  ['Teacher', 'Plan teaching, attendance and classwork.', '/login/teacher'],
-  ['Student', 'Keep up with assignments, timetable and results.', '/login/student'],
-  ['Parent / guardian', 'Follow school updates and your learner’s progress.', '/login/parent'],
-  ['Staff', 'View payslips and manage leave requests.', '/login/staff'],
-  ['HR & Finance', 'Use assigned workspaces for people and finance tasks.', '/login'],
-]
-
 function DashboardPreview() {
   return <figure className="hero-feature-showcase" aria-label="A connected school day">
     <img src="/images/school-day/classroom-learning.jpg" alt="Students learning together in a bright classroom" width="1440" height="810" fetchPriority="high" />
@@ -80,7 +71,7 @@ export default function Landing() {
     <main>
       <section id="home" className="sky-hero screenshot-hero school-hero">
         <div className="hero-product-backdrop"><div/><div/><div/><div/></div><div className="video-wash"/><div className="ambient-grid"/><div className="ambient-ring ring-one"/><div className="ambient-ring ring-two"/>
-        <div className="hero-copy"><p className="eyebrow blue-eyebrow">A PRACTICAL HOME FOR YOUR SCHOOL</p><h1>Run your school.<br/>Keep learning<br/><span>moving.</span></h1><p>Manage the school day, support teaching and keep families connected from one shared system.</p><div className="actions"><Link className="button blue-button" to="/register">Set up your school <b>→</b></Link><Link className="button outline-hero" to="/login">Sign in to your portal</Link></div></div><DashboardPreview/>
+        <div className="hero-copy"><p className="eyebrow blue-eyebrow">A PRACTICAL HOME FOR YOUR SCHOOL</p><h1>Run your school.<br/>Keep learning<br/><span>moving.</span></h1><p>Manage the school day, support teaching and keep families connected from one shared system.</p><div className="actions"><Link className="button blue-button" to="/register">Set up your school <b>→</b></Link><Link className="button outline-hero" to="/portals">Choose your school to sign in</Link></div></div><DashboardPreview/>
       </section>
 
       <nav className="school-home-jump-nav" aria-label="Explore the public website">
@@ -100,7 +91,7 @@ export default function Landing() {
         <div className="school-directory-heading"><div><p className="eyebrow blue-eyebrow">SCHOOLS USING SMARTSCHOOL</p><h2 id="landing-schools-title">Find your school</h2><p>Open your school’s workspace or register a new school to get started.</p></div><Link to="/portals">View all schools and portals →</Link></div>
         {schoolsLoading ? <p className="school-directory-empty" role="status">Loading active schools…</p>
           : schoolsError ? <div className="school-directory-empty"><p>{schoolsError}</p><button type="button" onClick={() => void loadSchools()}>Try again</button></div>
-            : schools.length ? <div className="school-directory-grid">{schools.slice(0, 3).map(school => <article className="school-directory-card" key={school.id}><h3>{school.name}</h3><p>Sign in or request access to this school.</p><Link className="school-public-portal-link" to={`/join-school/${encodeURIComponent(school.slug)}`}>Open school →</Link></article>)}</div>
+            : schools.length ? <div className="school-directory-grid">{schools.slice(0, 3).map(school => <article className="school-directory-card" key={school.id}><h3>{school.name}</h3><div className="school-directory-actions"><Link className="button blue-button" to={'/login?school=' + encodeURIComponent(school.slug)}>Login</Link><Link className="school-public-portal-link" to={`/join-school/${encodeURIComponent(school.slug)}`}>Register for this school</Link></div></article>)}</div>
               : <div className="school-directory-empty"><p>No active schools are listed yet. Register your school to create its workspace.</p><Link to="/register">Register a school →</Link></div>}
       </section></Reveal>
 
@@ -122,7 +113,7 @@ export default function Landing() {
 
       <Reveal><section className="school-home-story" id="about" aria-labelledby="school-home-story-title"><img src="/images/school-day/school-community.jpg" alt="School community members sharing ideas in a library" loading="lazy" /><div><p className="eyebrow blue-eyebrow">ABOUT SMARTSCHOOL</p><h2 id="school-home-story-title">One connected place for your school community.</h2><p>SmartSchool brings school leaders, teachers, students, families and staff into a shared workspace, with access shaped around each role.</p><Link className="school-home-section-link" to="/about">Learn about SmartSchool <b aria-hidden="true">→</b></Link></div></section></Reveal>
 
-      <Reveal><section className="section school-home-portals" id="portals" aria-labelledby="school-home-portals-title"><div className="section-heading"><div><p className="eyebrow blue-eyebrow">ROLE BASED ACCESS</p><h2 id="school-home-portals-title">A workspace for every part of school life.</h2></div><p className="section-note">Each person sees the tools and records assigned to their role.</p></div><div className="school-home-photo-strip" aria-label="Learning and school life"><figure><img src="/images/school-day/classroom-learning.jpg" alt="Students learning together in class" loading="lazy"/><figcaption>Teaching and learning</figcaption></figure><figure><img src="/images/school-day/school-community.jpg" alt="School community working together" loading="lazy"/><figcaption>School community</figcaption></figure><figure><img src="/images/school-day/school-library.jpg" alt="Books in a school library" loading="lazy"/><figcaption>Learning resources</figcaption></figure></div><div className="school-home-portal-grid">{homePortals.map(([title, text, path]) => <article key={title}><span aria-hidden="true">{title.slice(0, 1)}</span><div><h3>{title}</h3><p>{text}</p></div><Link to={path} aria-label={`Open ${title} sign in`}>Sign in <b aria-hidden="true">→</b></Link></article>)}</div><Link className="school-home-section-link" to="/portals">Find a school and view all portals <b aria-hidden="true">→</b></Link></section></Reveal>
+      <Reveal><section className="section school-home-portals" id="portals" aria-labelledby="school-home-portals-title"><div className="section-heading"><div><p className="eyebrow blue-eyebrow">SCHOOL PORTALS</p><h2 id="school-home-portals-title">Sign in through your school.</h2></div><p className="section-note">Choose your school first. SmartSchool will open the portal assigned to your account.</p></div><Link className="school-home-section-link" to="/portals">Choose a school to sign in or register <b aria-hidden="true">→</b></Link></section></Reveal>
 
       <Reveal><section className="school-home-pricing" id="pricing" aria-labelledby="school-home-pricing-title"><div><p className="eyebrow blue-eyebrow">PLANS FOR YOUR SCHOOL</p><h2 id="school-home-pricing-title">Start with the plan that fits.</h2><p>Choose a plan request when you register. The SmartSchool team will share subscription details with your school.</p><Link className="school-home-section-link" to="/pricing">See plans and request a trial <b aria-hidden="true">→</b></Link></div><img src="/images/school-day/school-library.jpg" alt="Shelves of books in a school library" loading="lazy" /></section></Reveal>
 
@@ -130,7 +121,7 @@ export default function Landing() {
 
 
 
-      <section className="school-cta-band" id="contact"><div><p className="eyebrow light-eyebrow">READY WHEN YOUR SCHOOL IS</p><h2>Bring your school’s<br/>everyday work together.</h2><p>Create your school workspace and start organising the routines that matter to you.</p></div><div className="actions"><Link className="button school-light-button" to="/register">Register your school <b>→</b></Link><Link className="school-cta-login" to="/login">Already have an account? Sign in</Link><Link className="school-cta-login" to="/contact">Contact SmartSchool</Link></div></section>
+      <section className="school-cta-band" id="contact"><div><p className="eyebrow light-eyebrow">READY WHEN YOUR SCHOOL IS</p><h2>Bring your school’s<br/>everyday work together.</h2><p>Create your school workspace and start organising the routines that matter to you.</p></div><div className="actions"><Link className="button school-light-button" to="/register">Register your school <b>→</b></Link><Link className="school-cta-login" to="/portals">Already have an account? Choose your school</Link><Link className="school-cta-login" to="/contact">Contact SmartSchool</Link></div></section>
     </main>
 
     <PublicFooter />
