@@ -28,27 +28,37 @@ Deno.serve(async request => {
   const data = payload.data && typeof payload.data === 'object' ? payload.data : {}
   if (!['charge.completed', 'subscription.cancelled'].includes(event)) return new Response('OK', { status: 200 })
 
-  let status = event === 'subscription.cancelled' ? 'cancelled' : String(data.status || '').toLowerCase()
+  let status = event === 'subscription.cancelled' ? 'cancelled' : ''
   let transactionId = data.id == null ? '' : String(data.id)
-  let txRef = typeof data.tx_ref === 'string' ? data.tx_ref : ''
-  let amount = Number(data.charged_amount ?? data.amount)
-  let currency = typeof data.currency === 'string' ? data.currency.toUpperCase() : ''
-  let customerEmail = typeof data.customer?.email === 'string' ? data.customer.email.toLowerCase() : ''
+  let txRef = ''
+  let amount = Number.NaN
+  let currency = ''
+  let customerEmail = ''
 
   if (event === 'charge.completed') {
-    if (!transactionId || !['successful', 'failed'].includes(status)) return new Response('Invalid payment event.', { status: 400 })
+    if (!transactionId) return new Response('Invalid payment event.', { status: 400 })
     const verification = await fetch(`https://api.flutterwave.com/v3/transactions/${encodeURIComponent(transactionId)}/verify`, {
       headers: { Authorization: `Bearer ${flutterwaveKey}` },
     })
     const verified = await verification.json().catch(() => ({}))
     const transaction = verified?.data
     if (!verification.ok || verified?.status !== 'success' || !transaction) return new Response('Could not verify transaction.', { status: 502 })
+    if (String(transaction.id ?? '') !== transactionId || typeof transaction.tx_ref !== 'string' || !transaction.tx_ref) {
+      return new Response('Verified transaction identity is incomplete.', { status: 502 })
+    }
     status = String(transaction.status || '').toLowerCase()
     if (!['successful', 'failed'].includes(status)) return new Response('Payment is not final.', { status: 409 })
-    txRef = typeof transaction.tx_ref === 'string' ? transaction.tx_ref : txRef
-    amount = Number(transaction.charged_amount ?? transaction.amount)
-    currency = typeof transaction.currency === 'string' ? transaction.currency.toUpperCase() : currency
-    customerEmail = typeof transaction.customer?.email === 'string' ? transaction.customer.email.toLowerCase() : customerEmail
+    txRef = transaction.tx_ref
+    amount = Number(transaction.amount)
+    currency = typeof transaction.currency === 'string' ? transaction.currency.toUpperCase() : ''
+    customerEmail = typeof transaction.customer?.email === 'string' ? transaction.customer.email.toLowerCase() : ''
+    if (status === 'successful' && (!Number.isFinite(amount) || !currency)) {
+      return new Response('Verified payment amount or currency is missing.', { status: 502 })
+    }
+  } else {
+    txRef = typeof data.tx_ref === 'string' ? data.tx_ref : ''
+    customerEmail = typeof data.customer?.email === 'string' ? data.customer.email.toLowerCase() : ''
+    if (!txRef && !customerEmail) return new Response('Cancellation identity is missing.', { status: 400 })
   }
 
   const identity = `${event}:${transactionId || txRef || customerEmail}:${status}`

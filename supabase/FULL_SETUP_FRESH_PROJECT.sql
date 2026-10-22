@@ -1,5 +1,5 @@
 -- SmartSchool complete Supabase setup
--- Includes schema.sql and numbered migrations 002-079 in order.
+-- Includes schema.sql and numbered migrations 002-089 in order.
 -- Run once in the SQL Editor of a NEW Supabase project.
 -- Do not run over a database that already has any of these migrations applied.
 -- Review README.md for required Edge Functions, Auth configuration, and secret setup.
@@ -9528,6 +9528,7 @@ grant execute on function public.register_for_free_school_activity(uuid,uuid) to
 
 -- END supabase/087_student_classes_subject_activities.sql
 
+-- BEGIN supabase/088_student_promotion_and_class_history.sql
 -- Keep a dated record of each student's class and promote automatically once
 -- every published exam in the configured promotion term has a passing result.
 alter table public.classes
@@ -9754,6 +9755,9 @@ create policy lesson_plans_read_related on public.lesson_plans for select to aut
   )
 );
 
+-- END supabase/088_student_promotion_and_class_history.sql
+
+-- BEGIN supabase/089_three_term_promotion_and_past_questions.sql
 -- Promotion is a year-end decision: only Term 3 can trigger it.
 update public.classes set promotion_term='Term 3' where promotion_term is distinct from 'Term 3';
 alter table public.classes drop constraint if exists classes_promotion_term_check;
@@ -9919,3 +9923,5 @@ drop policy if exists teacher_subject_assignments_admin_manage on public.teacher
 create policy teacher_subject_assignments_admin_manage on public.teacher_subject_assignments for all to authenticated
   using (school_id=private.current_school_id() and private.has_hr_role(school_id,array['principal']))
   with check (school_id=private.current_school_id() and private.has_hr_role(school_id,array['principal']));
+
+-- END supabase/089_three_term_promotion_and_past_questions.sql
