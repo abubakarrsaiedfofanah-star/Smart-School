@@ -48,6 +48,8 @@ const SchoolAccounts = lazy(() => import('./pages/SchoolAccounts'))
 const SchoolStaffRoles = lazy(() => import('./pages/SchoolStaffRoles'))
 const StaffWorkspace = lazy(() => import('./pages/StaffWorkspace'))
 const ActivityPortal = lazy(() => import('./pages/ActivityPortal'))
+const ClassHistory = lazy(() => import('./pages/ClassHistory'))
+const StudentProgression = lazy(() => import('./pages/StudentProgression'))
 import AppInstallPrompt from './components/AppInstallPrompt'
 import CommandPalette from './components/CommandPalette'
 
@@ -134,13 +136,15 @@ export default function App(){
         <Route path="/invoice/:paymentId" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><InvoiceView /></ProtectedRoute>} />
         <Route path="/gradebook" element={<ProtectedRoute roles={['school_admin', 'teacher']}><Gradebook /></ProtectedRoute>} />
         <Route path="/teacher-assignments" element={<ProtectedRoute roles={['school_admin', 'teacher']}><TeacherAssignments /></ProtectedRoute>} />
-        <Route path="/teacher-loads" element={<ProtectedRoute roles={['school_admin']}><TeacherLoads /></ProtectedRoute>} />
+        <Route path="/teacher-loads" element={<ProtectedRoute roles={['school_admin', 'staff']}><TeacherLoads /></ProtectedRoute>} />
         <Route path="/meetings" element={<ProtectedRoute roles={['teacher', 'parent']}><MeetingScheduler /></ProtectedRoute>} />
         <Route path="/behavior-log" element={<ProtectedRoute roles={['school_admin', 'teacher']}><BehaviorLog /></ProtectedRoute>} />
         <Route path="/submit/:assignmentId" element={<ProtectedRoute roles={['student']}><SubmissionPortal /></ProtectedRoute>} />
         <Route path="/review/:assignmentId" element={<ProtectedRoute roles={['teacher', 'school_admin']}><TeacherReview /></ProtectedRoute>} />
         <Route path="/calendar" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><SchoolCalendar /></ProtectedRoute>} />
         <Route path="/activities" element={<ProtectedRoute roles={['school_admin', 'teacher', 'staff', 'student', 'parent']}><ActivityPortalAccess /></ProtectedRoute>} />
+        <Route path="/class-history" element={<ProtectedRoute roles={['student']}><ClassHistory /></ProtectedRoute>} />
+        <Route path="/student-progression" element={<ProtectedRoute roles={['school_admin', 'staff']}><StudentProgression /></ProtectedRoute>} />
         <Route path="/timetable" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><Timetable /></ProtectedRoute>} />
         <Route path="/library" element={<ProtectedRoute roles={['school_admin', 'teacher', 'student', 'parent', 'staff']}><Library /></ProtectedRoute>} />
         <Route path="/inventory" element={<ProtectedRoute roles={['school_admin', 'staff']} permission="school.inventory.view"><Inventory /></ProtectedRoute>} />

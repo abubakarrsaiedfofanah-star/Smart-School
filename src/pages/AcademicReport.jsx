@@ -63,7 +63,7 @@ export default function AcademicReport() {
   const periodYear = result => result.exams?.academic_year || (result.exams?.exam_date ? String(new Date(`${result.exams.exam_date}T00:00:00`).getFullYear()) : 'Unassigned')
   const years = useMemo(() => [...new Set(results.map(periodYear))].sort((a, b) => b.localeCompare(a)), [results])
   const activeYear = years.includes(selectedYear) ? selectedYear : years[0] || selectedYear
-  const terms = useMemo(() => [...new Set(results.filter(result => periodYear(result) === activeYear).map(result => result.exams?.term || 'Unassigned'))].sort(), [results, activeYear])
+  const terms = ['Term 1', 'Term 2', 'Term 3']
   const periodResults = results.filter(result => periodYear(result) === activeYear && (selectedTerm === 'all' || (result.exams?.term || 'Unassigned') === selectedTerm))
   const totals = useMemo(() => periodResults.reduce((acc, result) => {
     const score = Number(result.score) || 0
@@ -73,6 +73,12 @@ export default function AcademicReport() {
     return acc
   }, { score: 0, max: 0 }), [periodResults])
   const average = totals.max > 0 ? totals.score / totals.max * 100 : 0
+  const termProgress = terms.map(term => {
+    const rows = results.filter(result => periodYear(result) === activeYear && result.exams?.term === term)
+    const score = rows.reduce((sum, result) => sum + (Number(result.score) || 0), 0)
+    const max = rows.reduce((sum, result) => sum + (Number(result.exams?.max_score) || 0), 0)
+    return { term, count: rows.length, average: max ? score / max * 100 : null }
+  })
   const overallGrade = getGrade(average, data?.student?.schools?.grading_scale)
   const school = data?.student?.schools
   const accent = normalizeBrandColor(school?.primary_color)
@@ -128,6 +134,15 @@ export default function AcademicReport() {
         <label>Academic year<select value={activeYear} onChange={event => { setSelectedYear(event.target.value); setSelectedTerm('all') }}>{years.map(period => <option key={period} value={period}>{period}</option>)}</select></label>
         <label>Term<select value={selectedTerm} onChange={event => setSelectedTerm(event.target.value)}><option value="all">All terms</option>{terms.map(term => <option key={term} value={term}>{term}</option>)}</select></label>
       </section>}
+
+      <section className="report-term-summary" aria-label="Three term academic year progress">
+        <h3>Academic year progress</h3>
+        <p>Promotion is considered at year end, after results are published for all three terms.</p>
+        <div className="report-term-summary-grid">{termProgress.map(item => <div className={`report-term-summary-item ${selectedTerm === item.term ? 'selected' : ''}`} key={item.term}>
+          <b>{item.term}</b><span>{item.count ? `${item.count} published result${item.count === 1 ? '' : 's'}` : 'No results published'}</span>
+          <strong>{item.average == null ? '—' : `${item.average.toFixed(1)}%`}</strong>
+        </div>)}</div>
+      </section>
 
       <div className="report-table-wrap">
         <table className="results-table">

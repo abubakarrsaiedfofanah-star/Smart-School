@@ -292,3 +292,14 @@
 .report-progress-track { height: 8px; overflow: hidden; border-radius: 99px; background: #e9eff4; }
 .report-progress-track i { display: block; height: 100%; border-radius: inherit; }
 @media print { .report-progress { break-inside: avoid; } }
+.report-term-summary { margin: 0 0 26px; padding: 18px; border: 1px solid #e1e8ef; border-radius: 10px; background: #fbfcfd; }
+.report-term-summary h3 { margin: 0 0 5px; color: #18324b; }
+.report-term-summary > p { margin: 0 0 13px; color: #60778e; font-size: .78rem; }
+.report-term-summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.report-term-summary-item { display: grid; gap: 5px; padding: 12px; border: 1px solid #e1e8ef; border-radius: 8px; background: #fff; }
+.report-term-summary-item.selected { border-color: var(--school-accent, #3456a1); box-shadow: inset 0 0 0 1px var(--school-accent, #3456a1); }
+.report-term-summary-item b { color: #18324b; font-size: .82rem; }
+.report-term-summary-item span { color: #60778e; font-size: .72rem; }
+.report-term-summary-item strong { color: var(--school-accent, #3456a1); font-size: 1.1rem; }
+@media (max-width: 680px) { .report-term-summary-grid { grid-template-columns: 1fr; } }
+@media print { .report-term-summary { break-inside: avoid; } .report-term-summary-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

@@ -101,6 +101,10 @@ export default function QuizPortal() {
   const submitQuizRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [quizzes, setQuizzes] = useState([]);
+  const [pastQuestions, setPastQuestions] = useState([]);
+  const [pastQuestionSubject, setPastQuestionSubject] = useState('all');
+  const [pastQuestionType, setPastQuestionType] = useState('all');
+  const [pastQuestionsLoading, setPastQuestionsLoading] = useState(false);
   const [results, setResults] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [classes, setClasses] = useState([]);
@@ -247,6 +251,22 @@ export default function QuizPortal() {
   }, [profile, isStaff]);
 
   useEffect(() => { void loadData(); }, [loadData]);
+
+  useEffect(() => {
+    let active = true;
+    if (!supabase || profile?.role !== 'student') {
+      setPastQuestions([]);
+      return () => { active = false; };
+    }
+    setPastQuestionsLoading(true);
+    void supabase.rpc('get_my_past_class_questions').then(({ data, error }) => {
+      if (!active) return;
+      if (error) console.error('Previous class questions could not be loaded:', error);
+      setPastQuestions(data || []);
+      setPastQuestionsLoading(false);
+    });
+    return () => { active = false; };
+  }, [profile?.id, profile?.role]);
 
   useEffect(() => {
     if (!expiresAt || !activeQuiz || summary) return undefined;
@@ -728,6 +748,11 @@ export default function QuizPortal() {
   }
 
   const visibleQuizzes = useMemo(() => quizzes.filter(quiz => isStaff || quiz.published), [quizzes, isStaff]);
+  const pastQuestionSubjects = useMemo(() => [...new Map(pastQuestions.map(row => [row.subject_id, row.subject_name || 'General'])).entries()], [pastQuestions]);
+  const visiblePastQuestions = useMemo(() => pastQuestions.filter(row =>
+    (pastQuestionSubject === 'all' || row.subject_id === pastQuestionSubject) &&
+    (pastQuestionType === 'all' || row.assessment_type === pastQuestionType)
+  ), [pastQuestions, pastQuestionSubject, pastQuestionType]);
   const groupedResources = useMemo(() => resources.reduce((groups, resource) => {
     const key = `${resource.subjects?.name || 'Subject'} · ${resource.unit_title}`;
     (groups[key] ||= []).push(resource); return groups;
@@ -835,6 +860,20 @@ export default function QuizPortal() {
               </article>;
             })}</div>}
           </section>
+          {profile?.role === 'student' && <section className="assessment-panel">
+            <div className="section-title-row"><div><p className="eyebrow">Practice from completed classes</p><h2>Past questions</h2></div><span className="badge">Study only</span></div>
+            <p>After promotion, use questions from earlier class levels to revise what those classes studied. This practice does not affect your current results, and answer keys stay hidden.</p>
+            <div className="resource-form" style={{ margin: '14px 0' }}>
+              <label>Subject<select value={pastQuestionSubject} onChange={event => setPastQuestionSubject(event.target.value)}><option value="all">All subjects</option>{pastQuestionSubjects.map(([id, name]) => id && <option key={id} value={id}>{name}</option>)}</select></label>
+              <label>Assessment type<select value={pastQuestionType} onChange={event => setPastQuestionType(event.target.value)}><option value="all">All types</option><option value="exam">Exam</option><option value="cat">CAT</option><option value="test">Test</option><option value="quiz">Quiz</option></select></label>
+            </div>
+            {pastQuestionsLoading ? <p className="assessment-empty">Loading past questions...</p> : visiblePastQuestions.length ? <div className="question-list">{visiblePastQuestions.map((row, index) => <article className="review-item" key={row.question_id}>
+              <small>{row.class_name || 'Previous class'} | {row.subject_name || 'General'} | {(row.assessment_type || 'quiz').toUpperCase()} | {row.assessment_title || 'Past assessment'}</small>
+              <p><b>{index + 1}. {row.question_text}</b></p>
+              {Array.isArray(row.options) && row.options.length > 0 && <ol type="A">{row.options.map((option, optionIndex) => <li key={optionIndex}>{typeof option === 'string' ? option : option?.text || JSON.stringify(option)}</li>)}</ol>}
+              {row.explanation && <details><summary>Study note</summary><p>{row.explanation}</p></details>}
+            </article>)}</div> : <p className="assessment-empty">{pastQuestions.length ? 'No past questions match these filters.' : 'Questions from your previous classes will appear here when your school publishes assessments with questions.'}</p>}
+          </section>}
           <section className="assessment-panel"><div className="section-title-row"><div><p className="eyebrow">Learning materials</p><h2>Subject resources</h2></div>{isStaff && <button className="button outline-button" onClick={() => setResourceFormOpen(open => !open)}>{resourceFormOpen ? 'Close' : '＋ Add PDF / PowerPoint'}</button>}</div>
             {resourceFormOpen && <form className="resource-form" onSubmit={uploadResource}><label>Subject<select required value={resourceForm.subject_id} onChange={event => setResourceForm(item => ({ ...item, subject_id: event.target.value }))}><option value="">Choose subject</option>{subjects.map(subject => <option key={subject.id} value={subject.id}>{subject.name}</option>)}</select></label><label>Class<select value={resourceForm.class_id} onChange={event => setResourceForm(item => ({ ...item, class_id: event.target.value }))}><option value="">All classes</option>{classes.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label>Unit / topic<input required value={resourceForm.unit_title} onChange={event => setResourceForm(item => ({ ...item, unit_title: event.target.value }))} /></label><label>Display title<input value={resourceForm.title} onChange={event => setResourceForm(item => ({ ...item, title: event.target.value }))} /></label><label className="wide">Description<input value={resourceForm.description} onChange={event => setResourceForm(item => ({ ...item, description: event.target.value }))} /></label><label className="wide">PDF or PowerPoint (max 50 MB)<input required type="file" accept=".pdf,.ppt,.pptx,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation" onChange={event => setResourceFile(event.target.files?.[0] || null)} /></label><button className="button blue-button" disabled={uploadingResource}>{uploadingResource ? 'Uploading…' : 'Upload resource'}</button></form>}
             {!Object.keys(groupedResources).length ? <p className="assessment-empty">PDF and PowerPoint files added by teachers will appear here by subject and unit.</p> : Object.entries(groupedResources).map(([group, items]) => <div className="resource-group" key={group}><h3>{group}</h3><div className="resource-grid">{items.map(resource => <article className="resource-card" key={resource.id}><h4>{resource.title}</h4><p>{resource.description || resource.file_name}</p><div className="assessment-meta">{resource.classes?.name && <span>{resource.classes.name}</span>}<span>{new Date(resource.created_at).toLocaleDateString()}</span></div><div className="quiz-actions">{resourceUrls[resource.id] ? <a className="button outline-button" href={resourceUrls[resource.id]} target="_blank" rel="noreferrer">Open file</a> : <span>Preparing secure link…</span>}{isStaff && (profile.role === 'school_admin' || resource.uploaded_by === profile.id) && <button className="button outline-button" onClick={() => deleteResource(resource)}>Remove</button>}</div></article>)}</div></div>)}

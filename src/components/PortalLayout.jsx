@@ -4,13 +4,14 @@ import { useAuth } from '../context/AuthContext'
 import { roleRoute } from '../lib/roleRoute'
 import { accessibleBrandColor, normalizeBrandColor } from '../lib/brandColor'
 import { hasSchoolPermission } from '../lib/schoolRoles'
+import { supabase } from '../lib/supabase'
 
 const navigation = {
   super_admin: [
     ['Platform', [['Dashboard', '\u2302', ''], ['Schools', '\u25a3', '?module=Schools'], ['Approvals', '\u2713', '?module=School approvals'], ['Subscriptions', '\u25c7', '?module=Subscriptions'], ['Payments', '$', '?module=Payments'], ['Analytics', '\u25ce', '?module=Analytics'], ['Audit trail', '\u2261', '?module=Audit Trail']]]
   ],
   school_admin: [
-    ['School', [['Dashboard', '\u2302', ''], ['Students', '\u25c9', '?module=Students'], ['Teachers', '\u25c8', '?module=Teachers'], ['Teacher subject assignments', '\u25a4', '/teacher-loads'], ['Portal accounts', '\u2637', '/school-accounts'], ['Staff roles & access', '\u2659', '/staff-roles'], ['Classes', '\u25a6', '?module=Classes'], ['Attendance', '\u2713', '?module=Attendance'], ['Staff attendance', '\u2713', '/staff-attendance'], ['Fees & payments', '$', '?module=Fees'], ['Inventory & assets', '\u25a7', '/inventory'], ['Admissions', '\u2197', '/admissions'], ['School settings', '\u2699', '/settings'], ['Plan & billing', '\u25c7', '/subscription']]],
+    ['School', [['Dashboard', '\u2302', ''], ['Students', '\u25c9', '?module=Students'], ['Teachers', '\u25c8', '?module=Teachers'], ['Teacher subject assignments', '\u25a4', '/teacher-loads'], ['Student progression', '\u21e7', '/student-progression'], ['Portal accounts', '\u2637', '/school-accounts'], ['Staff roles & access', '\u2659', '/staff-roles'], ['Classes', '\u25a6', '?module=Classes'], ['Attendance', '\u2713', '?module=Attendance'], ['Staff attendance', '\u2713', '/staff-attendance'], ['Fees & payments', '$', '?module=Fees'], ['Inventory & assets', '\u25a7', '/inventory'], ['Admissions', '\u2197', '/admissions'], ['School settings', '\u2699', '/settings'], ['Plan & billing', '\u25c7', '/subscription']]],
     ['Learning', [['Timetable', '\u25f7', '/timetable'], ['Assignments', '\u25a4', '?module=Assignments'], ['Gradebook', '\u25a5', '/gradebook'], ['Library', '\u25a7', '/library'], ['Quizzes', '\u270e', '/quizzes']]],
     ['Community', [['Calendar & events', '\u25a6', '/calendar'], ['Activities', '\u25cf', '/activities'], ['Messages', '\u2709', '/chat'], ['Announcements', '\u25c9', '?module=Announcements'], ['Audit trail', '\u2261', '/audit-trail']]]
   ],
@@ -20,7 +21,7 @@ const navigation = {
     ['Connect', [['Messages', '\u2709', '/chat'], ['Announcements', '\u25c9', '?module=Announcements'], ['Calendar', '\u25a6', '/calendar']]]
   ],
   student: [
-    ['My school', [['Dashboard', '\u2302', ''], ['Assignments', '\u25a4', '?module=Assignments'], ['My results', '\u25a5', '?module=My results'], ['Timetable', '\u25f7', '/timetable'], ['Attendance', '\u2713', '?module=Attendance'], ['Activities', '\u25cf', '/activities'], ['Library', '\u25a8', '/library'], ['Quizzes', '\u270e', '/quizzes']]],
+    ['My school', [['Dashboard', '\u2302', ''], ['Assignments', '\u25a4', '?module=Assignments'], ['My results', '\u25a5', '?module=My results'], ['Class & results history', '\u25a6', '/class-history'], ['Timetable', '\u25f7', '/timetable'], ['Attendance', '\u2713', '?module=Attendance'], ['Activities', '\u25cf', '/activities'], ['Library', '\u25a8', '/library'], ['Quizzes', '\u270e', '/quizzes']]],
     ['Connect', [['Messages', '\u2709', '/chat'], ['Announcements', '\u25c9', '?module=Announcements'], ['Calendar & events', '\u25a6', '/calendar']]]
   ],
   parent: [
@@ -39,10 +40,22 @@ export default function PortalLayout({ children, portal = null }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const [navSearch, setNavSearch] = useState('')
+  const [classPeriods, setClassPeriods] = useState([])
   const navSearchRef = useRef(null)
   const menuTriggerRef = useRef(null)
   const closeMenuRef = useRef(null)
   const role = profile?.role || 'unknown'
+  useEffect(() => {
+    let active = true
+    if (role !== 'student' || !profile?.id || !supabase) { setClassPeriods([]); return undefined }
+    void supabase.from('students').select('id').eq('profile_id', profile.id).maybeSingle().then(async ({ data }) => {
+      if (!data) return
+      const { data: rows } = await supabase.from('student_class_enrollments')
+        .select('id,class_id,ended_at,started_at,classes(name,grade)').eq('student_id', data.id).order('started_at', { ascending: false })
+      if (active) setClassPeriods(rows || [])
+    })
+    return () => { active = false }
+  }, [role, profile?.id])
   const assignedRoles = staffRoles || []
   const specialistNavigation = {
     hr: [['Human resources', [
@@ -72,10 +85,12 @@ export default function PortalLayout({ children, portal = null }) {
     ['HR & Payroll', '\u2659', '/hr-payroll', 'school.hr.portal.view', ['teacher', 'staff']],
     ['Finance operations', '$', '/finance-operations', 'school.finance.portal.view', ['teacher', 'staff']],
     ['Staff attendance', '\u2713', '/staff-attendance', 'school.staff_attendance.manage', ['staff']],
+    ['Student progression', '\u21e7', '/student-progression', null, ['staff']],
+    ['Teacher class & subject assignments', '\u25a4', '/teacher-loads', null, ['staff']],
     ['Admissions', '\u2197', '/admissions', 'school.admissions.manage', ['staff']],
     ['Inventory & assets', '\u25a7', '/inventory', 'school.inventory.view', ['staff']],
     ['Library', '\u25a8', '/library', null, ['staff']],
-  ].filter(([, , , permission, allowedRoles]) => allowedRoles.includes(role) && (!permission || hasSchoolPermission(role, assignedRoles, permission)))
+  ].filter(([, , path, permission, allowedRoles]) => allowedRoles.includes(role) && (!permission || hasSchoolPermission(role, assignedRoles, permission)) && (!['/student-progression', '/teacher-loads'].includes(path) || assignedRoles.includes('principal')))
   const roleGroups = !portal && roleToolLinks.length ? [...groups, ['Assigned responsibilities', roleToolLinks.map(([label, icon, path]) => [label, icon, path])]] : groups
   const visibleGroups = useMemo(() => {
     const query = navSearch.trim().toLocaleLowerCase()
@@ -160,6 +175,7 @@ export default function PortalLayout({ children, portal = null }) {
     </aside>
     <main className="portal-workspace">
       <header className="portal-topbar"><button ref={menuTriggerRef} className="portal-menu-button" aria-label="Open navigation" aria-controls="portal-navigation-panel" aria-expanded={mobileOpen} onClick={() => setMobileOpen(true)}>{'\u2630'}</button><button className="portal-collapse-button" aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} onClick={() => setCollapsed(!collapsed)}>{collapsed ? '›' : '‹'}</button><div className="portal-breadcrumb"><span>{role === 'super_admin' ? 'Platform' : (school?.name || 'School workspace')}</span><b>/</b><strong>{title}</strong></div><Link className="portal-topbar-user" to="/profile" aria-label="Open my profile">{profile?.avatar_url ? <img className="portal-user-avatar portal-user-photo" src={profile.avatar_url} alt="" /> : <span className="portal-user-avatar">{profile?.full_name?.trim()?.[0]?.toUpperCase() || 'U'}</span>}<span><b>{profile?.full_name || 'School user'}</b><small>{portal ? (portal === 'hr' ? 'HR & Payroll' : 'Finance') : role === 'staff' ? 'Staff self-service' : role.replaceAll('_', ' ')}</small></span></Link></header>
+      {role === 'student' && classPeriods.length > 1 && <div className="portal-page-content" style={{ paddingBottom: 0 }}><label className="portal-class-switcher"><span>Viewing class</span><select aria-label="Choose current or previous class" value={new URLSearchParams(location.search).get('enrollment') || classPeriods.find(row => !row.ended_at)?.id || ''} onChange={event => { const row = classPeriods.find(item => item.id === event.target.value); navigate(row?.ended_at ? `/class-history?enrollment=${encodeURIComponent(row.id)}` : '/student') }}><option value="">Current class portal</option>{classPeriods.map(row => <option key={row.id} value={row.id}>{row.classes?.name || row.classes?.grade || 'Class'}{row.ended_at ? ' · Previous history' : ' · Current'}</option>)}</select></label></div>}
       <div className="portal-page-content">{children}</div>
     </main>
   </div>

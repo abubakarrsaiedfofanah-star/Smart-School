@@ -6,7 +6,8 @@ import { supabase } from '../lib/supabase'
 const blank = { teacher_id: '', class_id: '', subject_id: '' }
 
 export default function TeacherLoads() {
-  const { profile } = useAuth()
+  const { profile, staffRoles = [] } = useAuth()
+  const canManage = profile?.role === 'school_admin' || (profile?.role === 'staff' && staffRoles.includes('principal'))
   const [people, setPeople] = useState([])
   const [classes, setClasses] = useState([])
   const [subjects, setSubjects] = useState([])
@@ -14,16 +15,16 @@ export default function TeacherLoads() {
   const [form, setForm] = useState(blank)
   const [busy, setBusy] = useState(false)
   const load = useCallback(async () => {
-    if (!supabase || !profile?.school_id) return
+    if (!supabase || !profile?.school_id || !canManage) return
     const [peopleResult, classesResult, subjectsResult, loadsResult] = await Promise.all([
-      supabase.from('profiles').select('id,full_name,email').eq('school_id', profile.school_id).eq('role', 'teacher').order('full_name'),
+      supabase.from('profiles').select('id,full_name,email').eq('school_id', profile.school_id).eq('role', 'teacher').eq('is_active', true).order('full_name'),
       supabase.from('classes').select('id,name,grade').eq('school_id', profile.school_id).order('name'),
       supabase.from('subjects').select('id,name,code').eq('school_id', profile.school_id).order('name'),
       supabase.from('teacher_subject_assignments').select('id,teacher_id,class_id,subject_id,profiles!teacher_subject_assignments_teacher_id_fkey(full_name),classes(name),subjects(name)').eq('school_id', profile.school_id).order('created_at', { ascending: false })
     ])
     for (const result of [peopleResult, classesResult, subjectsResult, loadsResult]) if (result.error) toast.error(result.error.message || 'Could not load teacher assignments')
     setPeople(peopleResult.data || []); setClasses(classesResult.data || []); setSubjects(subjectsResult.data || []); setLoads(loadsResult.data || [])
-  }, [profile?.school_id])
+  }, [profile?.school_id, canManage])
   useEffect(() => { void load() }, [load])
 
   async function addLoad(event) {
@@ -40,7 +41,8 @@ export default function TeacherLoads() {
     if (error) toast.error(error.message || 'Could not remove assignment'); else { toast.success('Teaching assignment removed'); void load() }
   }
 
-  return <main style={{ maxWidth: 1040, margin: '0 auto', padding: '32px 24px' }}><p className="eyebrow">Academic setup</p><h1>Teacher class & subject assignments</h1>
+  if (!canManage) return <main className="portal-loading"><section><p className="eyebrow">ACADEMIC SETUP</p><h1>Principal access required</h1><p>Ask your school principal or administrator to manage teaching assignments.</p></section></main>
+  return <main style={{ maxWidth: 1040, margin: '0 auto', padding: '32px 24px' }}><p className="eyebrow">Academic setup</p><h1>Teacher class & subject assignments</h1><p>Assign each teacher to as many classes and subjects as needed. Students then receive class-specific lessons, assignments, activities, and quizzes.</p>
     <form className="panel" onSubmit={addLoad} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 12, padding: 18, margin: '22px 0' }}>
       <label>Teacher<select required value={form.teacher_id} onChange={event => setForm({ ...form, teacher_id: event.target.value })}><option value="">Select teacher</option>{people.map(person => <option key={person.id} value={person.id}>{person.full_name || person.email}</option>)}</select></label>
       <label>Class<select required value={form.class_id} onChange={event => setForm({ ...form, class_id: event.target.value })}><option value="">Select class</option>{classes.map(item => <option key={item.id} value={item.id}>{item.name}{item.grade ? ` · ${item.grade}` : ''}</option>)}</select></label>
