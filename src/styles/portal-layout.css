@@ -177,6 +177,24 @@
 .portal-loading > section p:not(.eyebrow) { color: var(--muted, #60758a); line-height: 1.65; }
 .portal-loading > section .button,
 .portal-loading > section .outline-button { min-height: 44px; justify-content: center; }
+.mfa-gate-card {
+  display: grid;
+  gap: 16px;
+  width: min(440px, calc(100% - 32px));
+  padding: clamp(22px, 5vw, 34px);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow: 0 20px 55px #18324b12;
+  color: var(--ink);
+}
+.mfa-gate-card h1 { margin: 0; font-size: clamp(1.65rem, 6vw, 2.15rem); line-height: 1.16; }
+.mfa-gate-card p { margin: 0; color: var(--muted); line-height: 1.6; }
+.mfa-gate-card label { margin: 0; font-weight: 650; }
+.mfa-gate-card input { width: 100%; min-height: 48px; padding: 10px 13px; border: 1px solid var(--line); border-radius: 9px; background: var(--bg); color: var(--ink); font: inherit; }
+.mfa-gate-card button { width: 100%; min-height: 48px; justify-content: center; border-radius: 9px; }
+.mfa-gate-card .button { padding: 12px 16px; box-shadow: 0 8px 20px color-mix(in srgb, var(--green) 25%, transparent); }
+.mfa-gate-card .outline-button { padding: 10px 16px; }
 .portal-loading > section :focus-visible,
 .portal-access-denied :focus-visible { outline: 3px solid #73b5ff; outline-offset: 3px; }
 .portal-access-denied {

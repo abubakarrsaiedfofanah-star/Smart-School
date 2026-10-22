@@ -145,7 +145,7 @@ function MfaGate({ onVerified, required }) {
   }
 
   if (state === 'checking') return <div className="portal-loading" role="status">Checking account verification…</div>
-  return <main className="portal-loading"><form onSubmit={verify} style={{ width: 'min(420px, calc(100% - 32px))', padding: 24, background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 14 }}>
+  return <main className="portal-loading"><form className="mfa-gate-card" onSubmit={verify}>
     <h1>{state === 'enroll' ? 'Set up authenticator verification' : 'Verify it’s you'}</h1>
     <p>{state === 'error' ? 'Your account needs verification to continue.' : state === 'enroll' ? 'Scan with an authenticator app, then enter its six digit code.' : state === 'challenge' ? 'Enter your six digit authenticator code.' : 'Set up an authenticator to continue.'}</p>
     {state === 'enroll' && setup?.totp && <><img src={setup.totp.qr_code} alt="Authenticator setup QR code" style={{ width: 220, maxWidth: '100%', padding: 8, background: 'white', borderRadius: 8 }} /><p style={{ overflowWrap: 'anywhere' }}><b>Manual setup key:</b> {setup.totp.secret}</p><label htmlFor="route-enroll-code">Authenticator code</label><input id="route-enroll-code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={event => setCode(event.target.value)} required /></>}
