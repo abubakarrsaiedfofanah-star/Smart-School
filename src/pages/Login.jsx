@@ -22,7 +22,7 @@ export default function Login(){
   const [schoolLookup,setSchoolLookup]=useState(() => searchParams.get('school') ? 'loading' : 'idle')
 
   const {login,resetPassword,logout,session,profile,staffRoles,loading:authLoading}=useAuth(),navigate=useNavigate(),{portalRole}=useParams();
-  const roleLabels={school_admin:'School Admin',teacher:'Teacher',staff:'Staff',student:'Student',parent:'Parent',hr:'HR & Payroll',finance:'Finance'};
+  const roleLabels={super_admin:'Super Admin',school_admin:'School Admin',teacher:'Teacher',staff:'Staff',student:'Student',parent:'Parent',hr:'HR & Payroll',finance:'Finance'};
   const requestedRole=roleLabels[portalRole] ? portalRole : null;
   const specialistPermission = requestedRole === 'hr' ? 'school.hr.portal.view' : requestedRole === 'finance' ? 'school.finance.portal.view' : null;
   const sessionMatchesRequestedRole = !requestedRole || (specialistPermission
@@ -129,7 +129,7 @@ export default function Login(){
   }
 
   if(authLoading || (selectedSchoolSlug && schoolLookup === 'loading')) return <div className="portal-loading"><div className="spinner"/><p>Checking your school account...</p></div>;
-  if(!selectedSchoolSlug&&!session) return <Navigate to="/portals" replace/>;
+  if(!selectedSchoolSlug&&!session&&!requestedRole) return <Navigate to="/portals" replace/>;
   if(selectedSchoolSlug && schoolLookup === 'error') return <main className="portal-loading"><section><p className="eyebrow">SCHOOL NOT AVAILABLE</p><h1>Choose an active school</h1><p>The selected school could not be confirmed. Return to the school directory and choose an active school.</p><Link className="button blue-button" to="/portals">Choose a school</Link></section></main>;
   if(session&&profile&&selectedSchoolSlug&&profile.role!=='super_admin'&&!profile.school_id) return <main className="portal-loading"><section><p className="eyebrow">SCHOOL REGISTRATION</p><h1>Complete your school request</h1><p>This Google account is not linked to a school yet. Choose a portal and submit a registration request to {selectedSchool?.name}; access will stay locked until its administrator approves it.</p><Link className="button blue-button" to={`/join-school/${encodeURIComponent(selectedSchool.slug)}`}>Register with {selectedSchool?.name}</Link><button className="outline-button" type="button" onClick={() => void logout()}>Sign out</button></section></main>;
   if(session&&profile&&selectedSchoolSlug&&profile.role!=='super_admin'&&profile.school_id!==selectedSchool?.id) return <main className="portal-loading"><section><p className="eyebrow">SCHOOL ACCOUNT</p><h1>This account belongs to another school</h1><p>Sign out, then choose the school linked to your account to continue.</p><button className="button blue-button" type="button" onClick={() => void logout()}>Sign out and choose a school</button><Link className="outline-button" to="/portals">Choose a school</Link></section></main>;

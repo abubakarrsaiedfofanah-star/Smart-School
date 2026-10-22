@@ -14,3 +14,6 @@ verify_jwt = true
 
 [functions.flutterwave-school-billing-webhook]
 verify_jwt = false
+
+[functions.bootstrap-super-admin]
+verify_jwt = false

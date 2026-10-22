@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 const Landing = lazy(() => import('./pages/Landing'))
 const Login = lazy(() => import('./pages/Login'))
 const RegisterSchool = lazy(() => import('./pages/RegisterSchool'))
+const SuperAdminBootstrap = lazy(() => import('./pages/SuperAdminBootstrap'))
 const SchoolMemberSignup = lazy(() => import('./pages/SchoolMemberSignup'))
 const PublicSchoolPortal = lazy(() => import('./pages/PublicSchoolPortal'))
 import { useAuth } from './context/AuthContext'
@@ -126,6 +127,7 @@ export default function App(){
         <Route path="/about" element={<PublicPage page="about"/>}/>
         <Route path="/contact" element={<PublicPage page="contact"/>}/>
         <Route path="/register" element={<RegisterSchool/>}/>
+        <Route path="/super-admin/register" element={<SuperAdminBootstrap/>}/>
         <Route path="/join-school/:schoolSlug" element={<SchoolMemberSignup/>}/>
         <Route path="/school/:schoolSlug" element={<PublicSchoolPortal/>}/>
         <Route path="/login" element={<Login/>}/>
