@@ -22,7 +22,7 @@ export default function ProtectedRoute({ roles, permission, children, shell = tr
     : '/finance-operations'
   const allowedStaffPortalRoute = ['/profile', '/security'].includes(location.pathname)
     || (assignedStaffPortal === 'hr' && ['/hr-payroll', '/staff-attendance'].includes(location.pathname))
-    || (assignedStaffPortal === 'finance' && location.pathname === '/finance-operations')
+    || (assignedStaffPortal === 'finance' && ['/finance-operations', '/activities'].includes(location.pathname))
   const [mfaState, setMfaState] = useState('checking')
   const [mfaPolicy, setMfaPolicy] = useState({ checked: false, required: false })
 

@@ -4,6 +4,7 @@ const Landing = lazy(() => import('./pages/Landing'))
 const Login = lazy(() => import('./pages/Login'))
 const RegisterSchool = lazy(() => import('./pages/RegisterSchool'))
 const SchoolMemberSignup = lazy(() => import('./pages/SchoolMemberSignup'))
+const PublicSchoolPortal = lazy(() => import('./pages/PublicSchoolPortal'))
 import { useAuth } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 const RoleDashboard = lazy(() => import('./pages/RoleDashboard'))
@@ -11,6 +12,7 @@ const TeacherWorkspace = lazy(() => import('./pages/TeacherWorkspace'))
 const TeacherAssignments = lazy(() => import('./pages/TeacherAssignments'))
 const TeacherLoads = lazy(() => import('./pages/TeacherLoads'))
 import { roleRoute } from './lib/roleRoute'
+import { hasSchoolPermission } from './lib/schoolRoles'
 const PublicPage = lazy(() => import('./pages/PublicPage'))
 import { initPushNotifications } from './lib/notifications'
 import { Toaster } from 'react-hot-toast'
@@ -45,6 +47,7 @@ const SchoolSubscription = lazy(() => import('./pages/SchoolSubscription'))
 const SchoolAccounts = lazy(() => import('./pages/SchoolAccounts'))
 const SchoolStaffRoles = lazy(() => import('./pages/SchoolStaffRoles'))
 const StaffWorkspace = lazy(() => import('./pages/StaffWorkspace'))
+const ActivityPortal = lazy(() => import('./pages/ActivityPortal'))
 import AppInstallPrompt from './components/AppInstallPrompt'
 import CommandPalette from './components/CommandPalette'
 
@@ -57,6 +60,13 @@ const readTheme = () => {
 }
 
 function Guard() { const {session,profile,loading}=useAuth(); if(loading)return <div className="portal-loading"><div className="spinner"></div></div>; if(!session)return <Navigate to="/login" replace/>; return profile?.role ? <Navigate to={roleRoute(profile.role)} replace/> : <Navigate to="/login" replace/> }
+function ActivityPortalAccess() {
+  const { profile, staffRoles = [] } = useAuth()
+  if (profile?.role === 'staff' && !staffRoles.includes('principal') && !hasSchoolPermission(profile.role, staffRoles, 'school.finance.portal.view')) {
+    return <Navigate to="/finance-operations" replace />
+  }
+  return <ActivityPortal />
+}
 const roleRoutes=[['super-admin','super_admin'],['school-admin','school_admin'],['teacher','teacher'],['staff','staff'],['student','student'],['parent','parent']]
 export default function App(){
   const { profile } = useAuth()
@@ -115,6 +125,7 @@ export default function App(){
         <Route path="/contact" element={<PublicPage page="contact"/>}/>
         <Route path="/register" element={<RegisterSchool/>}/>
         <Route path="/join-school/:schoolSlug" element={<SchoolMemberSignup/>}/>
+        <Route path="/school/:schoolSlug" element={<PublicSchoolPortal/>}/>
         <Route path="/login" element={<Login/>}/>
         <Route path="/login/:portalRole" element={<Login/>}/>
         <Route path="/chat" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><Chat /></ProtectedRoute>} />
@@ -129,6 +140,7 @@ export default function App(){
         <Route path="/submit/:assignmentId" element={<ProtectedRoute roles={['student']}><SubmissionPortal /></ProtectedRoute>} />
         <Route path="/review/:assignmentId" element={<ProtectedRoute roles={['teacher', 'school_admin']}><TeacherReview /></ProtectedRoute>} />
         <Route path="/calendar" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><SchoolCalendar /></ProtectedRoute>} />
+        <Route path="/activities" element={<ProtectedRoute roles={['school_admin', 'teacher', 'staff', 'student', 'parent']}><ActivityPortalAccess /></ProtectedRoute>} />
         <Route path="/timetable" element={<ProtectedRoute roles={['super_admin', 'school_admin', 'teacher', 'student', 'parent']}><Timetable /></ProtectedRoute>} />
         <Route path="/library" element={<ProtectedRoute roles={['school_admin', 'teacher', 'student', 'parent', 'staff']}><Library /></ProtectedRoute>} />
         <Route path="/inventory" element={<ProtectedRoute roles={['school_admin', 'staff']} permission="school.inventory.view"><Inventory /></ProtectedRoute>} />

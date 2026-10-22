@@ -9,5 +9,8 @@ verify_jwt = false
 [functions.start-school-subscription]
 verify_jwt = true
 
+[functions.start-school-activity-payment]
+verify_jwt = true
+
 [functions.flutterwave-school-billing-webhook]
 verify_jwt = false

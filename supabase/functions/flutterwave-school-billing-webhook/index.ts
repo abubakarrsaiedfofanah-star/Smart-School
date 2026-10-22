@@ -53,16 +53,26 @@ Deno.serve(async request => {
 
   const identity = `${event}:${transactionId || txRef || customerEmail}:${status}`
   const admin = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } })
-  const { error } = await admin.rpc('process_flutterwave_school_billing_event', {
-    p_event_key: identity,
-    p_event_name: event,
-    p_tx_ref: txRef || null,
-    p_transaction_id: transactionId || null,
-    p_status: status,
-    p_currency_code: currency || null,
-    p_amount: Number.isFinite(amount) ? amount : null,
-    p_customer_email: customerEmail || null,
-  })
+  const isActivityPayment = txRef.startsWith('ACT-')
+  const { error } = isActivityPayment
+    ? await admin.rpc('process_flutterwave_school_activity_event', {
+      p_event_key: identity,
+      p_tx_ref: txRef,
+      p_transaction_id: transactionId || null,
+      p_status: status,
+      p_currency_code: currency || null,
+      p_amount: Number.isFinite(amount) ? amount : null,
+    })
+    : await admin.rpc('process_flutterwave_school_billing_event', {
+      p_event_key: identity,
+      p_event_name: event,
+      p_tx_ref: txRef || null,
+      p_transaction_id: transactionId || null,
+      p_status: status,
+      p_currency_code: currency || null,
+      p_amount: Number.isFinite(amount) ? amount : null,
+      p_customer_email: customerEmail || null,
+    })
   if (error) {
     console.error('Could not apply verified Flutterwave school billing event:', error.message)
     return new Response('Could not apply billing event.', { status: 500 })

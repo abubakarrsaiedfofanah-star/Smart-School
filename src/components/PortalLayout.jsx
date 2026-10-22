@@ -12,25 +12,25 @@ const navigation = {
   school_admin: [
     ['School', [['Dashboard', '\u2302', ''], ['Students', '\u25c9', '?module=Students'], ['Teachers', '\u25c8', '?module=Teachers'], ['Teacher subject assignments', '\u25a4', '/teacher-loads'], ['Portal accounts', '\u2637', '/school-accounts'], ['Staff roles & access', '\u2659', '/staff-roles'], ['Classes', '\u25a6', '?module=Classes'], ['Attendance', '\u2713', '?module=Attendance'], ['Staff attendance', '\u2713', '/staff-attendance'], ['Fees & payments', '$', '?module=Fees'], ['Inventory & assets', '\u25a7', '/inventory'], ['Admissions', '\u2197', '/admissions'], ['School settings', '\u2699', '/settings'], ['Plan & billing', '\u25c7', '/subscription']]],
     ['Learning', [['Timetable', '\u25f7', '/timetable'], ['Assignments', '\u25a4', '?module=Assignments'], ['Gradebook', '\u25a5', '/gradebook'], ['Library', '\u25a7', '/library'], ['Quizzes', '\u270e', '/quizzes']]],
-    ['Community', [['Calendar & events', '\u25a6', '/calendar'], ['Messages', '\u2709', '/chat'], ['Announcements', '\u25c9', '?module=Announcements'], ['Audit trail', '\u2261', '/audit-trail']]]
+    ['Community', [['Calendar & events', '\u25a6', '/calendar'], ['Activities', '\u25cf', '/activities'], ['Messages', '\u2709', '/chat'], ['Announcements', '\u25c9', '?module=Announcements'], ['Audit trail', '\u2261', '/audit-trail']]]
   ],
   teacher: [
     ['Teaching', [['Dashboard', '\u2302', ''], ['My classes', '\u25a6', '?module=My classes'], ['My subjects', '\u25a4', '?module=My subjects'], ['Students', '\u25c9', '?module=Students'], ['Class performance', '\u25ce', '?module=Class performance'], ['Timetable', '\u25f7', '/timetable'], ['Gradebook', '\u25a5', '/gradebook'], ['Lesson plans', '\u25a7', '/lessons'], ['Quizzes', '\u270e', '/quizzes'], ['Courses', '\u25a6', '/course-builder'], ['Library', '\u25a8', '/library']]],
-    ['Work', [['Attendance', '\u2713', '?module=Take attendance'], ['Assignments', '\u25a4', '/teacher-assignments'], ['Submissions', '\u25a5', '?module=Submissions'], ['Exams', '\u25a4', '?module=Exams'], ['Results', '\u25a5', '?module=Results'], ['Behavior log', '\u2605', '?module=Behavior Log'], ['Meetings', '\u25f7', '/meetings']]],
+    ['Work', [['Attendance', '\u2713', '?module=Take attendance'], ['Assignments', '\u25a4', '/teacher-assignments'], ['Submissions', '\u25a5', '?module=Submissions'], ['Exams', '\u25a4', '?module=Exams'], ['Results', '\u25a5', '?module=Results'], ['Activities', '\u25cf', '/activities'], ['Behavior log', '\u2605', '?module=Behavior Log'], ['Meetings', '\u25f7', '/meetings']]],
     ['Connect', [['Messages', '\u2709', '/chat'], ['Announcements', '\u25c9', '?module=Announcements'], ['Calendar', '\u25a6', '/calendar']]]
   ],
   student: [
-    ['My school', [['Dashboard', '\u2302', ''], ['Assignments', '\u25a4', '?module=Assignments'], ['My results', '\u25a5', '?module=My results'], ['Timetable', '\u25f7', '/timetable'], ['Attendance', '\u2713', '?module=Attendance'], ['Library', '\u25a8', '/library'], ['Quizzes', '\u270e', '/quizzes']]],
+    ['My school', [['Dashboard', '\u2302', ''], ['Assignments', '\u25a4', '?module=Assignments'], ['My results', '\u25a5', '?module=My results'], ['Timetable', '\u25f7', '/timetable'], ['Attendance', '\u2713', '?module=Attendance'], ['Activities', '\u25cf', '/activities'], ['Library', '\u25a8', '/library'], ['Quizzes', '\u270e', '/quizzes']]],
     ['Connect', [['Messages', '\u2709', '/chat'], ['Announcements', '\u25c9', '?module=Announcements'], ['Calendar & events', '\u25a6', '/calendar']]]
   ],
   parent: [
-    ['Family', [['Dashboard', '\u2302', ''], ['My children', '\u25c9', '?module=My children'], ['Attendance', '\u2713', '?module=Child attendance'], ['Results', '\u25a5', '?module=Child results'], ['Fees', '$', '?module=Child fees'], ['Timetable', '\u25f7', '/timetable']]],
+    ['Family', [['Dashboard', '\u2302', ''], ['My children', '\u25c9', '?module=My children'], ['Attendance', '\u2713', '?module=Child attendance'], ['Results', '\u25a5', '?module=Child results'], ['Fees', '$', '?module=Child fees'], ['Activities', '\u25cf', '/activities'], ['Timetable', '\u25f7', '/timetable']]],
     ['Connect', [['Messages', '\u2709', '/chat'], ['Meetings', '\u25f7', '/meetings'], ['Announcements', '\u25c9', '?module=Announcements'], ['Calendar & events', '\u25a6', '/calendar']]]
   ],
   staff: [['My work', [['Overview', '\u2302', ''], ['My payslips', '$', '?module=My payslips'], ['Leave requests', '\u2713', '?module=Leave requests'], ['My details', '\u263a', '?module=My details']]]]
 }
 
-const pageNames = { '/calendar': 'Calendar & events', '/timetable': 'Timetable', '/library': 'Library', '/inventory': 'Inventory & assets', '/staff-attendance': 'Staff attendance', '/finance-operations': 'Expenses & reconciliation', '/quizzes': 'Quizzes', '/chat': 'Messages', '/gradebook': 'Gradebook', '/lessons': 'Lesson plans', '/meetings': 'Meetings', '/settings': 'School settings', '/admissions': 'Admissions', '/broadcast': 'Broadcast', '/audit-trail': 'Audit trail', '/security': 'Security settings', '/profile': 'My profile', '/course-builder': 'Course builder', '/teacher-assignments': 'Assignments & submissions', '/teacher-loads': 'Teacher class & subject assignments', '/school-accounts': 'Portal accounts', '/staff-roles': 'Staff roles & access', '/subscription': 'Plan & billing' }
+const pageNames = { '/calendar': 'Calendar & events', '/activities': 'School activities', '/timetable': 'Timetable', '/library': 'Library', '/inventory': 'Inventory & assets', '/staff-attendance': 'Staff attendance', '/finance-operations': 'Expenses & reconciliation', '/quizzes': 'Quizzes', '/chat': 'Messages', '/gradebook': 'Gradebook', '/lessons': 'Lesson plans', '/meetings': 'Meetings', '/settings': 'School settings', '/admissions': 'Admissions', '/broadcast': 'Broadcast', '/audit-trail': 'Audit trail', '/security': 'Security settings', '/profile': 'My profile', '/course-builder': 'Course builder', '/teacher-assignments': 'Assignments & submissions', '/teacher-loads': 'Teacher class & subject assignments', '/school-accounts': 'Portal accounts', '/staff-roles': 'Staff roles & access', '/subscription': 'Plan & billing' }
 
 export default function PortalLayout({ children, portal = null }) {
   const { profile, school, staffRoles, logout } = useAuth()
@@ -55,6 +55,7 @@ export default function PortalLayout({ children, portal = null }) {
     ]]],
     finance: [['Finance', [
       ['Dashboard', '\u2302', '?module=Dashboard'], ['Fee collections', '$', '?module=Collections'],
+      ['Activity collections', '\u25cf', '/activities'],
       ['Expenses', '\u25a7', '?module=Expenses'], ['Payment reconciliation', '\u2713', '?module=Reconciliation']
     ]]]
   }

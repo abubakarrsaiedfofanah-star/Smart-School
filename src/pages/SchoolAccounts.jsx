@@ -11,6 +11,7 @@ export default function SchoolAccounts() {
   const [signupRequests, setSignupRequests] = useState([])
   const [requestStudents, setRequestStudents] = useState({})
   const [learners, setLearners] = useState([])
+  const [classes, setClasses] = useState([])
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [form, setForm] = useState({ full_name: '', email: '', role: 'student', student_id: '', job_title: '', department: '' })
@@ -18,17 +19,20 @@ export default function SchoolAccounts() {
   const load = useCallback(async () => {
     if (!supabase || !profile?.school_id) { setLoading(false); return }
     setLoading(true)
-    const [inviteResult, studentResult, requestResult] = await Promise.all([
+    const [inviteResult, studentResult, requestResult, classResult] = await Promise.all([
       supabase.from('school_portal_invites').select('id,email,full_name,role,student_id,created_at,accepted_at').eq('school_id', profile.school_id).order('created_at', { ascending: false }),
       supabase.from('students').select('id,admission_number,profile_id,full_name').eq('school_id', profile.school_id).order('admission_number'),
-      supabase.from('school_portal_signup_requests').select('user_id,full_name,email,requested_role,requested_access,admission_number,created_at').eq('school_id', profile.school_id).eq('status', 'pending').order('created_at', { ascending: true })
+      supabase.from('school_portal_signup_requests').select('user_id,full_name,email,requested_role,requested_access,admission_number,requested_class_id,created_at').eq('school_id', profile.school_id).eq('status', 'pending').order('created_at', { ascending: true }),
+      supabase.from('classes').select('id,name,grade').eq('school_id', profile.school_id).order('name')
     ])
     if (inviteResult.error) toast.error(`Could not load invitations: ${inviteResult.error.message}`)
     if (studentResult.error) toast.error(`Could not load learners: ${studentResult.error.message}`)
     if (requestResult.error) toast.error(`Could not load registration requests: ${requestResult.error.message}`)
+    if (classResult.error) toast.error(`Could not load classes: ${classResult.error.message}`)
     setInvites(inviteResult.data || [])
     setLearners(studentResult.data || [])
     setSignupRequests(requestResult.data || [])
+    setClasses(classResult.data || [])
     setLoading(false)
   }, [profile?.school_id])
 
@@ -98,10 +102,11 @@ export default function SchoolAccounts() {
 
       <section className="school-account-list"><div className="account-section-heading"><span>02</span><div><h3>Registration requests</h3></div><button type="button" onClick={load} disabled={loading} aria-label="Refresh registration requests">Refresh</button></div>
         {!supabase ? <div className="school-account-empty">Connect Supabase to review requests.</div> : loading ? <div className="school-account-empty">Loading…</div> : signupRequests.length ? <div className="school-signup-request-list">{signupRequests.map(request => {
-          const matchingLearners = learners.filter(learner => learner.admission_number?.trim().toLowerCase() === request.admission_number?.trim().toLowerCase() && (request.requested_role !== 'student' || !learner.profile_id))
+          const matchingLearners = learners.filter(learner => learner.admission_number?.trim().toLowerCase() === request.admission_number?.trim().toLowerCase() && (request.requested_role !== 'student' || !learner.profile_id) && (!learner.class_id || learner.class_id === request.requested_class_id))
+          const requestedClass = classes.find(item => item.id === request.requested_class_id)
           const needsLearnerLink = ['student', 'parent'].includes(request.requested_role)
           const requestedRoleName = request.requested_access === 'hr' ? 'HR & Payroll' : request.requested_access === 'finance' ? 'Finance' : roleNames[request.requested_role] || request.requested_role
-          return <article key={request.user_id}><div className="school-signup-request-copy"><b>{request.full_name}</b><small>{request.email}</small><span>{requestedRoleName} · {new Date(request.created_at).toLocaleDateString()}</span>{request.admission_number && <small>Admission number: {request.admission_number}</small>}</div>{needsLearnerLink && <label>Match learner<select value={requestStudents[request.user_id] || ''} onChange={event => setRequestStudents(current => ({ ...current, [request.user_id]: event.target.value }))}><option value="">Choose matching record</option>{matchingLearners.map(learner => <option key={learner.id} value={learner.id}>{learner.full_name || 'Learner'} · {learner.admission_number}</option>)}</select>{!matchingLearners.length && <small>No learner record matches this admission number yet.</small>}</label>}<div className="school-signup-request-actions"><button type="button" disabled={needsLearnerLink && !requestStudents[request.user_id]} onClick={() => void reviewSignup(request, true)}>Approve</button><button type="button" className="decline" onClick={() => void reviewSignup(request, false)}>Decline</button></div></article>
+          return <article key={request.user_id}><div className="school-signup-request-copy"><b>{request.full_name}</b><small>{request.email}</small><span>{requestedRoleName} · {new Date(request.created_at).toLocaleDateString()}</span>{request.admission_number && <small>Admission number: {request.admission_number}</small>}{requestedClass && <small>Requested class: {requestedClass.name}{requestedClass.grade ? ` · ${requestedClass.grade}` : ''}</small>}</div>{needsLearnerLink && <label>Match learner<select value={requestStudents[request.user_id] || ''} onChange={event => setRequestStudents(current => ({ ...current, [request.user_id]: event.target.value }))}><option value="">Choose matching record</option>{matchingLearners.map(learner => { const learnerClass = classes.find(item => item.id === learner.class_id); return <option key={learner.id} value={learner.id}>{learner.full_name || 'Learner'} · {learner.admission_number}{learnerClass ? ` · ${learnerClass.name}` : ''}</option> })}</select>{!matchingLearners.length && <small>No learner record matches this admission number and requested class. Check the student record first.</small>}</label>}<div className="school-signup-request-actions"><button type="button" disabled={needsLearnerLink && !requestStudents[request.user_id]} onClick={() => void reviewSignup(request, true)}>Approve</button><button type="button" className="decline" onClick={() => void reviewSignup(request, false)}>Decline</button></div></article>
         })}</div> : <div className="school-account-empty"><b>No pending requests</b><span>Public school account requests appear here.</span></div>}
       </section>
 
