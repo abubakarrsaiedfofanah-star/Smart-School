@@ -7,16 +7,52 @@ import { supabase } from '../lib/supabase'
 import { aboutHighlights, contactOptions, pricingPlans, serviceCatalog } from '../data/publicSiteContent'
 
 const pages = {
-  features: ['Services', 'Explore the tools SmartSchool brings together for learning, school operations and family engagement.'],
-  portals: ['Choose your school', 'Sign in to your school or request an account.'],
-  pricing: ['Plans for your school', 'Request a 14-day free trial. Subscription pricing is shared during registration.', pricingPlans],
-  about: ['About SmartSchool', 'A shared system for the people who make a school work.', aboutHighlights],
-  contact: ['Get started with SmartSchool', 'Create a school workspace or sign in to a portal your school has already set up.', contactOptions],
+  features: {
+    eyebrow: 'SERVICES',
+    title: 'Everything your school needs, working together.',
+    intro: 'Explore the teaching, student records, daily operations, finance, and communication tools available in SmartSchool.',
+    image: '/images/school-day/services-computer-lab.jpg',
+    focus: '65% 45%',
+    action: ['Explore school portals', '/portals'],
+  },
+  portals: {
+    eyebrow: 'SCHOOL PORTALS',
+    title: 'Your school, one secure sign in.',
+    intro: 'Find your school to sign in or request an account. Your access stays with the school you choose.',
+    image: '/images/school-day/portals-school-community.jpg',
+    focus: '50% 64%',
+    action: ['Register a new school', '/register'],
+  },
+  pricing: {
+    eyebrow: 'PLANS FOR YOUR SCHOOL',
+    title: 'Choose the right plan for your school.',
+    intro: 'Start with a 14-day free trial. We will help your school choose a plan that fits its size and needs.',
+    image: '/images/school-day/pricing-library.jpg',
+    focus: '50% 48%',
+    action: ['Start a school trial', '/register?trial=1'],
+  },
+  about: {
+    eyebrow: 'ABOUT SMARTSCHOOL',
+    title: 'Built around the people who make school work.',
+    intro: 'SmartSchool brings school leaders, teachers, students, families, and staff into one shared workspace, with access shaped around each role.',
+    image: '/images/school-day/about-classroom-community.jpg',
+    focus: '67% 55%',
+    action: ['Explore our services', '/services'],
+  },
+  contact: {
+    eyebrow: 'CONTACT & GETTING STARTED',
+    title: 'We are here to help your school get started.',
+    intro: 'Register a new school, find your existing school portal, or contact the SmartSchool team.',
+    image: '/images/school-day/contact-school-community.jpg',
+    focus: '50% 50%',
+    action: ['Register your school', '/register'],
+  },
 }
 
 export default function PublicPage({ page }) {
-  const [title, intro, configuredItems] = pages[page] || pages.features
-  const items = page === 'portals' ? [] : configuredItems
+  const config = pages[page] || pages.features
+  const { title, intro, eyebrow, image, focus, action } = config
+  const items = page === 'pricing' ? pricingPlans : page === 'about' ? aboutHighlights : contactOptions
   const [schools, setSchools] = useState([])
   const [schoolsLoading, setSchoolsLoading] = useState(page === 'portals')
   const [schoolsError, setSchoolsError] = useState('')
@@ -54,54 +90,52 @@ export default function PublicPage({ page }) {
 
   return <div className="public-site school-home school-public-page page-transition">
     <PublicHeader />
-    <main className="school-public-content">
-      {page !== 'portals' && <section className="school-public-hero school-public-hero-text-only">
-        <div className="school-public-intro">
-        <p className="eyebrow">SMARTSCHOOL · {page === 'features' ? 'SERVICES' : page.replaceAll('-', ' ').toUpperCase()}</p>
-        <h1>{title}</h1>
-        <p>{intro}</p>
-        <div className="school-public-actions">
-          {page === 'pricing' && <Link className="button blue-button" to="/register?trial=1">Start a school trial <b aria-hidden="true">→</b></Link>}
-          <Link className="button outline-hero" to="/portals">Sign in</Link>
+    <main className={`school-public-page-main school-public-page-${page}`}>
+      <section className="school-photo-hero" style={{ '--school-photo-focus': focus }} aria-labelledby="school-public-title">
+        <img className="school-photo-hero-image" src={image} alt="" fetchPriority="high" />
+        <div className="school-photo-hero-inner">
+          <div className="school-photo-hero-copy">
+            <p className="eyebrow">SMARTSCHOOL <span aria-hidden="true">·</span> {eyebrow}</p>
+            <h1 id="school-public-title">{title}</h1>
+            <p>{intro}</p>
+            <div className="school-public-actions">
+              <Link className="button blue-button" to={action[1]}>{action[0]} <b aria-hidden="true">→</b></Link>
+              {page !== 'portals' && <Link className="button outline-hero" to="/portals">Sign in</Link>}
+            </div>
+          </div>
         </div>
-        </div>
-      </section>}
-      {page === 'portals' && <section className="school-public-intro school-directory-intro">
-        <p className="eyebrow">SMARTSCHOOL · SCHOOL PORTALS</p>
-        <h1>Find your school</h1>
-        <p>Choose your school to sign in or request an account. Your access stays with the school you choose.</p>
-        <div className="school-public-actions"><Link className="button blue-button" to="/register">Register a new school</Link></div>
-      </section>}
-      {page === 'portals' && <section className="school-directory-section" id="schools" aria-labelledby="school-directory-title">
-        <div className="school-directory-heading"><div><p className="eyebrow">SCHOOL DIRECTORY</p><h2 id="school-directory-title">Choose a school</h2><p>Use Login for an existing account, or register for access to the selected school.</p></div></div>
-        {schoolsLoading ? <p className="school-directory-empty" role="status">Loading active schools…</p>
-          : schoolsError ? <div className="school-directory-empty"><p>{schoolsError}</p><button type="button" onClick={() => void loadSchools()}>Try again</button></div>
-            : schools.length ? <><label className="school-directory-search">Search schools<input type="search" value={schoolSearch} onChange={event => setSchoolSearch(event.target.value)} placeholder="Type a school name" aria-label="Search schools by name" /></label>{filteredSchools.length ? <div className="school-directory-grid">{filteredSchools.map(school => <article className="school-directory-card" key={school.id}><h3>{school.status === 'active' ? <Link to={`/school/${encodeURIComponent(school.slug)}`}>{school.name}</Link> : school.name}</h3>{school.status === 'suspended' && <p className="school-directory-paused">Subscription payment is overdue. School access is paused.</p>}<div className="school-directory-actions"><Link className="button blue-button" to={'/login?school=' + encodeURIComponent(school.slug)}>Login</Link>{school.status === 'active' ? <Link className="school-public-portal-link" to={`/join-school/${encodeURIComponent(school.slug)}`}>Register for this school</Link> : <span className="school-directory-paused-label">New registrations paused</span>}</div></article>)}</div> : <p className="school-directory-empty" role="status">No schools match “{schoolSearch}”. Try another name.</p>}</>
-              : <p className="school-directory-empty">No approved schools are listed yet. A school appears here after it has been approved and activated.</p>}
-      </section>}
-      {page === 'features' && <section className="school-public-grid school-service-grid" aria-label="SmartSchool services and features">
-        {serviceCatalog.map(({ icon, title: serviceTitle, summary, features }, index) => <article className={`school-public-card school-service-card school-service-card-${index + 1}`} key={serviceTitle}>
-          <div className="school-service-card-top"><span className="school-service-icon" aria-hidden="true">{icon}</span><span className="school-public-card-number">{String(index + 1).padStart(2, '0')}</span></div>
-          <h2>{serviceTitle}</h2>
-          <p>{summary}</p>
-          <ul>{features.map(feature => <li key={feature}>{feature}</li>)}</ul>
-        </article>)}
-        <p className="school-service-note">Tools are shown according to each person’s role and the services enabled for their school.</p>
-      </section>}
-      {page !== 'features' && page !== 'portals' && <section className={`school-public-grid ${page === 'pricing' ? 'school-pricing-grid' : ''}`} aria-label={`${title} information`}>
-        {items.map(([label, text], index) => (
-          <article className="school-public-card" key={label}>
-            <span className="school-public-card-number">0{index + 1}</span>
-            <h2>{label}</h2>
-            <p>{text}</p>
+      </section>
+
+      <div className="school-public-content">
+        {page === 'portals' && <section className="school-directory-section" id="schools" aria-labelledby="school-directory-title">
+          <div className="school-directory-heading"><div><p className="eyebrow">SCHOOL DIRECTORY</p><h2 id="school-directory-title">Choose a school</h2><p>Use Login for an existing account, or register for access to the selected school.</p></div></div>
+          {schoolsLoading ? <p className="school-directory-empty" role="status">Loading active schools…</p>
+            : schoolsError ? <div className="school-directory-empty"><p>{schoolsError}</p><button type="button" onClick={() => void loadSchools()}>Try again</button></div>
+              : schools.length ? <><label className="school-directory-search">Search schools<input type="search" value={schoolSearch} onChange={event => setSchoolSearch(event.target.value)} placeholder="Type a school name" aria-label="Search schools by name" /></label>{filteredSchools.length ? <div className="school-directory-grid">{filteredSchools.map(school => <article className="school-directory-card" key={school.id}><h3>{school.status === 'active' ? <Link to={`/school/${encodeURIComponent(school.slug)}`}>{school.name}</Link> : school.name}</h3>{school.status === 'suspended' && <p className="school-directory-paused">Subscription payment is overdue. School access is paused.</p>}<div className="school-directory-actions"><Link className="button blue-button" to={'/login?school=' + encodeURIComponent(school.slug)}>Login</Link>{school.status === 'active' ? <Link className="school-public-portal-link" to={`/join-school/${encodeURIComponent(school.slug)}`}>Register for this school</Link> : <span className="school-directory-paused-label">New registrations paused</span>}</div></article>)}</div> : <p className="school-directory-empty" role="status">No schools match “{schoolSearch}”. Try another name.</p>}</>
+                : <p className="school-directory-empty">No approved schools are listed yet. A school appears here after it has been approved and activated.</p>}
+        </section>}
+
+        {page === 'features' && <section className="school-public-grid school-service-grid" aria-label="SmartSchool services and features">
+          {serviceCatalog.map(({ icon, title: serviceTitle, summary, features }, index) => <article className={`school-public-card school-service-card school-service-card-${index + 1}`} key={serviceTitle}>
+            <div className="school-service-card-top"><span className="school-service-icon" aria-hidden="true">{icon}</span><span className="school-public-card-number">{String(index + 1).padStart(2, '0')}</span></div>
+            <h2>{serviceTitle}</h2><p>{summary}</p>
+            <ul>{features.map(feature => <li key={feature}>{feature}</li>)}</ul>
+          </article>)}
+          <p className="school-service-note">Tools are shown according to each person’s role and the services enabled for their school.</p>
+        </section>}
+
+        {page !== 'features' && page !== 'portals' && <section className={`school-public-grid ${page === 'pricing' ? 'school-pricing-grid' : ''} ${page === 'contact' ? 'school-contact-grid' : ''}`} aria-label={`${title} information`}>
+          {items.map(([label, text], index) => <article className="school-public-card" key={label}>
+            <span className="school-public-card-number">0{index + 1}</span><h2>{label}</h2><p>{text}</p>
             {page === 'pricing' && <Link className="school-public-portal-link" to={`/register?trial=1&plan=${encodeURIComponent(label)}`}>Choose {label} for your school <b aria-hidden="true">→</b></Link>}
             {page === 'contact' && label === 'Register a school' && <Link to="/register">Start registration <b aria-hidden="true">→</b></Link>}
             {page === 'contact' && label === 'Existing school' && <Link to="/portals">Open sign in <b aria-hidden="true">→</b></Link>}
             {page === 'contact' && label === 'Role portals' && <Link to="/portals">View portals <b aria-hidden="true">→</b></Link>}
-          </article>
-        ))}
-      </section>}
-      {page === 'contact' && <ContactMethods className="school-public-contact-methods" />}
+          </article>)}
+        </section>}
+
+        {page === 'contact' && <ContactMethods className="school-public-contact-methods" />}
+      </div>
     </main>
     <PublicFooter />
   </div>

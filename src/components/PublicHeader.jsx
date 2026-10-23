@@ -3,11 +3,11 @@ import { Link, useLocation } from 'react-router-dom'
 
 const navigation = [
   ['Home', '/'],
-  ['Services', '/#services'],
-  ['Portals', '/#portals'],
-  ['Pricing', '/#pricing'],
-  ['About', '/#about'],
-  ['Contact', '/#contact'],
+  ['Services', '/services'],
+  ['Portals', '/portals'],
+  ['Pricing', '/pricing'],
+  ['About', '/about'],
+  ['Contact', '/contact'],
 ]
 
 export default function PublicHeader() {
@@ -53,7 +53,7 @@ export default function PublicHeader() {
           const active = pathname === target && (targetHash ? hash === `#${targetHash}` : (target !== '/' || (!hash && label === 'Home')))
           return <Link key={label} className={active ? 'active' : ''} to={to} onClick={() => { closeMenu(); if (target === '/' && !targetHash && pathname === '/') window.scrollTo({ top: 0, behavior: 'smooth' }) }}>{label}</Link>
         })}
-        <Link className="header-login" to="/#portals" onClick={closeMenu}>Login</Link>
+        <Link className="header-login" to="/portals" onClick={closeMenu}>Login</Link>
         <Link className="button small blue-button header-register" to="/register" onClick={closeMenu}>Register school <b aria-hidden="true">→</b></Link>
       </nav>
     </header>

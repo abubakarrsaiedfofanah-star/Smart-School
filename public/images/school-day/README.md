@@ -27,3 +27,15 @@ License: https://unsplash.com/license
   https://unsplash.com/photos/a-school-building-surrounded-by-greenery-under-a-blue-sky-eZjpArlRqZ4
 - teacher-connection.jpg — Unsplash classroom photo photo-1577896851231-70ef18881754
   https://images.unsplash.com/photo-1577896851231-70ef18881754
+- services-computer-lab.jpg — Poddar Group of Institutions, teacher guiding students on computers
+  https://unsplash.com/photos/teacher-guiding-students-on-computer-in-classroom-ereEoYDIl20
+- portals-school-community.jpg — Lens Fables, students outside a school building
+  https://unsplash.com/photos/students-stand-in-front-of-a-school-building-w-u3E9_-6s0
+- pricing-library.jpg — Natalie Van Dam, Trinity College Library
+  https://unsplash.com/photos/brown-wooden-shelves-in-library-onsl9K6Wy4U
+- about-classroom-community.jpg — Vitaly Gariev, teacher talking with students
+  https://unsplash.com/photos/teacher-interacting-with-students-in-a-classroom-setting-c6QLJhezaYs
+- contact-school-community.jpg — Anna Amelina, students showing school community spirit
+  https://unsplash.com/photos/children-in-uniform-make-heart-shapes-with-hands-BGvLIb1wriA
+- getting-started-classroom.jpg — Vitaly Gariev, teacher and students in a discussion
+  https://unsplash.com/photos/teacher-pointing-at-students-with-raised-hands-HIheRKI9mTs

@@ -75,12 +75,12 @@ export default function Landing() {
       <nav className="school-home-jump-nav" aria-label="Explore the public website">
         <p>Explore SmartSchool</p>
         <div>
-          <a href="#start"><span>01</span>Getting started <b aria-hidden="true">â†“</b></a>
-          <a href="#services"><span>02</span>Services <b aria-hidden="true">â†“</b></a>
-          <a href="#about"><span>03</span>About <b aria-hidden="true">â†“</b></a>
-          <a href="#portals"><span>04</span>Portals <b aria-hidden="true">â†“</b></a>
-          <a href="#pricing"><span>05</span>Plans <b aria-hidden="true">â†“</b></a>
-          <a href="#contact"><span>06</span>Contact <b aria-hidden="true">â†“</b></a>
+          <a href="#start"><span>01</span>Getting started <b aria-hidden="true">↓</b></a>
+          <a href="#services"><span>02</span>Services <b aria-hidden="true">↓</b></a>
+          <a href="#about"><span>03</span>About <b aria-hidden="true">↓</b></a>
+          <a href="#portals"><span>04</span>Portals <b aria-hidden="true">↓</b></a>
+          <a href="#pricing"><span>05</span>Plans <b aria-hidden="true">↓</b></a>
+          <a href="#contact"><span>06</span>Contact <b aria-hidden="true">↓</b></a>
         </div>
       </nav>
 
