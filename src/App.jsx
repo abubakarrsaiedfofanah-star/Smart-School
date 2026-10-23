@@ -15,7 +15,6 @@ const TeacherAssignments = lazy(() => import('./pages/TeacherAssignments'))
 const TeacherLoads = lazy(() => import('./pages/TeacherLoads'))
 import { roleRoute } from './lib/roleRoute'
 import { hasSchoolPermission } from './lib/schoolRoles'
-const PublicPage = lazy(() => import('./pages/PublicPage'))
 import { initPushNotifications } from './lib/notifications'
 import { Toaster } from 'react-hot-toast'
 const Chat = lazy(() => import('./pages/Chat'))
@@ -121,12 +120,12 @@ export default function App(){
       <Routes>
         <Route path="/" element={<Landing/>}/>
         <Route path="/welcome" element={<Landing/>}/>
-        <Route path="/features" element={<PublicPage page="features"/>}/>
-        <Route path="/services" element={<PublicPage page="features"/>}/>
-        <Route path="/portals" element={<PublicPage page="portals"/>}/>
-        <Route path="/pricing" element={<PublicPage page="pricing"/>}/>
-        <Route path="/about" element={<PublicPage page="about"/>}/>
-        <Route path="/contact" element={<PublicPage page="contact"/>}/>
+        <Route path="/features" element={<Navigate to="/#services" replace/>}/>
+        <Route path="/services" element={<Navigate to="/#services" replace/>}/>
+        <Route path="/portals" element={<Navigate to="/#portals" replace/>}/>
+        <Route path="/pricing" element={<Navigate to="/#pricing" replace/>}/>
+        <Route path="/about" element={<Navigate to="/#about" replace/>}/>
+        <Route path="/contact" element={<Navigate to="/#contact" replace/>}/>
         <Route path="/register" element={<RegisterSchool/>}/>
         <Route path="/super-admin/register" element={<SuperAdminBootstrap/>}/>
         <Route path="/join-school/:schoolSlug" element={<SchoolMemberSignup/>}/>

@@ -636,13 +636,14 @@
 .school-hero::before { z-index: 0; background: linear-gradient(90deg, #071522ed 0%, #0b2037c9 48%, #0b203765 100%); }
 .school-hero .hero-copy { position: relative; z-index: 1; max-width: 610px; }
 .school-hero .hero-copy h1, .school-hero .hero-copy > p:not(.eyebrow) { color: #fff; }
-.school-hero .hero-copy h1 span { color: #9bd4ff; }
+.school-home .school-hero .hero-copy h1 { background: none; -webkit-text-fill-color: #fff; }
+.school-home .school-hero .hero-copy h1 span { color: #9bd4ff; -webkit-text-fill-color: #9bd4ff; }
 .school-hero .hero-copy .eyebrow { color: #b8dfff; }
 .school-hero .button.outline-hero { border-color: #ffffffa8; color: #fff; }
 .school-start-section { background: linear-gradient(90deg, #071522e8 0%, #102a43cc 55%, #102a4378 100%), url('/images/school-day/classroom-group.jpg') center 44% / cover no-repeat; }
 .school-start-section .section-heading h2, .school-start-section .section-heading .eyebrow { color: #fff; }
 .school-start-section > .school-home-section-link { color: #d7ecff; }
-.school-tools-section { background: linear-gradient(90deg, #071522de 0%, #0b2338bc 55%, #0b233866 100%), url('/images/school-day/computer-lab.jpg') center 48% / cover no-repeat; }
+.school-tools-section { background-color: #102a43; background-image: linear-gradient(90deg, #071522ed 0%, #0b2338d9 55%, #0b23389c 100%), url('/images/school-day/computer-lab.jpg'); background-position: center, center 48%; background-size: cover, cover; background-repeat: no-repeat; scroll-margin-top: 92px; }
 .school-tools-section .section-heading h2, .school-tools-section .section-heading .eyebrow, .school-tools-section .section-note { color: #fff; }
 .school-home-story { grid-template-columns: minmax(0, 1fr); min-height: 520px; align-content: center; padding: clamp(38px, 7vw, 78px); border-radius: 22px; background: linear-gradient(90deg, #071522e8 0%, #102a43c9 58%, #102a4355 100%), url('/images/school-day/school-community.jpg') center 46% / cover no-repeat; }
 .school-home-story > div:not(.school-public-grid) { max-width: 640px; }
@@ -655,6 +656,7 @@
 .school-home-contact { background: linear-gradient(90deg, #071522e8 0%, #102a43c8 58%, #102a4355 100%), url('/images/school-day/teacher-connection.jpg') center 42% / cover no-repeat; }
 .school-home-contact > .section-heading h2, .school-home-contact > .section-heading .eyebrow, .school-home-contact > .section-heading .section-note { color: #fff; }
 .school-home-story, .school-home-pricing { column-gap: 0; }
+.school-home main > section[id] { scroll-margin-top: 92px; }
 @media (max-width: 760px) {
   .school-hero { min-height: 620px; align-items: flex-start; padding-top: 82px; }
   .school-home-story, .school-home-pricing { width: calc(100% - 36px); min-height: 0; padding: 30px 22px; }

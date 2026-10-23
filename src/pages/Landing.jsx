@@ -1,5 +1,5 @@
-﻿import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import PublicHeader from '../components/PublicHeader'
 import PublicFooter from '../components/PublicFooter'
 import ContactMethods from '../components/ContactMethods'
@@ -22,10 +22,20 @@ function Reveal({ children, className = '' }) {
 }
 
 export default function Landing() {
+  const { hash } = useLocation()
   const [schools, setSchools] = useState([])
   const [schoolsLoading, setSchoolsLoading] = useState(true)
   const [schoolsError, setSchoolsError] = useState('')
   const [schoolSearch, setSchoolSearch] = useState('')
+
+  useEffect(() => {
+    if (!hash) return
+    const targetId = decodeURIComponent(hash.slice(1))
+    const firstFrame = requestAnimationFrame(() => requestAnimationFrame(() => {
+      document.getElementById(targetId)?.scrollIntoView({ block: 'start' })
+    }))
+    return () => cancelAnimationFrame(firstFrame)
+  }, [hash])
 
   const filteredSchools = useMemo(() => {
     const query = schoolSearch.trim().toLocaleLowerCase()
@@ -59,7 +69,7 @@ export default function Landing() {
     <main>
       <section id="home" className="sky-hero screenshot-hero school-hero">
         <div className="hero-product-backdrop"><div/><div/><div/><div/></div><div className="video-wash"/><div className="ambient-grid"/><div className="ambient-ring ring-one"/><div className="ambient-ring ring-two"/>
-        <div className="hero-copy"><p className="eyebrow blue-eyebrow">A PRACTICAL HOME FOR YOUR SCHOOL</p><h1>Run your school.<br/>Keep learning<br/><span>moving.</span></h1><p>Manage the school day, support teaching and keep families connected from one shared system.</p><div className="actions"><Link className="button blue-button" to="/register">Set up your school <b>â†’</b></Link><Link className="button outline-hero" to="/portals">Choose your school to sign in</Link></div></div>
+        <div className="hero-copy"><p className="eyebrow blue-eyebrow">A PRACTICAL HOME FOR YOUR SCHOOL</p><h1>Run your school.<br/>Keep learning<br/><span>moving.</span></h1><p>Manage the school day, support teaching and keep families connected from one shared system.</p><div className="actions"><Link className="button blue-button" to="/register">Set up your school <b>→</b></Link><Link className="button outline-hero" to="/portals">Choose your school to sign in</Link></div></div>
       </section>
 
       <nav className="school-home-jump-nav" aria-label="Explore the public website">
@@ -82,7 +92,7 @@ export default function Landing() {
           <article><span>02</span><div><h3>Submit it for review</h3><p>SmartSchool reviews the school and plan request before activation.</p></div></article>
           <article><span>03</span><div><h3>Open your role portal</h3><p>Once your school is active, sign in using the workspace for your role.</p></div></article>
         </div>
-        <Link className="school-home-section-link" to="/register">Start your school registration <b aria-hidden="true">â†’</b></Link>
+        <Link className="school-home-section-link" to="/register">Start your school registration <b aria-hidden="true">→</b></Link>
       </section></Reveal>
 
 
@@ -111,7 +121,7 @@ export default function Landing() {
 
 
 
-      <Reveal><section className="section school-home-contact" id="contact" aria-labelledby="school-home-contact-title"><div className="section-heading"><div><p className="eyebrow blue-eyebrow">CONTACT</p><h2 id="school-home-contact-title">Get started with SmartSchool</h2></div><p className="section-note">Create a school workspace or sign in to a portal your school has already set up.</p></div><div className="school-public-grid school-contact-grid">{contactOptions.map(([title, text], index) => <article className="school-public-card" key={title}><span className="school-public-card-number">0{index + 1}</span><h2>{title}</h2><p>{text}</p>{index === 0 ? <Link to="/register">Start registration <b aria-hidden="true">â†’</b></Link> : <Link to="/portals">{index === 1 ? 'Open sign in' : 'View portals'} <b aria-hidden="true">â†’</b></Link>}</article>)}</div><div className="school-cta-band"><div><p className="eyebrow light-eyebrow">CONTACT SMARTSCHOOL DIRECTLY</p><ContactMethods /></div></div></section></Reveal>
+      <Reveal><section className="section school-home-contact" id="contact" aria-labelledby="school-home-contact-title"><div className="section-heading"><div><p className="eyebrow blue-eyebrow">CONTACT</p><h2 id="school-home-contact-title">Get started with SmartSchool</h2></div><p className="section-note">Create a school workspace or sign in to a portal your school has already set up.</p></div><div className="school-public-grid school-contact-grid">{contactOptions.map(([title, text], index) => <article className="school-public-card" key={title}><span className="school-public-card-number">0{index + 1}</span><h2>{title}</h2><p>{text}</p>{index === 0 ? <Link to="/register">Start registration <b aria-hidden="true">→</b></Link> : <Link to="/portals">{index === 1 ? 'Open sign in' : 'View portals'} <b aria-hidden="true">→</b></Link>}</article>)}</div><div className="school-cta-band"><div><p className="eyebrow light-eyebrow">CONTACT SMARTSCHOOL DIRECTLY</p><ContactMethods /></div></div></section></Reveal>
     </main>
 
     <PublicFooter />
