@@ -18,7 +18,7 @@ const getGrade = (score, gradingScale) => {
 
 export default function AcademicReport() {
   const { studentId } = useParams()
-  const { profile, school, demo } = useAuth()
+  const { profile, school: workspaceSchool, demo } = useAuth()
   const [data, setData] = useState(null)
   const [behavior, setBehavior] = useState([])
   const [loading, setLoading] = useState(true)
@@ -45,7 +45,7 @@ export default function AcademicReport() {
         if (resultsRes.error) throw resultsRes.error
         if (behaviorRes.error) throw behaviorRes.error
         if (!cancelled) {
-          setData({ student: { ...studentRes.data, schools: school }, results: resultsRes.data || [] })
+          setData({ student: { ...studentRes.data, schools: workspaceSchool }, results: resultsRes.data || [] })
           setBehavior(behaviorRes.data || [])
         }
       } catch (error) {
@@ -57,7 +57,7 @@ export default function AcademicReport() {
     }
     void fetchData()
     return () => { cancelled = true }
-  }, [studentId, demo, school])
+  }, [studentId, demo, workspaceSchool])
 
   const results = data?.results || []
   const periodYear = result => result.exams?.academic_year || (result.exams?.exam_date ? String(new Date(`${result.exams.exam_date}T00:00:00`).getFullYear()) : 'Unassigned')
