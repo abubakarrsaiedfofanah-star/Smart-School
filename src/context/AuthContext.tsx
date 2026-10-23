@@ -56,7 +56,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setProfile(nextProfile)
       await loadStaffRoles(nextProfile)
       if (nextProfile?.school_id) {
-        const { data: schoolData } = await supabase.from('schools').select('*').eq('id', nextProfile.school_id).maybeSingle()
+        const { data: schoolData, error: schoolError } = await supabase.rpc('get_my_school_workspace')
+        if (schoolError) throw schoolError
         setSchool(schoolData as SchoolWorkspace | null)
       } else setSchool(null)
     } catch (error) {
@@ -111,7 +112,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const nextStaffRoles = [...new Set((assigned || []).map((row: { role_key: string }) => row.role_key).filter(Boolean))]
     setStaffRoles(nextStaffRoles)
     if (nextProfile.school_id) {
-      const { data: nextSchool } = await supabase.from('schools').select('*').eq('id', nextProfile.school_id).maybeSingle()
+      const { data: nextSchool, error: schoolError } = await supabase.rpc('get_my_school_workspace')
+      if (schoolError) throw schoolError
       setSchool(nextSchool as SchoolWorkspace | null)
     } else setSchool(null)
     return { profile: nextProfile, staffRoles: nextStaffRoles }

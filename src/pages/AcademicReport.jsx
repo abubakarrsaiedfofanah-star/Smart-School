@@ -18,7 +18,7 @@ const getGrade = (score, gradingScale) => {
 
 export default function AcademicReport() {
   const { studentId } = useParams()
-  const { profile, demo } = useAuth()
+  const { profile, school, demo } = useAuth()
   const [data, setData] = useState(null)
   const [behavior, setBehavior] = useState([])
   const [loading, setLoading] = useState(true)
@@ -37,7 +37,7 @@ export default function AcademicReport() {
         }
 
         const [studentRes, resultsRes, behaviorRes] = await Promise.all([
-          supabase.from('students').select('*, profiles:profile_id(full_name), classes:class_id(name, teacher:teacher_id(full_name, signature_url)), schools:school_id(name, logo_url, primary_color, principal_signature_url, school_motto, school_level, grading_scale, timezone)').eq('id', studentId).single(),
+          supabase.from('students').select('*, profiles:profile_id(full_name), classes:class_id(name, teacher:teacher_id(full_name, signature_url))').eq('id', studentId).single(),
           supabase.from('results').select('score, remarks, exams:exam_id(name, max_score, exam_date, academic_year, term, subjects:subject_id(name))').eq('student_id', studentId).eq('published', true),
           supabase.from('behavior_records').select('type,points').eq('student_id', studentId)
         ])
@@ -45,7 +45,7 @@ export default function AcademicReport() {
         if (resultsRes.error) throw resultsRes.error
         if (behaviorRes.error) throw behaviorRes.error
         if (!cancelled) {
-          setData({ student: studentRes.data, results: resultsRes.data || [] })
+          setData({ student: { ...studentRes.data, schools: school }, results: resultsRes.data || [] })
           setBehavior(behaviorRes.data || [])
         }
       } catch (error) {
@@ -57,7 +57,7 @@ export default function AcademicReport() {
     }
     void fetchData()
     return () => { cancelled = true }
-  }, [studentId, demo])
+  }, [studentId, demo, school])
 
   const results = data?.results || []
   const periodYear = result => result.exams?.academic_year || (result.exams?.exam_date ? String(new Date(`${result.exams.exam_date}T00:00:00`).getFullYear()) : 'Unassigned')

@@ -11,9 +11,8 @@ export default function PaymentFlow({ payment, onClose }) {
     let active = true;
     const fetchSchool = async () => {
       if (!payment?.school_id || !supabase) return;
-      const { data } = await supabase.from('schools')
-        .select('name, country_code, mobile_money_provider, mobile_money_number, mobile_money_account_name, mpesa_paybill, mpesa_till, bank_name, bank_account_name, bank_account_number, currency_code')
-        .eq('id', payment.school_id).maybeSingle();
+      const { data, error } = await supabase.rpc('get_my_payment_school_details', { p_payment_id: payment.id });
+      if (error) console.error('Could not load payment instructions:', error.message);
       if (active) setSchool(data || null);
     };
     fetchSchool();

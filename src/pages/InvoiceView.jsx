@@ -25,18 +25,21 @@ export default function InvoiceView() {
 
         const { data: pay, error } = await supabase
           .from('payments')
-          .select('*, fees(*), students(*, profiles(full_name), classes(name)), schools(*)')
+          .select('*, fees(*), students(*, profiles(full_name), classes(name))')
           .eq('id', paymentId)
           .single();
 
         if (error) throw error;
+        const { data: school, error: schoolError } = await supabase.rpc('get_my_payment_school_details', { p_payment_id: paymentId });
+        if (schoolError) throw schoolError;
+        if (!school) throw new Error('Payment is not available to this account.');
         const { data: signers, error: signerError } = await supabase.rpc('get_payment_document_signatures', { p_payment_id: paymentId });
         if (signerError) console.error('Could not load receipt signatures:', signerError.message);
         setData({
           payment: pay,
           fee: pay.fees,
           student: pay.students,
-          school: pay.schools,
+          school,
           signers: signers?.[0] || null
         });
       } catch (err) {

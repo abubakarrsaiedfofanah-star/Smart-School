@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { classLabel, groupClasses } from '../lib/educationLevels'
 
 export default function StudentProgression() {
   const { profile, staffRoles = [] } = useAuth()
@@ -11,9 +12,9 @@ export default function StudentProgression() {
   const authorized = profile?.role === 'school_admin' || (profile?.role === 'staff' && staffRoles.includes('principal'))
   const load = async () => {
     if (!supabase || !profile?.school_id) return
-    const { data, error } = await supabase.from('classes').select('id,name,grade,next_class_id,promotion_minimum_percentage,promotion_term').eq('school_id', profile.school_id).order('name')
+    const { data, error } = await supabase.from('classes').select('id,name,grade,education_stage,level_order,next_class_id,promotion_minimum_percentage,promotion_term').eq('school_id', profile.school_id)
     if (error) toast.error(error.message)
-    setClasses(data || [])
+    setClasses(groupClasses(data || []).flatMap(group => group.classes))
     setLoading(false)
   }
   useEffect(() => { void load() }, [profile?.school_id])
@@ -29,6 +30,6 @@ export default function StudentProgression() {
   }
   return <section className="page-wrap">
     <div className="page-heading"><div><p className="eyebrow">Academics</p><h1>Student progression</h1><p>Set each class’s next level, pass mark, and promotion term. Eligible learners move automatically when every exam result for that term is published.</p></div></div>
-    {!authorized ? <div className="panel">A principal or school administrator can manage student progression settings.</div> : loading ? <div className="portal-loading"><div className="spinner" /></div> : !classes.length ? <div className="empty-state">Create classes before setting promotion paths.</div> : <div className="panel"><div className="table-wrap"><table><thead><tr><th>Current class</th><th>Promote to</th><th>Pass mark (%)</th><th>Promotion period</th><th /></tr></thead><tbody>{classes.map(row => <tr key={row.id}><td>{row.name}{row.grade ? ` · ${row.grade}` : ''}</td><td><select aria-label={`Next class after ${row.name}`} value={row.next_class_id || ''} onChange={event => update(row.id, 'next_class_id', event.target.value)}><option value="">No automatic promotion</option>{classes.filter(item => item.id !== row.id).map(item => <option key={item.id} value={item.id}>{item.name}{item.grade ? ` · ${item.grade}` : ''}</option>)}</select></td><td><input aria-label={`Pass mark for ${row.name}`} type="number" min="0" max="100" step="0.5" value={row.promotion_minimum_percentage ?? 50} onChange={event => update(row.id, 'promotion_minimum_percentage', event.target.value)} style={{ width: 90 }} /></td><td><span>Term 3 · end of academic year</span></td><td><button className="btn btn-primary" type="button" disabled={saving === row.id} onClick={() => save(row)}>{saving === row.id ? 'Saving…' : 'Save'}</button></td></tr>)}</tbody></table></div><p style={{ marginTop: 16 }}>Promotion is considered after exams and published results cover Term 1, Term 2, and Term 3. The overall annual score is compared with the pass mark; learners below it remain in their current class.</p></div>}
+    {!authorized ? <div className="panel">A principal or school administrator can manage student progression settings.</div> : loading ? <div className="portal-loading"><div className="spinner" /></div> : !classes.length ? <div className="empty-state">Create classes before setting promotion paths.</div> : <div className="panel"><div className="table-wrap"><table><thead><tr><th>Current class</th><th>Promote to</th><th>Pass mark (%)</th><th>Promotion period</th><th /></tr></thead><tbody>{classes.map(row => <tr key={row.id}><td>{classLabel(row)}</td><td><select aria-label={`Next class after ${row.name}`} value={row.next_class_id || ''} onChange={event => update(row.id, 'next_class_id', event.target.value)}><option value="">No automatic promotion</option>{classes.filter(item => item.id !== row.id).map(item => <option key={item.id} value={item.id}>{classLabel(item)}</option>)}</select></td><td><input aria-label={`Pass mark for ${row.name}`} type="number" min="0" max="100" step="0.5" value={row.promotion_minimum_percentage ?? 50} onChange={event => update(row.id, 'promotion_minimum_percentage', event.target.value)} style={{ width: 90 }} /></td><td><span>Term 3 · end of academic year</span></td><td><button className="btn btn-primary" type="button" disabled={saving === row.id} onClick={() => save(row)}>{saving === row.id ? 'Saving…' : 'Save'}</button></td></tr>)}</tbody></table></div><p style={{ marginTop: 16 }}>Promotion is considered after exams and published results cover Term 1, Term 2, and Term 3. The overall annual score is compared with the pass mark; learners below it remain in their current class.</p></div>}
   </section>
 }

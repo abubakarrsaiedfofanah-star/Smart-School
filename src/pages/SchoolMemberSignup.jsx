@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import PublicHeader from '../components/PublicHeader'
 import PublicFooter from '../components/PublicFooter'
 import { supabase } from '../lib/supabase'
+import { classLabel, groupClasses } from '../lib/educationLevels'
 import '../styles/school-member-signup.css'
 
 const portalCatalog = [
@@ -38,9 +39,10 @@ export default function SchoolMemberSignup() {
   const [submitted, setSubmitted] = useState(false)
   const [googleSubmitted, setGoogleSubmitted] = useState(false)
   const [chosenPortal, setChosenPortal] = useState(() => isGoogleRegistration && portalCatalog.some(option => option.value === googlePortal) ? googlePortal : '')
-  const [form, setForm] = useState(() => ({ fullName: googleFullName, email: '', password: '', admissionNumber: googleAdmissionNumber, requestedClassId: googleDraft.requestedClassId || '' }))
+  const [form, setForm] = useState(() => ({ fullName: googleFullName, email: '', password: '', admissionNumber: googleAdmissionNumber, requestedClassId: googleDraft.requestedClassId || '', studentRegistrationId: googleDraft.studentRegistrationId || '', parentNationalId: googleDraft.parentNationalId || '' }))
   const googleRequestStarted = useRef(false)
   const selectedPortal = availablePortals.find(option => option.value === chosenPortal) || null
+  const classGroups = groupClasses(classes)
   const googlePortalUnavailable = isGoogleRegistration && !loading && !portalLoadError
     && availablePortals.length > 0 && !availablePortals.some(option => option.value === googlePortal)
 
@@ -96,6 +98,8 @@ export default function SchoolMemberSignup() {
         p_requested_access: googleSelectedPortal.access,
         p_admission_number: googleAdmissionNumber,
         p_requested_class_id: googleDraft.requestedClassId || null,
+        p_student_registration_id: googleDraft.studentRegistrationId || null,
+        p_parent_national_id: googleDraft.parentNationalId || null,
       })
       if (!live) return
       setSubmitting(false)
@@ -119,8 +123,10 @@ export default function SchoolMemberSignup() {
     if (!supabase || !school) return toast.error('This school is not accepting portal registration right now.')
     if (!selectedPortal) return toast.error('Choose a portal currently available at this school.')
     if (form.password.length < 12) return toast.error('Use a password with at least 12 characters.')
-    if (['student', 'parent'].includes(selectedPortal.profileRole) && !form.admissionNumber.trim()) return toast.error('Enter the learner admission number provided by the school.')
-    if (['student', 'parent'].includes(selectedPortal.profileRole) && !form.requestedClassId) return toast.error('Choose the learner’s current class or level.')
+    if (selectedPortal.profileRole === 'student' && !form.admissionNumber.trim()) return toast.error('Enter the learner admission number provided by the school.')
+    if (selectedPortal.profileRole === 'student' && !form.requestedClassId) return toast.error('Choose the learner’s current class or level.')
+    if (selectedPortal.profileRole === 'parent' && !form.studentRegistrationId.trim()) return toast.error('Enter the student registration ID provided by the school.')
+    if (selectedPortal.profileRole === 'parent' && !form.parentNationalId.trim()) return toast.error('Enter your national ID for school verification.')
     setSubmitting(true)
     const { data, error } = await supabase.auth.signUp({
       email: form.email.trim().toLowerCase(),
@@ -132,7 +138,9 @@ export default function SchoolMemberSignup() {
           requested_portal_role: selectedPortal.profileRole,
           requested_portal_access: selectedPortal.access,
           admission_number: form.admissionNumber.trim(), full_name: form.fullName.trim(),
-          requested_class_id: form.requestedClassId || '',
+          requested_class_id: selectedPortal.profileRole === 'student' ? form.requestedClassId || '' : '',
+          student_registration_id: selectedPortal.profileRole === 'parent' ? form.studentRegistrationId.trim().toUpperCase() : '',
+          parent_national_id: selectedPortal.profileRole === 'parent' ? form.parentNationalId.trim() : '',
         },
       },
     })
@@ -147,12 +155,14 @@ export default function SchoolMemberSignup() {
   async function continueWithGoogle() {
     if (!supabase || !school) return toast.error('Google registration is unavailable right now.')
     if (!selectedPortal) return toast.error('Choose a portal currently available at this school.')
-    if (['student', 'parent'].includes(selectedPortal.profileRole) && !form.admissionNumber.trim()) return toast.error('Enter the learner admission number provided by the school.')
-    if (['student', 'parent'].includes(selectedPortal.profileRole) && !form.requestedClassId) return toast.error('Choose the learner’s current class or level.')
+    if (selectedPortal.profileRole === 'student' && !form.admissionNumber.trim()) return toast.error('Enter the learner admission number provided by the school.')
+    if (selectedPortal.profileRole === 'student' && !form.requestedClassId) return toast.error('Choose the learner’s current class or level.')
+    if (selectedPortal.profileRole === 'parent' && (!form.studentRegistrationId.trim() || !form.parentNationalId.trim())) return toast.error('Enter the student registration ID and your national ID.')
     try {
       sessionStorage.setItem(googleDraftKey, JSON.stringify({
         fullName: form.fullName.trim(), admissionNumber: form.admissionNumber.trim(),
-        requestedClassId: form.requestedClassId || '',
+        requestedClassId: form.requestedClassId || '', studentRegistrationId: form.studentRegistrationId.trim().toUpperCase(),
+        parentNationalId: form.parentNationalId.trim(),
       }))
     } catch {
       return toast.error('Could not save this registration for the Google sign-in step. Check your browser storage settings and try again.')
@@ -194,10 +204,14 @@ export default function SchoolMemberSignup() {
           <form onSubmit={submit}>
             <label>Full name<input required minLength="2" maxLength="160" autoComplete="name" value={form.fullName} onChange={event => setForm(current => ({ ...current, fullName: event.target.value }))} /></label>
             <label>Email<input required type="email" maxLength="254" autoComplete="email" value={form.email} onChange={event => setForm(current => ({ ...current, email: event.target.value }))} /></label>
-            {selectedPortal && ['student', 'parent'].includes(selectedPortal.profileRole) && <>
-              <label>Class or level<select required value={form.requestedClassId || ''} onChange={event => setForm(current => ({ ...current, requestedClassId: event.target.value }))}><option value="">Choose current class or level</option>{classes.map(item => <option key={item.id} value={item.id}>{item.name}{item.grade ? ` · ${item.grade}` : ''}</option>)}</select><small>This helps the school match the request and show the right class activities.</small></label>
-              <label>Learner admission number<input required maxLength="80" value={form.admissionNumber} onChange={event => setForm(current => ({ ...current, admissionNumber: event.target.value }))} /><small>For a parent account, enter your child’s admission number.</small></label>
+            {selectedPortal?.profileRole === 'student' && <>
+              <label>Class or level<select required value={form.requestedClassId || ''} onChange={event => setForm(current => ({ ...current, requestedClassId: event.target.value }))}><option value="">Choose current class or level</option>{classGroups.map(group => <optgroup key={group.stage} label={group.label}>{group.classes.map(item => <option key={item.id} value={item.id}>{classLabel(item)}</option>)}</optgroup>)}</select><small>This helps the school match the request and show the right class activities.</small></label>
+              <label>Learner admission number<input required maxLength="80" value={form.admissionNumber} onChange={event => setForm(current => ({ ...current, admissionNumber: event.target.value }))} /><small>Use the admission number the school gave the learner.</small></label>
               {!classes.length && <small>The school has not added any classes yet. Contact the school administrator before registering.</small>}
+            </>}
+            {selectedPortal?.profileRole === 'parent' && <>
+              <label>Student registration ID<input required maxLength="48" autoCapitalize="characters" value={form.studentRegistrationId} onChange={event => setForm(current => ({ ...current, studentRegistrationId: event.target.value.toUpperCase() }))} placeholder="For example, STU-SCH-000001-000001" /><small>Get this permanent ID from the school. The school will confirm the learner before linking your account.</small></label>
+              <label>Parent national ID<input required maxLength="80" autoComplete="off" value={form.parentNationalId} onChange={event => setForm(current => ({ ...current, parentNationalId: event.target.value }))} /><small>Only the school administrator can review this with your request.</small></label>
             </>}
             <label>Password<div className="school-password-field"><input required minLength="12" type={showPassword ? 'text' : 'password'} autoComplete="new-password" value={form.password} onChange={event => setForm(current => ({ ...current, password: event.target.value }))} /><button className="school-password-visibility" type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2.2 12s3.4-6.5 9.8-6.5 9.8 6.5 9.8 6.5-3.4 6.5-9.8 6.5S2.2 12 2.2 12Z" /><circle cx="12" cy="12" r="3" />{!showPassword && <path d="m4 4 16 16" />}</svg></button></div><small>At least 12 characters.</small></label>
             {!supabase && <p className="school-member-signup-error">Supabase is not connected. Registration is unavailable.</p>}

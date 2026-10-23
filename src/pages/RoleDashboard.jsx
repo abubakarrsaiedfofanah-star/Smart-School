@@ -140,11 +140,11 @@ export default function RoleDashboard({role, embedded = false}){const {logout,pr
           const childIds = (links || []).map(item => item.student_id);
           const { data: children, error: childError } = childIds.length ? await supabase.from('students').select('id,class_id').eq('school_id', profile.school_id).in('id', childIds) : { data: [], error: null };
           if (childError) throw childError;
-          const classIds = [...new Set((children || []).map(child => child.class_id).filter(Boolean))];
-          const [attendance, results, assignments, payments] = childIds.length ? await Promise.all([
-            count('attendance', [...schoolFilter, ['student_id', 'in', childIds]]), count('results', [...schoolFilter, ['student_id', 'in', childIds]]),
-            classIds.length ? count('assignments', [...schoolFilter, ['class_id', 'in', classIds]]) : Promise.resolve(0),
-            sum('payments', 'amount', [...schoolFilter, ['student_id', 'in', childIds], ['status', 'eq', 'pending']])
+          const selectedChild = (children || []).find(child => child.id === studentId) || children?.[0];
+          const [attendance, results, assignments, payments] = selectedChild ? await Promise.all([
+            count('attendance', [...schoolFilter, ['student_id', 'eq', selectedChild.id]]), count('results', [...schoolFilter, ['student_id', 'eq', selectedChild.id]]),
+            selectedChild.class_id ? count('assignments', [...schoolFilter, ['class_id', 'eq', selectedChild.class_id]]) : Promise.resolve(0),
+            sum('payments', 'amount', [...schoolFilter, ['student_id', 'eq', selectedChild.id], ['status', 'eq', 'pending']])
           ]) : [0, 0, 0, 0];
           values = [childIds.length, attendance, results, assignments, money(payments)];
         }
@@ -156,7 +156,7 @@ export default function RoleDashboard({role, embedded = false}){const {logout,pr
     };
     load();
     return () => { cancelled = true };
-  }, [profile?.id, profile?.school_id, role, demo, school?.timezone, school?.currency_code]);
+  }, [profile?.id, profile?.school_id, role, demo, studentId, school?.timezone, school?.currency_code]);
 
   useEffect(() => {
     if (school?.primary_color) document.documentElement.style.setProperty('--green', school.primary_color);
@@ -187,12 +187,17 @@ export default function RoleDashboard({role, embedded = false}){const {logout,pr
         if (error) { console.error('Unable to load linked learners:', error.message); return; }
         const ids = (links || []).map(link => link.student_id);
         if (!ids.length) { setParentChildren([]); setStudentId(null); return; }
-        const { data: children, error: childError } = await supabase.from('students').select('id,profile_id,admission_number').eq('school_id', profile.school_id).in('id', ids);
+        const { data: children, error: childError } = await supabase.from('students').select('id,profile_id,admission_number,full_name,class_id').eq('school_id', profile.school_id).in('id', ids);
         if (childError) { console.error('Unable to load learner profiles:', childError.message); return; }
         const profileIds = (children || []).map(child => child.profile_id).filter(Boolean);
-        const { data: childProfiles } = profileIds.length ? await supabase.from('profiles').select('id,full_name').in('id', profileIds) : { data: [] };
+        const classIds = [...new Set((children || []).map(child => child.class_id).filter(Boolean))];
+        const [{ data: childProfiles }, { data: childClasses }] = await Promise.all([
+          profileIds.length ? supabase.from('profiles').select('id,full_name').in('id', profileIds) : Promise.resolve({ data: [] }),
+          classIds.length ? supabase.from('classes').select('id,name,grade').eq('school_id', profile.school_id).in('id', classIds) : Promise.resolve({ data: [] })
+        ]);
         const names = new Map((childProfiles || []).map(item => [item.id, item.full_name]));
-        const linked = (children || []).map(child => ({ ...child, name: names.get(child.profile_id) || child.admission_number || 'Learner' }));
+        const classNames = new Map((childClasses || []).map(item => [item.id, `${item.name}${item.grade && item.grade !== item.name ? ` · ${item.grade}` : ''}`]));
+        const linked = (children || []).map(child => ({ ...child, name: names.get(child.profile_id) || child.full_name || child.admission_number || 'Learner', className: classNames.get(child.class_id) || 'Class not assigned' }));
         setParentChildren(linked);
         setStudentId(current => linked.some(child => child.id === current) ? current : linked[0]?.id || null);
       };
@@ -276,8 +281,9 @@ return <div className={`portal${embedded ? ' portal-embedded' : ''}`} style={{'-
               <b>{t('viewing_child')}:</b>
               <select value={studentId || ''} onChange={e => setStudentId(e.target.value || null)} aria-label="Choose a learner">
                 {!parentChildren.length && <option value="">No learners linked to this account</option>}
-                {parentChildren.map(child => <option value={child.id} key={child.id}>{child.name}</option>)}
+                {parentChildren.map(child => <option value={child.id} key={child.id}>{child.name} · {child.className}</option>)}
               </select>
+              {!!parentChildren.length && <small>Each page shows information for the selected child.</small>}
             </div>
           )}
           {demo && <div className="dashboard-data-note" role="status">Demo account · connect a school to load records.</div>}
@@ -297,11 +303,19 @@ return <div className={`portal${embedded ? ' portal-embedded' : ''}`} style={{'-
             </div>
           )}
           <DashboardQuickActions role={role} studentId={studentId} onSelect={choose} />
-          <DashboardHighlights role={role} profile={profile} timezone={school?.timezone || 'Africa/Nairobi'} />
+          <DashboardHighlights role={role} profile={profile} timezone={school?.timezone || 'Africa/Nairobi'} studentId={studentId} />
           {role === 'super_admin' && <SuperAdminOverview />}
         </>
       ) : (
         <div className="module-view-container">
+          {role === 'parent' && <div className="child-switch glass-card mini-switch">
+            <b>{t('viewing_child')}:</b>
+            <select value={studentId || ''} onChange={event => setStudentId(event.target.value || null)} aria-label="Choose a learner">
+              {!parentChildren.length && <option value="">No learners linked to this account</option>}
+              {parentChildren.map(child => <option value={child.id} key={child.id}>{child.name} · {child.className}</option>)}
+            </select>
+            {!!parentChildren.length && <small>Records below belong to the selected child.</small>}
+          </div>}
           <ModulePanel table={table} profile={profile} superAdmin={role === 'super_admin'} studentId={studentId} />
         </div>
       )}
@@ -336,7 +350,7 @@ function DashboardQuickActions({ role, studentId, onSelect }) {
   </div></section>
 }
 
-function DashboardHighlights({ role, profile, timezone }) {
+function DashboardHighlights({ role, profile, timezone, studentId }) {
   const [notices, setNotices] = useState([])
   const [assignments, setAssignments] = useState([])
   const [pulse, setPulse] = useState('—')
@@ -351,7 +365,7 @@ function DashboardHighlights({ role, profile, timezone }) {
         const schoolId = profile.school_id
         const today = new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date())
         const noticeRequest = supabase.from('announcements').select('id,title,created_at').eq('school_id', schoolId).order('created_at', { ascending: false }).limit(3)
-        let classIds = []
+      let classIds = []
         let studentIds = []
         if (role === 'student') {
           const { data } = await supabase.from('students').select('id,class_id').eq('school_id', schoolId).eq('profile_id', profile.id).maybeSingle()
@@ -361,8 +375,11 @@ function DashboardHighlights({ role, profile, timezone }) {
           const linkedIds = (links || []).map(row => row.student_id)
           if (linkedIds.length) {
             const { data: children } = await supabase.from('students').select('id,class_id').eq('school_id', schoolId).in('id', linkedIds)
-            studentIds = (children || []).map(row => row.id)
-            classIds = [...new Set((children || []).map(row => row.class_id).filter(Boolean))]
+            const selectedChild = (children || []).find(child => child.id === studentId) || children?.[0]
+            if (selectedChild) {
+              studentIds = [selectedChild.id]
+              classIds = selectedChild.class_id ? [selectedChild.class_id] : []
+            }
           }
         } else if (role === 'teacher') {
           const [classes, subjectClasses] = await Promise.all([
@@ -372,6 +389,7 @@ function DashboardHighlights({ role, profile, timezone }) {
           if (classes.error || subjectClasses.error) throw classes.error || subjectClasses.error
           classIds = [...new Set([...(classes.data || []).map(row => row.id), ...(subjectClasses.data || []).map(row => row.class_id)])]
         }
+        if (role === 'parent') noticeRequest.or(classIds.length ? `class_id.is.null,class_id.eq.${classIds[0]}` : 'class_id.is.null')
         let assignmentRequest = supabase.from('assignments').select('id,title,due_date').eq('school_id', schoolId).gte('due_date', today).order('due_date', { ascending: true }).limit(4)
         if (role === 'teacher') assignmentRequest = assignmentRequest.eq('created_by', profile.id)
         if ((role === 'student' || role === 'parent') && classIds.length) assignmentRequest = assignmentRequest.in('class_id', classIds)
@@ -401,7 +419,7 @@ function DashboardHighlights({ role, profile, timezone }) {
     }
     void load()
     return () => { cancelled = true }
-  }, [role, profile?.id, profile?.school_id, timezone])
+  }, [role, profile?.id, profile?.school_id, timezone, studentId])
 
   if (role === 'super_admin') return null
   const formatDate = value => new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', timeZone: timezone }).format(new Date(value))

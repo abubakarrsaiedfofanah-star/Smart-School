@@ -9291,6 +9291,7 @@ grant execute on function public.process_flutterwave_school_activity_event(text,
 alter table public.school_portal_signup_requests
   add column if not exists requested_class_id uuid references public.classes(id) on delete set null;
 
+drop function if exists public.get_public_school_classes(text);
 create or replace function public.get_public_school_classes(p_school_slug text)
 returns table(id uuid, name text, grade text)
 language sql stable security definer set search_path = '' as $$
@@ -10076,3 +10077,1421 @@ create trigger enforce_school_signup_portal_enabled
   for each row execute function private.enforce_school_signup_portal_enabled();
 
 -- END supabase/091_school_specific_registration_portals.sql
+
+-- BEGIN supabase/092_class_based_school_organization.sql
+-- Standardize class ordering and let class teachers publish class-only notices.
+alter table public.classes
+  add column if not exists education_stage text,
+  add column if not exists level_order smallint;
+
+update public.classes
+set education_stage = case
+      when lower(concat_ws(' ', name, grade)) ~ '(nursery|kindergarten|pre.?primary)' then 'pre_primary'
+      when lower(concat_ws(' ', name, grade)) ~ '(jss|junior secondary)' then 'jss'
+      when lower(concat_ws(' ', name, grade)) ~ '(sss|senior secondary)' then 'sss'
+      when lower(concat_ws(' ', name, grade)) ~ '(primary|class)' then 'primary'
+      else education_stage
+    end,
+    level_order = case
+      when lower(concat_ws(' ', name, grade)) ~ 'nursery\s*1' then 1
+      when lower(concat_ws(' ', name, grade)) ~ 'nursery\s*2' then 2
+      when lower(concat_ws(' ', name, grade)) ~ 'kindergarten' then 3
+      when lower(concat_ws(' ', name, grade)) ~ '(class|primary)\s*1' then 1
+      when lower(concat_ws(' ', name, grade)) ~ '(class|primary)\s*2' then 2
+      when lower(concat_ws(' ', name, grade)) ~ '(class|primary)\s*3' then 3
+      when lower(concat_ws(' ', name, grade)) ~ '(class|primary)\s*4' then 4
+      when lower(concat_ws(' ', name, grade)) ~ '(class|primary)\s*5' then 5
+      when lower(concat_ws(' ', name, grade)) ~ '(class|primary)\s*6' then 6
+      when lower(concat_ws(' ', name, grade)) ~ '(jss|junior secondary)\s*1' then 1
+      when lower(concat_ws(' ', name, grade)) ~ '(jss|junior secondary)\s*2' then 2
+      when lower(concat_ws(' ', name, grade)) ~ '(jss|junior secondary)\s*3' then 3
+      when lower(concat_ws(' ', name, grade)) ~ '(sss|senior secondary)\s*1' then 1
+      when lower(concat_ws(' ', name, grade)) ~ '(sss|senior secondary)\s*2' then 2
+      when lower(concat_ws(' ', name, grade)) ~ '(sss|senior secondary)\s*3' then 3
+      else level_order
+    end
+where education_stage is null or level_order is null;
+
+alter table public.classes drop constraint if exists classes_education_stage_valid;
+alter table public.classes add constraint classes_education_stage_valid
+  check (education_stage is null or education_stage in ('pre_primary','primary','jss','sss'));
+create index if not exists classes_school_stage_order_idx
+  on public.classes(school_id, education_stage, level_order, name);
+
+create or replace function private.validate_class_teacher()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if new.teacher_id is not null and not exists (
+    select 1 from public.profiles p where p.id = new.teacher_id and p.school_id = new.school_id
+      and p.role = 'teacher' and p.is_active is true
+  ) then
+    raise exception 'Choose an active teacher from this school.' using errcode = '23514';
+  end if;
+  return new;
+end $$;
+revoke all on function private.validate_class_teacher() from public, anon, authenticated;
+drop trigger if exists validate_class_teacher on public.classes;
+create trigger validate_class_teacher before insert or update of teacher_id, school_id on public.classes
+for each row execute function private.validate_class_teacher();
+
+drop function if exists public.get_public_school_classes(text);
+create or replace function public.get_public_school_classes(p_school_slug text)
+returns table(id uuid, name text, grade text, education_stage text, level_order smallint)
+language sql stable security definer set search_path = '' as $$
+  select c.id, c.name, c.grade, c.education_stage, c.level_order
+  from public.classes c join public.schools s on s.id = c.school_id
+  where s.slug = p_school_slug and s.status = 'active'
+  order by case c.education_stage when 'pre_primary' then 1 when 'primary' then 2 when 'jss' then 3 when 'sss' then 4 else 5 end,
+    c.level_order nulls last, lower(c.grade), lower(c.name), c.id
+$$;
+revoke all on function public.get_public_school_classes(text) from public;
+grant execute on function public.get_public_school_classes(text) to anon, authenticated;
+
+alter table public.announcements
+  add column if not exists class_id uuid references public.classes(id) on delete cascade;
+create index if not exists announcements_school_class_created_idx
+  on public.announcements(school_id, class_id, created_at desc);
+
+create or replace function private.validate_announcement_class()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if new.class_id is not null and not exists (
+    select 1 from public.classes c where c.id = new.class_id and c.school_id = new.school_id
+  ) then
+    raise exception 'Choose a class from this school.' using errcode = '23514';
+  end if;
+  if tg_op = 'UPDATE' and (new.school_id is distinct from old.school_id or new.created_by is distinct from old.created_by) then
+    raise exception 'An announcement cannot be reassigned to another school or author.' using errcode = '42501';
+  end if;
+  return new;
+end $$;
+revoke all on function private.validate_announcement_class() from public, anon, authenticated;
+drop trigger if exists validate_announcement_class on public.announcements;
+create trigger validate_announcement_class before insert or update on public.announcements
+for each row execute function private.validate_announcement_class();
+
+drop policy if exists announcements_read_school on public.announcements;
+drop policy if exists announcements_staff_insert on public.announcements;
+drop policy if exists announcements_staff_update on public.announcements;
+drop policy if exists announcements_staff_delete on public.announcements;
+drop policy if exists announcements_school_leadership_insert on public.announcements;
+drop policy if exists announcements_school_leadership_update on public.announcements;
+drop policy if exists announcements_school_leadership_delete on public.announcements;
+drop policy if exists "school members announcements" on public.announcements;
+drop policy if exists announcements_read_related on public.announcements;
+drop policy if exists announcements_insert_related on public.announcements;
+drop policy if exists announcements_update_related on public.announcements;
+drop policy if exists announcements_delete_related on public.announcements;
+
+create policy announcements_read_related on public.announcements for select to authenticated using (
+  private.current_role() = 'super_admin'
+  or (school_id = private.current_school_id() and (
+    class_id is null
+    or private.has_school_permission(school_id, 'school.announcements.manage')
+    or private.can_view_class(class_id)
+  ))
+);
+create policy announcements_insert_related on public.announcements for insert to authenticated with check (
+  school_id = private.current_school_id()
+  and created_by = (select auth.uid())
+  and (
+    (class_id is null and private.has_school_permission(school_id, 'school.announcements.manage'))
+    or (class_id is not null and private.current_role() = 'teacher' and private.can_view_class(class_id))
+    or (class_id is not null and private.has_school_permission(school_id, 'school.announcements.manage') and private.can_view_class(class_id))
+  )
+);
+create policy announcements_update_related on public.announcements for update to authenticated
+using (
+  school_id = private.current_school_id()
+  and (private.has_school_permission(school_id, 'school.announcements.manage')
+    or (created_by = (select auth.uid()) and class_id is not null and private.current_role() = 'teacher' and private.can_view_class(class_id)))
+)
+with check (
+  school_id = private.current_school_id()
+  and (private.has_school_permission(school_id, 'school.announcements.manage')
+    or (created_by = (select auth.uid()) and class_id is not null and private.current_role() = 'teacher' and private.can_view_class(class_id)))
+);
+create policy announcements_delete_related on public.announcements for delete to authenticated using (
+  school_id = private.current_school_id()
+  and (private.has_school_permission(school_id, 'school.announcements.manage')
+    or (created_by = (select auth.uid()) and class_id is not null and private.current_role() = 'teacher' and private.can_view_class(class_id)))
+);
+
+drop policy if exists lesson_plans_read_related on public.lesson_plans;
+create policy lesson_plans_read_related on public.lesson_plans for select to authenticated using (
+  school_id = private.current_school_id() and (
+    private.current_role() = 'school_admin'
+    or (private.current_role() = 'teacher' and class_id is not null and subject_id is not null and exists (
+      select 1 from public.teacher_subject_assignments tsa where tsa.school_id = lesson_plans.school_id
+        and tsa.teacher_id = (select auth.uid()) and tsa.class_id = lesson_plans.class_id and tsa.subject_id = lesson_plans.subject_id
+    ))
+    or (is_public = true and class_id is not null and private.can_view_class(class_id)
+      and private.current_role() in ('student','parent'))
+  )
+);
+-- END supabase/092_class_based_school_organization.sql
+
+-- BEGIN supabase/093_role_scoped_class_subjects.sql
+-- Keep subject catalogs visible by role and expose learner subjects through
+-- the class/subject/teacher assignment matrix.
+create or replace function private.validate_student_class_school()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if new.class_id is not null and not exists (
+    select 1 from public.classes c where c.id = new.class_id and c.school_id = new.school_id
+  ) then
+    raise exception 'A learner must be enrolled in a class from the same school.' using errcode = '23514';
+  end if;
+  return new;
+end $$;
+revoke all on function private.validate_student_class_school() from public, anon, authenticated;
+drop trigger if exists validate_student_class_school on public.students;
+create trigger validate_student_class_school before insert or update of school_id, class_id on public.students
+for each row execute function private.validate_student_class_school();
+
+create or replace function private.can_view_school_subject(target_subject uuid)
+returns boolean language sql stable security definer set search_path = '' as $$
+  select
+    private.current_role() = 'super_admin'
+    or exists (
+      select 1 from public.subjects subject_row
+      join public.profiles actor on actor.school_id = subject_row.school_id
+      where subject_row.id = target_subject
+        and actor.id = (select auth.uid())
+        and actor.is_active is true
+        and private.school_subscription_entitled(actor.school_id)
+        and (
+          actor.role in ('school_admin','staff')
+          or (actor.role = 'teacher' and exists (
+            select 1 from public.teacher_subject_assignments tsa
+            where tsa.school_id = actor.school_id and tsa.subject_id = subject_row.id and tsa.teacher_id = actor.id
+          ))
+          or (actor.role = 'student' and exists (
+            select 1 from public.students learner
+            join public.teacher_subject_assignments tsa on tsa.school_id = learner.school_id
+              and tsa.class_id = learner.class_id and tsa.subject_id = subject_row.id
+            where learner.school_id = actor.school_id and learner.profile_id = actor.id
+          ))
+          or (actor.role = 'parent' and exists (
+            select 1 from public.student_guardians guardian
+            join public.students learner on learner.id = guardian.student_id
+            join public.teacher_subject_assignments tsa on tsa.school_id = learner.school_id
+              and tsa.class_id = learner.class_id and tsa.subject_id = subject_row.id
+            where learner.school_id = actor.school_id and guardian.guardian_id = actor.id
+          ))
+        )
+    )
+$$;
+revoke all on function private.can_view_school_subject(uuid) from public, anon;
+grant execute on function private.can_view_school_subject(uuid) to authenticated;
+
+drop policy if exists subjects_read_school on public.subjects;
+drop policy if exists subjects_read_by_role on public.subjects;
+create policy subjects_read_by_role on public.subjects for select to authenticated
+using (private.can_view_school_subject(id));
+
+drop policy if exists teacher_subject_assignments_read_school on public.teacher_subject_assignments;
+drop policy if exists teacher_subject_assignments_read_related on public.teacher_subject_assignments;
+create policy teacher_subject_assignments_read_related on public.teacher_subject_assignments
+for select to authenticated using (
+  school_id = private.current_school_id()
+  and (
+    private.current_role() = 'school_admin'
+    or private.has_school_permission(school_id, 'school.assignments.manage')
+    or private.has_hr_role(school_id, array['principal'])
+    or teacher_id = (select auth.uid())
+    or (private.current_role() = 'teacher' and exists (
+      select 1 from public.classes class_row where class_row.id = teacher_subject_assignments.class_id
+        and class_row.school_id = teacher_subject_assignments.school_id
+        and class_row.teacher_id = (select auth.uid())
+    ))
+    or (private.current_role() in ('student','parent') and private.can_view_class(class_id))
+  )
+);
+
+drop policy if exists teacher_subject_assignments_admin_manage on public.teacher_subject_assignments;
+create policy teacher_subject_assignments_admin_manage on public.teacher_subject_assignments
+for all to authenticated
+using (
+  school_id = private.current_school_id()
+  and (private.current_role() = 'school_admin' or private.has_school_permission(school_id, 'school.assignments.manage'))
+)
+with check (
+  school_id = private.current_school_id()
+  and (private.current_role() = 'school_admin' or private.has_school_permission(school_id, 'school.assignments.manage'))
+);
+-- END supabase/093_role_scoped_class_subjects.sql
+
+-- BEGIN supabase/094_class_subject_role_security.sql
+-- Remove early broad same-school policies so class and subject access follows
+-- the current school role and assignment model.
+do $$
+declare policy_row record;
+begin
+  for policy_row in
+    select schemaname, tablename, policyname
+    from pg_catalog.pg_policies
+    where schemaname = 'public'
+      and tablename in ('classes', 'subjects', 'teacher_subject_assignments', 'class_subjects')
+  loop
+    execute format('drop policy %I on %I.%I', policy_row.policyname, policy_row.schemaname, policy_row.tablename);
+  end loop;
+end $$;
+
+create policy classes_read_by_role on public.classes
+for select to authenticated using (
+  private.current_role() = 'super_admin'
+  or (school_id = private.current_school_id() and private.can_view_class(id))
+  or private.has_hr_role(school_id, array['principal'])
+);
+create policy classes_manage_by_role on public.classes
+for all to authenticated using (
+  school_id = private.current_school_id()
+  and (private.current_role() = 'school_admin' or private.has_school_permission(school_id, 'school.assignments.manage')
+    or private.has_hr_role(school_id, array['principal']))
+)
+with check (
+  school_id = private.current_school_id()
+  and (private.current_role() = 'school_admin' or private.has_school_permission(school_id, 'school.assignments.manage')
+    or private.has_hr_role(school_id, array['principal']))
+);
+
+create policy subjects_read_by_role on public.subjects
+for select to authenticated using (private.can_view_school_subject(id));
+create policy subjects_manage_by_role on public.subjects
+for all to authenticated using (
+  school_id = private.current_school_id()
+  and (private.current_role() = 'school_admin' or private.has_school_permission(school_id, 'school.assignments.manage')
+    or private.has_hr_role(school_id, array['principal']))
+)
+with check (
+  school_id = private.current_school_id()
+  and (private.current_role() = 'school_admin' or private.has_school_permission(school_id, 'school.assignments.manage')
+    or private.has_hr_role(school_id, array['principal']))
+);
+
+create policy teacher_subject_assignments_read_related on public.teacher_subject_assignments
+for select to authenticated using (
+  school_id = private.current_school_id()
+  and (
+    private.current_role() = 'school_admin'
+    or private.has_school_permission(school_id, 'school.assignments.manage')
+    or teacher_id = (select auth.uid())
+    or (private.current_role() = 'teacher' and exists (
+      select 1 from public.classes class_row where class_row.id = teacher_subject_assignments.class_id
+        and class_row.school_id = teacher_subject_assignments.school_id
+        and class_row.teacher_id = (select auth.uid())
+    ))
+    or (private.current_role() in ('student','parent') and private.can_view_class(class_id))
+  )
+);
+create policy teacher_subject_assignments_manage_by_role on public.teacher_subject_assignments
+for all to authenticated using (
+  school_id = private.current_school_id()
+  and (private.current_role() = 'school_admin' or private.has_school_permission(school_id, 'school.assignments.manage')
+    or private.has_hr_role(school_id, array['principal']))
+)
+with check (
+  school_id = private.current_school_id()
+  and (private.current_role() = 'school_admin' or private.has_school_permission(school_id, 'school.assignments.manage')
+    or private.has_hr_role(school_id, array['principal']))
+);
+
+-- A valid assignment must bind an active teacher, subject, and class from the
+-- same school. Foreign keys alone do not prevent cross-school combinations.
+create or replace function private.validate_teacher_subject_assignment()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if not exists (
+    select 1
+    from public.profiles teacher
+    join public.classes class_row on class_row.id = new.class_id and class_row.school_id = new.school_id
+    join public.subjects subject_row on subject_row.id = new.subject_id and subject_row.school_id = new.school_id
+    where teacher.id = new.teacher_id and teacher.school_id = new.school_id
+      and teacher.role = 'teacher' and teacher.is_active is true
+  ) then
+    raise exception 'Choose an active teacher, class, and subject from the same school.' using errcode = '23514';
+  end if;
+  return new;
+end $$;
+revoke all on function private.validate_teacher_subject_assignment() from public, anon, authenticated;
+drop trigger if exists validate_teacher_subject_assignment on public.teacher_subject_assignments;
+create trigger validate_teacher_subject_assignment
+before insert or update of school_id, teacher_id, class_id, subject_id
+on public.teacher_subject_assignments
+for each row execute function private.validate_teacher_subject_assignment();
+
+-- END supabase/094_class_subject_role_security.sql
+
+-- BEGIN supabase/095_subject_stage_scope.sql
+-- Restrict each school's subject catalog to the education stages where that
+-- subject is taught, then enforce that scope when assigning a teacher.
+alter table public.subjects
+  add column if not exists education_stages text[] not null
+    default array['pre_primary','primary','jss','sss']::text[];
+
+alter table public.subjects drop constraint if exists subjects_education_stages_valid;
+alter table public.subjects add constraint subjects_education_stages_valid check (
+  cardinality(education_stages) > 0
+  and education_stages <@ array['pre_primary','primary','jss','sss']::text[]
+);
+
+-- Homeroom teachers can see the subject catalog for their assigned class;
+-- subject teachers can still see only subjects assigned to them or their class.
+create or replace function private.can_view_school_subject(target_subject uuid)
+returns boolean language sql stable security definer set search_path = '' as $$
+  select
+    private.current_role() = 'super_admin'
+    or exists (
+      select 1 from public.subjects subject_row
+      join public.profiles actor on actor.school_id = subject_row.school_id
+      where subject_row.id = target_subject
+        and actor.id = (select auth.uid())
+        and actor.is_active is true
+        and private.school_subscription_entitled(actor.school_id)
+        and (
+          actor.role in ('school_admin','staff')
+          or (actor.role = 'teacher' and exists (
+            select 1 from public.teacher_subject_assignments tsa
+            where tsa.school_id = actor.school_id and tsa.subject_id = subject_row.id and tsa.teacher_id = actor.id
+          ))
+          or (actor.role = 'teacher' and exists (
+            select 1 from public.teacher_subject_assignments tsa
+            join public.classes class_row on class_row.id = tsa.class_id and class_row.school_id = tsa.school_id
+            where tsa.school_id = actor.school_id and tsa.subject_id = subject_row.id
+              and class_row.teacher_id = actor.id
+          ))
+          or (actor.role = 'student' and exists (
+            select 1 from public.students learner
+            join public.teacher_subject_assignments tsa on tsa.school_id = learner.school_id
+              and tsa.class_id = learner.class_id and tsa.subject_id = subject_row.id
+            where learner.school_id = actor.school_id and learner.profile_id = actor.id
+          ))
+          or (actor.role = 'parent' and exists (
+            select 1 from public.student_guardians guardian
+            join public.students learner on learner.id = guardian.student_id
+            join public.teacher_subject_assignments tsa on tsa.school_id = learner.school_id
+              and tsa.class_id = learner.class_id and tsa.subject_id = subject_row.id
+            where learner.school_id = actor.school_id and guardian.guardian_id = actor.id
+          ))
+        )
+    )
+$$;
+revoke all on function private.can_view_school_subject(uuid) from public, anon;
+grant execute on function private.can_view_school_subject(uuid) to authenticated;
+
+create or replace function private.validate_teacher_subject_assignment()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if not exists (
+    select 1
+    from public.profiles teacher
+    join public.classes class_row on class_row.id = new.class_id and class_row.school_id = new.school_id
+    join public.subjects subject_row on subject_row.id = new.subject_id and subject_row.school_id = new.school_id
+    where teacher.id = new.teacher_id and teacher.school_id = new.school_id
+      and teacher.role = 'teacher' and teacher.is_active is true
+      and (class_row.education_stage is null or class_row.education_stage = any(subject_row.education_stages))
+  ) then
+    raise exception 'Choose an active teacher and a subject available for this class in the same school.' using errcode = '23514';
+  end if;
+  return new;
+end $$;
+
+create or replace function private.prevent_subject_stage_assignment_conflicts()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if exists (
+    select 1 from public.teacher_subject_assignments assignment_row
+    join public.classes class_row on class_row.id = assignment_row.class_id
+    where assignment_row.subject_id = new.id and class_row.education_stage is not null
+      and not (new.education_stages @> array[class_row.education_stage])
+  ) then
+    raise exception 'This subject is already assigned to a class outside the selected education stages.' using errcode = '23514';
+  end if;
+  return new;
+end $$;
+revoke all on function private.prevent_subject_stage_assignment_conflicts() from public, anon, authenticated;
+drop trigger if exists prevent_subject_stage_assignment_conflicts on public.subjects;
+create trigger prevent_subject_stage_assignment_conflicts
+before update of education_stages on public.subjects
+for each row execute function private.prevent_subject_stage_assignment_conflicts();
+
+create or replace function private.prevent_class_stage_assignment_conflicts()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if new.education_stage is not null and exists (
+    select 1 from public.teacher_subject_assignments assignment_row
+    join public.subjects subject_row on subject_row.id = assignment_row.subject_id
+    where assignment_row.class_id = new.id
+      and not (subject_row.education_stages @> array[new.education_stage])
+  ) then
+    raise exception 'This class has a teacher assignment for a subject not available at the selected education stage.' using errcode = '23514';
+  end if;
+  return new;
+end $$;
+revoke all on function private.prevent_class_stage_assignment_conflicts() from public, anon, authenticated;
+drop trigger if exists prevent_class_stage_assignment_conflicts on public.classes;
+create trigger prevent_class_stage_assignment_conflicts
+before update of education_stage on public.classes
+for each row execute function private.prevent_class_stage_assignment_conflicts();
+-- END supabase/095_subject_stage_scope.sql
+
+-- BEGIN supabase/096_student_teacher_parent_data_scope.sql
+-- Tighten class membership helpers and ensure subject-specific learning
+-- materials are visible only through a learner's or parent's class matrix.
+
+create or replace function private.can_view_class(target_class uuid)
+returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (
+    select 1
+    from public.classes c
+    join public.profiles actor on actor.id = (select auth.uid())
+    where c.id = target_class
+      and actor.is_active is true
+      and actor.school_id = c.school_id
+      and private.school_subscription_entitled(c.school_id)
+      and (
+        actor.role = 'school_admin'
+        or (actor.role = 'teacher' and (
+          c.teacher_id = actor.id
+          or exists (
+            select 1 from public.teacher_subject_assignments tsa
+            where tsa.school_id = c.school_id and tsa.class_id = c.id
+              and tsa.teacher_id = actor.id
+          )
+        ))
+        or (actor.role = 'student' and exists (
+          select 1 from public.students s
+          where s.school_id = c.school_id and s.class_id = c.id
+            and s.profile_id = actor.id
+        ))
+        or (actor.role = 'parent' and exists (
+          select 1 from public.student_guardians g
+          join public.students s on s.id = g.student_id and s.school_id = c.school_id
+          where g.guardian_id = actor.id and s.class_id = c.id
+        ))
+      )
+  )
+$$;
+
+create or replace function private.can_view_student(target_student uuid)
+returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (
+    select 1
+    from public.students s
+    join public.profiles actor on actor.id = (select auth.uid())
+    where s.id = target_student
+      and s.school_id = actor.school_id
+      and actor.is_active is true
+      and private.school_subscription_entitled(s.school_id)
+      and (
+        actor.role = 'school_admin'
+        or (actor.role = 'student' and s.profile_id = actor.id)
+        or (actor.role = 'teacher' and exists (
+          select 1 from public.classes c
+          where c.id = s.class_id and c.school_id = s.school_id
+            and (c.teacher_id = actor.id or exists (
+              select 1 from public.teacher_subject_assignments tsa
+              where tsa.school_id = c.school_id and tsa.class_id = c.id
+                and tsa.teacher_id = actor.id
+            ))
+        ))
+        or (actor.role = 'parent' and exists (
+          select 1 from public.student_guardians g
+          where g.student_id = s.id and g.guardian_id = actor.id
+        ))
+      )
+  )
+$$;
+revoke all on function private.can_view_class(uuid) from public, anon;
+revoke all on function private.can_view_student(uuid) from public, anon;
+grant execute on function private.can_view_class(uuid) to authenticated;
+grant execute on function private.can_view_student(uuid) to authenticated;
+
+-- Teachers see only subjects explicitly assigned to them. Homeroom access to
+-- a class does not implicitly grant access to every subject taught there.
+create or replace function private.can_view_school_subject(target_subject uuid)
+returns boolean language sql stable security definer set search_path = '' as $$
+  select private.current_role() = 'super_admin'
+    or exists (
+      select 1 from public.subjects subject_row
+      join public.profiles actor on actor.school_id = subject_row.school_id
+      where subject_row.id = target_subject
+        and actor.id = (select auth.uid())
+        and actor.is_active is true
+        and private.school_subscription_entitled(actor.school_id)
+        and (
+          actor.role in ('school_admin','staff')
+          or (actor.role = 'teacher' and exists (
+            select 1 from public.teacher_subject_assignments tsa
+            where tsa.school_id = actor.school_id and tsa.subject_id = subject_row.id
+              and tsa.teacher_id = actor.id
+          ))
+          or (actor.role = 'student' and exists (
+            select 1 from public.students learner
+            join public.teacher_subject_assignments tsa on tsa.school_id = learner.school_id
+              and tsa.class_id = learner.class_id and tsa.subject_id = subject_row.id
+            where learner.school_id = actor.school_id and learner.profile_id = actor.id
+          ))
+          or (actor.role = 'parent' and exists (
+            select 1 from public.student_guardians guardian
+            join public.students learner on learner.id = guardian.student_id
+            join public.teacher_subject_assignments tsa on tsa.school_id = learner.school_id
+              and tsa.class_id = learner.class_id and tsa.subject_id = subject_row.id
+            where learner.school_id = actor.school_id and guardian.guardian_id = actor.id
+          ))
+        )
+    )
+$$;
+revoke all on function private.can_view_school_subject(uuid) from public, anon;
+grant execute on function private.can_view_school_subject(uuid) to authenticated;
+
+drop policy if exists teacher_subject_assignments_read_related on public.teacher_subject_assignments;
+create policy teacher_subject_assignments_read_related on public.teacher_subject_assignments
+for select to authenticated using (
+  school_id = private.current_school_id()
+  and (
+    private.current_role() = 'school_admin'
+    or private.has_school_permission(school_id, 'school.assignments.manage')
+    or private.has_hr_role(school_id, array['principal'])
+    or (private.current_role() = 'teacher' and teacher_id = (select auth.uid()))
+    or (private.current_role() in ('student','parent') and private.can_view_class(class_id))
+  )
+);
+
+-- A subject resource belongs to a subject and, optionally, one class. Learners
+-- and parents can read it only if that subject is assigned to a class they can
+-- access. A class-wide resource is still subject-scoped.
+drop policy if exists subject_resources_read_scope on public.subject_resources;
+create policy subject_resources_read_scope on public.subject_resources
+for select to authenticated using (
+  school_id = private.current_school_id()
+  and (
+    private.current_role() = 'school_admin'
+    or (private.current_role() = 'teacher' and exists (
+      select 1 from public.teacher_subject_assignments tsa
+      where tsa.school_id = subject_resources.school_id
+        and tsa.teacher_id = (select auth.uid())
+        and tsa.subject_id = subject_resources.subject_id
+        and (subject_resources.class_id is null or tsa.class_id = subject_resources.class_id)
+    ))
+    or (private.current_role() in ('student','parent') and exists (
+      select 1 from public.teacher_subject_assignments tsa
+      where tsa.school_id = subject_resources.school_id
+        and tsa.subject_id = subject_resources.subject_id
+        and (subject_resources.class_id is null or tsa.class_id = subject_resources.class_id)
+        and private.can_view_class(tsa.class_id)
+    ))
+  )
+);
+
+-- Give every school record a stable identifier that can be shared privately
+-- with a parent for a supervised account link.
+alter table public.students add column if not exists student_registration_id text;
+update public.students
+set student_registration_id = 'STU-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 16))
+where student_registration_id is null or btrim(student_registration_id) = '';
+alter table public.students alter column student_registration_id
+  set default ('STU-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 16)));
+alter table public.students alter column student_registration_id set not null;
+create unique index if not exists students_registration_id_unique
+  on public.students(student_registration_id);
+
+alter table public.school_portal_signup_requests
+  add column if not exists student_registration_id text,
+  add column if not exists parent_national_id text;
+
+-- Rebuild signup capture so parent ID information is held only in the
+-- school-scoped review request; public users cannot attach a guardian link.
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer set search_path = '' as $$
+declare requested_school uuid; claimed_school uuid; requested_role public.user_role := 'student';
+  requested_access text; requested_class uuid; school_name text;
+begin
+  if new.raw_user_meta_data->>'school_portal_signup' = 'true' then
+    begin
+      requested_school := nullif(new.raw_user_meta_data->>'school_id', '')::uuid;
+      requested_class := nullif(new.raw_user_meta_data->>'requested_class_id', '')::uuid;
+    exception when invalid_text_representation then raise exception 'Choose a valid school and class.'; end;
+    begin requested_role := coalesce(nullif(new.raw_user_meta_data->>'requested_portal_role','')::public.user_role, 'student');
+    exception when invalid_text_representation then raise exception 'Choose a valid school portal.'; end;
+    requested_access := nullif(new.raw_user_meta_data->>'requested_portal_access','');
+    if requested_school is null or requested_role not in ('teacher','student','parent','staff')
+       or (requested_access is not null and (requested_role <> 'staff' or requested_access not in ('hr','finance'))) then
+      raise exception 'Choose a valid school and portal.';
+    end if;
+    if requested_role = 'student' and (requested_class is null or not exists (
+      select 1 from public.classes c where c.id=requested_class and c.school_id=requested_school
+    )) then raise exception 'Choose a class or level offered by this school.'; end if;
+    if requested_role = 'parent' and (nullif(btrim(new.raw_user_meta_data->>'student_registration_id'),'') is null
+      or nullif(btrim(new.raw_user_meta_data->>'parent_national_id'),'') is null) then
+      raise exception 'Enter the learner registration ID and your national ID.';
+    end if;
+    if requested_role = 'student' and nullif(btrim(new.raw_user_meta_data->>'admission_number'),'') is null then
+      raise exception 'Enter the admission number provided by the school.';
+    end if;
+    select s.name into school_name from public.schools s where s.id=requested_school and s.status='active';
+    if school_name is null then raise exception 'This school is not accepting portal registrations.'; end if;
+    insert into public.profiles(id,school_id,full_name,phone,role,is_active)
+      values(new.id,requested_school,left(new.raw_user_meta_data->>'full_name',160),left(new.raw_user_meta_data->>'phone',40),requested_role,false);
+    insert into public.school_portal_signup_requests(
+      user_id,school_id,full_name,email,requested_role,requested_access,admission_number,requested_class_id,
+      student_registration_id,parent_national_id
+    ) values (
+      new.id,requested_school,left(new.raw_user_meta_data->>'full_name',160),lower(new.email),requested_role,requested_access,
+      nullif(btrim(new.raw_user_meta_data->>'admission_number'),''),requested_class,
+      nullif(upper(btrim(new.raw_user_meta_data->>'student_registration_id')),''),
+      nullif(btrim(new.raw_user_meta_data->>'parent_national_id'),'')
+    );
+    if requested_role = 'parent' then
+      update auth.users set raw_user_meta_data = coalesce(raw_user_meta_data, '{}'::jsonb) - 'parent_national_id'
+      where id = new.id;
+    end if;
+    return new;
+  end if;
+  if new.raw_user_meta_data->>'role' = 'school_admin' then
+    begin requested_school := nullif(new.raw_user_meta_data->>'school_id','')::uuid;
+    exception when invalid_text_representation then requested_school := null; end;
+    if requested_school is not null then
+      perform set_config('app.school_claim_id',requested_school::text,true);
+      perform set_config('app.school_claim_user',new.id::text,true);
+      update public.schools set admin_user_id=new.id where id=requested_school and status='pending'
+        and admin_user_id is null and lower(admin_email)=lower(new.email) returning id into claimed_school;
+      if claimed_school is not null then requested_role := 'school_admin'; else requested_school := null; end if;
+    end if;
+  else requested_school := null; end if;
+  insert into public.profiles(id,school_id,full_name,phone,role)
+    values(new.id,requested_school,left(new.raw_user_meta_data->>'full_name',160),left(new.raw_user_meta_data->>'phone',40),requested_role);
+  return new;
+end $$;
+
+-- Admin approval still verifies the selected school record; a parent request
+-- is matched by the generated registration ID and does not alter the learner.
+create or replace function public.approve_school_portal_signup(p_user_id uuid,p_student_id uuid default null)
+returns void language plpgsql security definer set search_path = '' as $$
+declare actor public.profiles; request_row public.school_portal_signup_requests;
+  auth_email_confirmed timestamptz; linked_student public.students; role_key text;
+begin
+  select * into actor from public.profiles p where p.id=(select auth.uid()) and p.is_active is true;
+  if actor.id is null or actor.role<>'school_admin' or actor.school_id is null then
+    raise exception 'An active school administrator is required.' using errcode='42501';
+  end if;
+  if not exists(select 1 from public.schools s where s.id=actor.school_id and s.status='active') then
+    raise exception 'Only an active school can approve portal registrations.' using errcode='42501';
+  end if;
+  select * into request_row from public.school_portal_signup_requests r
+    where r.user_id=p_user_id and r.school_id=actor.school_id and r.status='pending' for update;
+  if request_row.user_id is null then raise exception 'Pending registration request not found.'; end if;
+  select u.email_confirmed_at into auth_email_confirmed from auth.users u where u.id=p_user_id;
+  if auth_email_confirmed is null then raise exception 'The applicant must verify their email before approval.'; end if;
+  if request_row.requested_role in ('student','parent') then
+    if p_student_id is null then raise exception 'Choose the learner record to link to this account.'; end if;
+    select * into linked_student from public.students s
+      where s.id=p_student_id and s.school_id=actor.school_id for update;
+    if linked_student.id is null then raise exception 'Choose a learner from this school.'; end if;
+    if request_row.requested_role='student' then
+      if lower(btrim(coalesce(linked_student.admission_number,''))) <> lower(btrim(coalesce(request_row.admission_number,''))) then
+        raise exception 'The learner does not match the submitted admission number.';
+      end if;
+      if linked_student.class_id is distinct from request_row.requested_class_id then
+        raise exception 'The learner class changed. Ask the applicant to submit an updated request.';
+      end if;
+      if linked_student.profile_id is not null and linked_student.profile_id<>p_user_id then
+        raise exception 'This learner already has a portal account.';
+      end if;
+      update public.students set profile_id=p_user_id where id=linked_student.id and school_id=actor.school_id;
+    else
+      if nullif(btrim(request_row.parent_national_id),'') is null
+        or upper(btrim(coalesce(linked_student.student_registration_id,''))) <> upper(btrim(coalesce(request_row.student_registration_id,''))) then
+        raise exception 'Verify the parent ID and match the learner registration ID before approval.';
+      end if;
+      insert into public.student_guardians(student_id,guardian_id,relationship)
+        values(linked_student.id,p_user_id,'parent/guardian') on conflict(student_id,guardian_id) do nothing;
+    end if;
+  end if;
+  perform set_config('app.approve_school_portal_user',p_user_id::text,true);
+  update public.profiles set is_active=true where id=p_user_id and school_id=actor.school_id
+    and role=request_row.requested_role and is_active is false;
+  if not found then raise exception 'The pending portal profile could not be activated.'; end if;
+  if request_row.requested_role='staff' and request_row.requested_access is not null then
+    role_key:=case request_row.requested_access when 'hr' then 'hr_admin' when 'finance' then 'finance_officer' end;
+    insert into public.school_staff_role_assignments(school_id,profile_id,role_key,assigned_by)
+      values(actor.school_id,p_user_id,role_key,actor.id) on conflict(school_id,profile_id,role_key) do nothing;
+  end if;
+  update public.school_portal_signup_requests set status='approved',reviewed_by=actor.id,reviewed_at=now(),parent_national_id=null
+    where user_id=p_user_id and school_id=actor.school_id and status='pending';
+end $$;
+revoke all on function public.approve_school_portal_signup(uuid,uuid) from public,anon;
+grant execute on function public.approve_school_portal_signup(uuid,uuid) to authenticated;
+
+-- Existing parents can be linked to additional learners only by their active
+-- school's administrator; this preserves one parent login for any number of children.
+create or replace function public.admin_link_parent_student(p_parent_id uuid,p_student_id uuid)
+returns void language plpgsql security definer set search_path = '' as $$
+declare actor public.profiles; parent_row public.profiles; student_school uuid;
+begin
+  select * into actor from public.profiles p where p.id=(select auth.uid()) and p.is_active is true;
+  if actor.id is null or actor.role<>'school_admin' or actor.school_id is null then
+    raise exception 'An active school administrator is required.' using errcode='42501';
+  end if;
+  if not exists(select 1 from public.schools s where s.id=actor.school_id and s.status='active') then
+    raise exception 'Only an active school can manage family links.' using errcode='42501';
+  end if;
+  select * into parent_row from public.profiles p
+    where p.id=p_parent_id and p.school_id=actor.school_id and p.role='parent' and p.is_active is true;
+  select s.school_id into student_school from public.students s where s.id=p_student_id;
+  if parent_row.id is null or student_school is distinct from actor.school_id then
+    raise exception 'Choose an active parent and a learner from your school.' using errcode='42501';
+  end if;
+  insert into public.student_guardians(student_id,guardian_id,relationship)
+    values(p_student_id,p_parent_id,'parent/guardian') on conflict(student_id,guardian_id) do nothing;
+end $$;
+revoke all on function public.admin_link_parent_student(uuid,uuid) from public,anon;
+grant execute on function public.admin_link_parent_student(uuid,uuid) to authenticated;
+
+drop function if exists public.submit_google_school_portal_signup(text,text,text,text,text,uuid);
+create or replace function public.submit_google_school_portal_signup(
+  p_school_slug text, p_full_name text, p_requested_role text,
+  p_requested_access text default null, p_admission_number text default null,
+  p_requested_class_id uuid default null, p_student_registration_id text default null,
+  p_parent_national_id text default null
+)
+returns void language plpgsql security definer set search_path = '' as $$
+declare actor public.profiles; account auth.users; target_school public.schools;
+  resolved_name text; resolved_role public.user_role; resolved_access text;
+begin
+  if (select auth.uid()) is null then raise exception 'Sign in with Google before submitting a school request.' using errcode='42501'; end if;
+  select * into account from auth.users u where u.id=(select auth.uid());
+  if account.id is null or account.email_confirmed_at is null then raise exception 'Verify your Google account email before submitting a school request.'; end if;
+  select * into actor from public.profiles p where p.id=account.id for update;
+  if actor.id is null or actor.school_id is not null or actor.role<>'student' or actor.is_active is not true then
+    raise exception 'This Google account is already linked to a school or is not eligible for a new school request.';
+  end if;
+  select * into target_school from public.schools s where s.slug=p_school_slug and s.status='active';
+  if target_school.id is null then raise exception 'This school is not accepting portal registrations.'; end if;
+  begin resolved_role:=p_requested_role::public.user_role;
+  exception when invalid_text_representation then raise exception 'Choose a valid school portal.'; end;
+  resolved_access:=nullif(btrim(coalesce(p_requested_access,'')), '');
+  if resolved_role not in ('teacher','student','parent','staff') or
+    (resolved_access is not null and (resolved_role<>'staff' or resolved_access not in ('hr','finance'))) then
+    raise exception 'Choose a valid school portal.';
+  end if;
+  if resolved_role='student' and (nullif(btrim(coalesce(p_admission_number,'')),'') is null
+    or p_requested_class_id is null or not exists(select 1 from public.classes c where c.id=p_requested_class_id and c.school_id=target_school.id)) then
+    raise exception 'Enter the learner admission number and choose a class offered by this school.';
+  end if;
+  if resolved_role='parent' and (nullif(btrim(coalesce(p_student_registration_id,'')),'') is null
+    or nullif(btrim(coalesce(p_parent_national_id,'')),'') is null) then
+    raise exception 'Enter the learner registration ID and your national ID.';
+  end if;
+  if resolved_role='parent' and (length(btrim(p_student_registration_id))>40 or length(btrim(p_parent_national_id))>80) then
+    raise exception 'Check the registration ID and national ID lengths.';
+  end if;
+  resolved_name:=left(trim(coalesce(nullif(p_full_name,''),actor.full_name,account.raw_user_meta_data->>'full_name',account.raw_user_meta_data->>'name','')),160);
+  if length(resolved_name)<2 then raise exception 'Enter your full name before requesting a school account.'; end if;
+  perform set_config('app.submit_school_portal_signup',account.id::text,true);
+  update public.profiles set school_id=target_school.id,full_name=resolved_name,role=resolved_role,is_active=false
+    where id=account.id and school_id is null and role='student' and is_active is true;
+  if not found then raise exception 'This Google account is already linked to a school.'; end if;
+  insert into public.school_portal_signup_requests(
+    user_id,school_id,full_name,email,requested_role,requested_access,admission_number,requested_class_id,
+    student_registration_id,parent_national_id
+  ) values(account.id,target_school.id,resolved_name,lower(account.email),resolved_role,resolved_access,
+    nullif(btrim(coalesce(p_admission_number,'')),''),p_requested_class_id,
+    nullif(upper(btrim(coalesce(p_student_registration_id,''))),''),nullif(btrim(coalesce(p_parent_national_id,'')),''));
+end $$;
+revoke all on function public.submit_google_school_portal_signup(text,text,text,text,text,uuid,text,text) from public,anon;
+grant execute on function public.submit_google_school_portal_signup(text,text,text,text,text,uuid,text,text) to authenticated;
+-- END supabase/096_student_teacher_parent_data_scope.sql
+
+-- BEGIN supabase/097_school_scoped_student_registration_ids.sql
+-- Give each school a stable human-readable code and issue learner IDs from a
+-- per-school counter. The ID stays fixed when a learner changes class/stage.
+
+create sequence if not exists private.school_registration_code_seq;
+
+alter table public.schools add column if not exists school_code text;
+update public.schools
+set school_code = 'SCH-' || lpad(nextval('private.school_registration_code_seq')::text, 6, '0')
+where school_code is null or btrim(school_code) = '';
+alter table public.schools alter column school_code drop default;
+alter table public.schools alter column school_code set not null;
+create unique index if not exists schools_school_code_unique on public.schools(school_code);
+
+create or replace function private.assign_school_code()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if tg_op = 'UPDATE' then
+    if new.school_code is distinct from old.school_code then
+      raise exception 'A school code is permanent and cannot be changed.' using errcode = '42501';
+    end if;
+    return new;
+  end if;
+  if new.school_code is null or btrim(new.school_code) = '' then
+    new.school_code := 'SCH-' || lpad(nextval('private.school_registration_code_seq')::text, 6, '0');
+  end if;
+  return new;
+end $$;
+revoke all on function private.assign_school_code() from public, anon, authenticated;
+drop trigger if exists assign_school_code on public.schools;
+create trigger assign_school_code
+before insert or update of school_code on public.schools
+for each row execute function private.assign_school_code();
+
+create table if not exists private.school_student_registration_counters (
+  school_id uuid primary key references public.schools(id) on delete cascade,
+  last_number bigint not null default 0 check (last_number >= 0),
+  updated_at timestamptz not null default now()
+);
+revoke all on private.school_student_registration_counters from public, anon, authenticated;
+
+-- Stage old IDs into a private one-run map so pending parent requests can be
+-- carried forward when the identifiers are upgraded.
+create table if not exists private.student_registration_id_rollout_map (
+  student_id uuid primary key,
+  school_id uuid not null,
+  old_registration_id text not null,
+  new_registration_id text not null
+);
+revoke all on private.student_registration_id_rollout_map from public, anon, authenticated;
+truncate table private.student_registration_id_rollout_map;
+
+with legacy_students as (
+  select s.id as student_id, s.school_id, s.student_registration_id as old_registration_id,
+    coalesce(counter.last_number, 0) + row_number() over (
+      partition by s.school_id order by s.created_at nulls first, s.id
+    ) as next_number,
+    school.school_code
+  from public.students s
+  join public.schools school on school.id = s.school_id
+  left join private.school_student_registration_counters counter on counter.school_id = s.school_id
+  where s.student_registration_id not like 'STU-' || school.school_code || '-%'
+)
+insert into private.student_registration_id_rollout_map(
+  student_id, school_id, old_registration_id, new_registration_id
+)
+select student_id, school_id, old_registration_id,
+  'STU-' || school_code || '-' || lpad(next_number::text, greatest(6, length(next_number::text)), '0')
+from legacy_students;
+
+update public.school_portal_signup_requests request
+set student_registration_id = remap.new_registration_id
+from private.student_registration_id_rollout_map remap
+where request.school_id = remap.school_id
+  and upper(btrim(request.student_registration_id)) = upper(btrim(remap.old_registration_id));
+
+update public.students learner
+set student_registration_id = remap.new_registration_id
+from private.student_registration_id_rollout_map remap
+where learner.id = remap.student_id;
+
+insert into private.school_student_registration_counters(school_id, last_number, updated_at)
+select school_id, max(split_part(new_registration_id, '-', 4)::bigint), now()
+from private.student_registration_id_rollout_map
+group by school_id
+on conflict (school_id) do update
+set last_number = greatest(private.school_student_registration_counters.last_number, excluded.last_number),
+    updated_at = now();
+
+-- Recover the high-water mark from issued IDs as well, so an interrupted SQL
+-- editor run cannot cause the counter to start over on a later attempt.
+insert into private.school_student_registration_counters(school_id, last_number, updated_at)
+select learner.school_id,
+  max(substring(learner.student_registration_id from ('^STU-' || school.school_code || '-([0-9]+)$'))::bigint), now()
+from public.students learner
+join public.schools school on school.id = learner.school_id
+where learner.student_registration_id ~ ('^STU-' || school.school_code || '-[0-9]+$')
+group by learner.school_id
+on conflict (school_id) do update
+set last_number = greatest(private.school_student_registration_counters.last_number, excluded.last_number),
+    updated_at = now();
+
+drop table private.student_registration_id_rollout_map;
+
+create or replace function private.assign_student_registration_id()
+returns trigger language plpgsql security definer set search_path = '' as $$
+declare issued_number bigint; target_school_code text;
+begin
+  if tg_op = 'UPDATE' then
+    if new.school_id is distinct from old.school_id then
+      raise exception 'A learner record cannot be moved to another school.' using errcode = '42501';
+    end if;
+    if new.student_registration_id is distinct from old.student_registration_id then
+      raise exception 'A student registration ID is permanent and cannot be changed.' using errcode = '42501';
+    end if;
+    return new;
+  end if;
+
+  insert into private.school_student_registration_counters(school_id, last_number, updated_at)
+  values (new.school_id, 1, now())
+  on conflict (school_id) do update
+    set last_number = private.school_student_registration_counters.last_number + 1,
+        updated_at = now()
+  returning last_number into issued_number;
+
+  select s.school_code into target_school_code from public.schools s where s.id = new.school_id;
+  if target_school_code is null then raise exception 'Choose a valid school for this learner.'; end if;
+  new.student_registration_id := 'STU-' || target_school_code || '-'
+    || lpad(issued_number::text, greatest(6, length(issued_number::text)), '0');
+  return new;
+end $$;
+revoke all on function private.assign_student_registration_id() from public, anon, authenticated;
+drop trigger if exists assign_student_registration_id on public.students;
+create trigger assign_student_registration_id
+before insert or update of school_id, student_registration_id on public.students
+for each row execute function private.assign_student_registration_id();
+-- END supabase/097_school_scoped_student_registration_ids.sql
+
+-- BEGIN supabase/098_public_surface_security.sql
+-- Keep anonymous access limited to the minimum needed to choose and join an
+-- active school. School records and student credential rows stay private.
+
+create or replace function public.get_public_school_login_directory()
+returns table(id uuid, name text, slug text, status public.school_status)
+language sql stable security definer set search_path = '' as $$
+  select s.id, s.name, s.slug, s.status
+  from public.schools s where s.status = 'active'
+  order by lower(s.name), s.id
+$$;
+revoke all on function public.get_public_school_login_directory() from public;
+grant execute on function public.get_public_school_login_directory() to anon, authenticated;
+
+create or replace function public.get_public_school_profiles()
+returns table(id uuid, name text, slug text, school_level text, address text)
+language sql stable security definer set search_path = '' as $$
+  select s.id, s.name, s.slug, null::text, null::text from public.schools s
+  where s.status = 'active' order by lower(s.name), s.id
+$$;
+revoke all on function public.get_public_school_profiles() from public;
+grant execute on function public.get_public_school_profiles() to anon, authenticated;
+
+create or replace function public.get_public_school_profile(p_school_slug text)
+returns table(id uuid, name text, slug text, school_level text, address text)
+language sql stable security definer set search_path = '' as $$
+  select s.id, s.name, s.slug, null::text, null::text from public.schools s
+  where s.status = 'active' and s.slug = p_school_slug limit 1
+$$;
+revoke all on function public.get_public_school_profile(text) from public;
+grant execute on function public.get_public_school_profile(text) to anon, authenticated;
+
+drop policy if exists "anyone verify credential" on public.verified_credentials;
+revoke select on table public.verified_credentials from public, anon;
+grant select on table public.verified_credentials to authenticated;
+
+drop policy if exists portal_signup_admin_read on public.school_portal_signup_requests;
+create policy portal_signup_admin_read on public.school_portal_signup_requests
+  for select to authenticated using (
+    exists (select 1 from public.profiles p where p.id = (select auth.uid())
+      and p.is_active is true and p.role = 'school_admin'
+      and p.school_id = school_portal_signup_requests.school_id)
+  );
+revoke all on table public.school_portal_signup_requests from public, anon;
+grant select on table public.school_portal_signup_requests to authenticated;
+
+create or replace function public.get_my_school_portal_signup_status()
+returns text language sql stable security definer set search_path = '' as $$
+  select r.status from public.school_portal_signup_requests r
+  where r.user_id = (select auth.uid()) limit 1
+$$;
+revoke all on function public.get_my_school_portal_signup_status() from public, anon;
+grant execute on function public.get_my_school_portal_signup_status() to authenticated;
+
+create or replace function public.reject_school_portal_signup(p_user_id uuid)
+returns void language plpgsql security definer set search_path = '' as $$
+declare actor public.profiles;
+begin
+  select * into actor from public.profiles p
+  where p.id = (select auth.uid()) and p.is_active is true;
+  if actor.id is null or actor.role <> 'school_admin' or actor.school_id is null then
+    raise exception 'An active school administrator is required.' using errcode = '42501';
+  end if;
+  if not exists (select 1 from public.schools s where s.id = actor.school_id and s.status = 'active') then
+    raise exception 'Only an active school can review portal registrations.' using errcode = '42501';
+  end if;
+  update public.school_portal_signup_requests
+  set status = 'rejected', reviewed_by = actor.id, reviewed_at = now(), parent_national_id = null
+  where user_id = p_user_id and school_id = actor.school_id and status = 'pending';
+  if not found then raise exception 'Pending registration request not found.'; end if;
+end $$;
+revoke all on function public.reject_school_portal_signup(uuid) from public, anon;
+grant execute on function public.reject_school_portal_signup(uuid) to authenticated;
+-- END supabase/098_public_surface_security.sql
+
+-- BEGIN supabase/099_storage_session_scope.sql
+drop policy if exists assignment_files_student_upload on storage.objects;
+create policy assignment_files_student_upload on storage.objects
+for insert to authenticated with check (
+  bucket_id = 'assignment-files'
+  and (storage.foldername(name))[1] = 'submissions'
+  and private.current_role() = 'student'
+  and exists (
+    select 1 from public.students s
+    join public.assignments a on a.id = (storage.foldername(name))[2]::uuid
+      and a.school_id = s.school_id and a.class_id = s.class_id
+    where s.id = (storage.foldername(name))[3]::uuid
+      and s.profile_id = (select auth.uid())
+      and s.school_id = private.current_school_id()
+      and private.can_view_student(s.id)
+      and a.published_at is not null
+      and (a.due_date is null or a.due_date >= private.school_local_date(a.school_id))
+  )
+);
+
+drop policy if exists assignment_files_owner_read on storage.objects;
+create policy assignment_files_owner_read on storage.objects
+for select to authenticated using (
+  bucket_id = 'assignment-files'
+  and (storage.foldername(name))[1] = 'submissions'
+  and private.current_role() = 'student'
+  and exists (
+    select 1 from public.students s
+    join public.assignments a on a.id = (storage.foldername(name))[2]::uuid
+      and a.school_id = s.school_id and a.class_id = s.class_id
+    where s.id = (storage.foldername(name))[3]::uuid
+      and s.profile_id = (select auth.uid())
+      and s.school_id = private.current_school_id()
+      and private.can_view_student(s.id)
+  )
+);
+
+drop policy if exists assignment_files_student_update on storage.objects;
+create policy assignment_files_student_update on storage.objects
+for update to authenticated using (
+  bucket_id = 'assignment-files'
+  and (storage.foldername(name))[1] = 'submissions'
+  and private.current_role() = 'student'
+  and exists (
+    select 1 from public.students s
+    join public.assignments a on a.id = (storage.foldername(name))[2]::uuid
+      and a.school_id = s.school_id and a.class_id = s.class_id
+    where s.id = (storage.foldername(name))[3]::uuid
+      and s.profile_id = (select auth.uid())
+      and s.school_id = private.current_school_id()
+      and private.can_view_student(s.id)
+      and a.published_at is not null
+      and (a.due_date is null or a.due_date >= private.school_local_date(a.school_id))
+  )
+) with check (
+  bucket_id = 'assignment-files'
+  and (storage.foldername(name))[1] = 'submissions'
+  and private.current_role() = 'student'
+  and exists (
+    select 1 from public.students s
+    join public.assignments a on a.id = (storage.foldername(name))[2]::uuid
+      and a.school_id = s.school_id and a.class_id = s.class_id
+    where s.id = (storage.foldername(name))[3]::uuid
+      and s.profile_id = (select auth.uid())
+      and s.school_id = private.current_school_id()
+      and private.can_view_student(s.id)
+  )
+);
+
+drop policy if exists profile_photos_owner_insert on storage.objects;
+create policy profile_photos_owner_insert on storage.objects
+for insert to authenticated with check (
+  bucket_id = 'profile-photos'
+  and (storage.foldername(name))[1] = (select auth.uid())::text
+  and private.current_role() is not null
+);
+
+drop policy if exists profile_photos_owner_read on storage.objects;
+create policy profile_photos_owner_read on storage.objects
+for select to authenticated using (
+  bucket_id = 'profile-photos'
+  and (storage.foldername(name))[1] = (select auth.uid())::text
+  and private.current_role() is not null
+);
+
+drop policy if exists profile_photos_owner_delete on storage.objects;
+create policy profile_photos_owner_delete on storage.objects
+for delete to authenticated using (
+  bucket_id = 'profile-photos'
+  and (storage.foldername(name))[1] = (select auth.uid())::text
+  and private.current_role() is not null
+);
+-- END supabase/099_storage_session_scope.sql
+
+-- BEGIN supabase/100_school_record_privacy.sql
+-- School rows contain payment destinations and platform billing metadata.
+-- Keep full-row access for the school's active administrator and platform admins;
+-- expose a deliberately small workspace profile to other active members.
+
+drop policy if exists "members view their school" on public.schools;
+drop policy if exists schools_platform_or_admin_read on public.schools;
+create policy schools_platform_or_admin_read on public.schools
+for select to authenticated using (
+  exists (
+    select 1 from public.profiles actor
+    where actor.id = (select auth.uid()) and actor.is_active is true
+      and actor.role = 'super_admin'
+  )
+  or exists (
+    select 1 from public.profiles actor
+    where actor.id = (select auth.uid()) and actor.is_active is true
+      and actor.role = 'school_admin' and actor.school_id = schools.id
+  )
+);
+
+-- Billing suspended administrators retain the existing billing read policy.
+-- Replace the original admin update policy so disabled accounts cannot edit
+-- school settings using an unexpired JWT.
+drop policy if exists "school admins update their school" on public.schools;
+drop policy if exists schools_active_admin_update on public.schools;
+create policy schools_active_admin_update on public.schools
+for update to authenticated
+using (exists (
+  select 1 from public.profiles actor
+  where actor.id = (select auth.uid()) and actor.is_active is true
+    and actor.role = 'school_admin' and actor.school_id = schools.id
+))
+with check (exists (
+  select 1 from public.profiles actor
+  where actor.id = (select auth.uid()) and actor.is_active is true
+    and actor.role = 'school_admin' and actor.school_id = schools.id
+));
+
+create or replace function public.get_my_school_workspace()
+returns jsonb language sql stable security definer set search_path = '' as $$
+  select pg_catalog.jsonb_build_object(
+    'id', s.id,
+    'name', s.name,
+    'slug', s.slug,
+    'status', s.status,
+    'school_level', s.school_level,
+    'logo_url', s.logo_url,
+    'principal_signature_url', s.principal_signature_url,
+    'teacher_signature_url', s.teacher_signature_url,
+    'school_motto', s.school_motto,
+    'mission', s.mission,
+    'vision', s.vision,
+    'primary_color', s.primary_color,
+    'country_code', s.country_code,
+    'currency_code', s.currency_code,
+    'timezone', s.timezone,
+    'academic_terms', s.academic_terms,
+    'grading_scale', s.grading_scale
+  )
+  from public.profiles actor
+  join public.schools s on s.id = actor.school_id
+  where actor.id = (select auth.uid()) and actor.is_active is true
+    and actor.role <> 'super_admin'
+  limit 1
+$$;
+revoke all on function public.get_my_school_workspace() from public, anon;
+grant execute on function public.get_my_school_workspace() to authenticated;
+
+-- A school payment record is the authorization anchor for disclosure of
+-- payment destinations. Parents must be linked to its student; students may
+-- see only their own; school admins and finance staff may support the payer.
+create or replace function public.get_my_payment_school_details(p_payment_id uuid)
+returns jsonb language sql stable security definer set search_path = '' as $$
+  select pg_catalog.jsonb_build_object(
+    'id', s.id,
+    'name', s.name,
+    'address', s.address,
+    'logo_url', s.logo_url,
+    'currency_code', s.currency_code,
+    'country_code', s.country_code,
+    'mobile_money_provider', s.mobile_money_provider,
+    'mobile_money_number', s.mobile_money_number,
+    'mobile_money_account_name', s.mobile_money_account_name,
+    'mpesa_paybill', s.mpesa_paybill,
+    'mpesa_till', s.mpesa_till,
+    'bank_name', s.bank_name,
+    'bank_account_name', s.bank_account_name,
+    'bank_account_number', s.bank_account_number
+  )
+  from public.payments payment_row
+  join public.schools s on s.id = payment_row.school_id
+  where payment_row.id = p_payment_id
+    and payment_row.school_id = private.current_school_id()
+    and private.current_role() is not null
+    and (
+      private.current_role() = 'school_admin'
+      or private.has_hr_role(payment_row.school_id, array['finance'])
+      or (payment_row.student_id is not null and private.can_view_student(payment_row.student_id)
+        and private.current_role() in ('student','parent'))
+    )
+  limit 1
+$$;
+revoke all on function public.get_my_payment_school_details(uuid) from public, anon;
+grant execute on function public.get_my_payment_school_details(uuid) to authenticated;
+
+-- END supabase/100_school_record_privacy.sql
+
+-- BEGIN supabase/101_exam_subject_role_scope.sql
+-- Do not let the published learner-facing exam policy broaden a teacher's
+-- access beyond the class/subject assignments used for staff access.
+drop policy if exists exams_read_related on public.exams;
+create policy exams_read_related on public.exams
+for select to authenticated using (
+  (school_id = private.current_school_id() and private.current_role() = 'school_admin')
+  or (school_id = private.current_school_id() and private.current_role() = 'teacher'
+    and private.can_manage_class_subject(school_id, class_id, subject_id))
+  or (private.current_role() in ('student','parent') and published = true
+    and class_id is not null and private.can_view_class(class_id))
+  or (private.current_role() in ('student','parent') and published = true
+    and class_id is not null and private.can_view_class_history_material(class_id, exam_date))
+);
+
+-- END supabase/101_exam_subject_role_scope.sql
+
+-- BEGIN supabase/102_subject_catalog_role_scope.sql
+-- Generic HR and finance staff roles do not need the school's full subject
+-- catalog. Allow it only to school admins, principals, staff with the explicit
+-- assignment-management permission, teachers assigned to a class/subject, and
+-- learners or parents linked to a class with that subject.
+create or replace function private.can_view_school_subject(target_subject uuid)
+returns boolean language sql stable security definer set search_path = '' as $$
+  select private.current_role() = 'super_admin'
+    or exists (
+      select 1 from public.subjects subject_row
+      join public.profiles actor on actor.school_id = subject_row.school_id
+      where subject_row.id = target_subject
+        and actor.id = (select auth.uid())
+        and actor.is_active is true
+        and private.school_subscription_entitled(actor.school_id)
+        and (
+          actor.role = 'school_admin'
+          or (actor.role in ('teacher','staff') and (
+            private.has_school_permission(actor.school_id, 'school.assignments.manage')
+            or private.has_hr_role(actor.school_id, array['principal'])
+          ))
+          or (actor.role = 'teacher' and exists (
+            select 1 from public.teacher_subject_assignments tsa
+            where tsa.school_id = actor.school_id and tsa.subject_id = subject_row.id
+              and tsa.teacher_id = actor.id
+          ))
+          or (actor.role = 'teacher' and exists (
+            select 1 from public.teacher_subject_assignments tsa
+            join public.classes class_row on class_row.id = tsa.class_id and class_row.school_id = tsa.school_id
+            where tsa.school_id = actor.school_id and tsa.subject_id = subject_row.id
+              and class_row.teacher_id = actor.id
+          ))
+          or (actor.role = 'student' and exists (
+            select 1 from public.students learner
+            join public.teacher_subject_assignments tsa on tsa.school_id = learner.school_id
+              and tsa.class_id = learner.class_id and tsa.subject_id = subject_row.id
+            where learner.school_id = actor.school_id and learner.profile_id = actor.id
+          ))
+          or (actor.role = 'parent' and exists (
+            select 1 from public.student_guardians guardian
+            join public.students learner on learner.id = guardian.student_id
+            join public.teacher_subject_assignments tsa on tsa.school_id = learner.school_id
+              and tsa.class_id = learner.class_id and tsa.subject_id = subject_row.id
+            where learner.school_id = actor.school_id and guardian.guardian_id = actor.id
+          ))
+        )
+    )
+$$;
+revoke all on function private.can_view_school_subject(uuid) from public, anon;
+grant execute on function private.can_view_school_subject(uuid) to authenticated;
+
+-- END supabase/102_subject_catalog_role_scope.sql
+
+
+-- BEGIN supabase/103_billing_suspended_account_scope.sql
+-- A billing-suspended school administrator needs a checkout path, not direct
+-- access to full school, provider, and payment-attempt rows.
+drop policy if exists schools_admin_billing_read on public.schools;
+
+drop policy if exists subscriptions_admin_billing_read on public.subscriptions;
+drop policy if exists subscriptions_admin_read on public.subscriptions;
+drop policy if exists "school and platform admins view subscriptions" on public.subscriptions;
+create policy subscriptions_admin_billing_read on public.subscriptions
+for select to authenticated using (
+  private.current_role() = 'super_admin'
+  or exists (
+    select 1 from public.profiles actor
+    where actor.id = (select auth.uid()) and actor.is_active is true
+      and actor.role = 'school_admin' and actor.school_id = subscriptions.school_id
+  )
+);
+
+drop policy if exists subscription_billing_attempts_admin_read on public.subscription_billing_attempts;
+create policy subscription_billing_attempts_admin_read on public.subscription_billing_attempts
+for select to authenticated using (
+  private.current_role() = 'super_admin'
+  or exists (
+    select 1 from public.profiles actor
+    where actor.id = (select auth.uid()) and actor.is_active is true
+      and actor.role = 'school_admin' and actor.school_id = subscription_billing_attempts.school_id
+  )
+);
+
+-- Flutterwave plan identifiers are used only by trusted platform code. School
+-- administrators receive display prices through the scoped RPC below.
+drop policy if exists subscription_plan_prices_platform_read on public.subscription_plan_prices;
+drop policy if exists subscription_plan_prices_school_admin_read on public.subscription_plan_prices;
+create policy subscription_plan_prices_platform_read on public.subscription_plan_prices
+for select to authenticated using (private.current_role() = 'super_admin');
+
+create or replace function public.get_my_school_billing_overview()
+returns jsonb language plpgsql stable security definer set search_path = '' as $$
+declare actor public.profiles; school_row public.schools; subscription_row public.subscriptions;
+  result jsonb;
+begin
+  select * into actor from public.profiles p where p.id = (select auth.uid());
+  if actor.id is null or actor.role <> 'school_admin' or actor.school_id is null
+    or not (
+      actor.is_active is true
+      or (actor.billing_suspended_at is not null and exists (
+        select 1 from public.schools s where s.id = actor.school_id
+          and s.status = 'suspended' and s.suspension_reason = 'payment_failed'
+      ))
+    ) then
+    raise exception 'School billing access is unavailable.' using errcode = '42501';
+  end if;
+
+  select * into school_row from public.schools s where s.id = actor.school_id;
+  select * into subscription_row from public.subscriptions sub where sub.school_id = actor.school_id;
+  select pg_catalog.jsonb_build_object(
+    'school', pg_catalog.jsonb_build_object(
+      'id', school_row.id,
+      'name', school_row.name,
+      'currency_code', school_row.currency_code,
+      'subscription_plan', school_row.subscription_plan,
+      'status', school_row.status,
+      'suspension_reason', school_row.suspension_reason
+    ),
+    'subscription', case when subscription_row.id is null then null else pg_catalog.jsonb_build_object(
+      'id', subscription_row.id,
+      'plan', subscription_row.plan,
+      'status', subscription_row.status,
+      'starts_at', subscription_row.starts_at,
+      'ends_at', subscription_row.ends_at,
+      'request_status', subscription_row.request_status,
+      'requested_plan', subscription_row.requested_plan,
+      'monthly_amount', subscription_row.monthly_amount,
+      'billing_email', subscription_row.billing_email,
+      'payment_failed_at', subscription_row.payment_failed_at,
+      'monthly_recurring', subscription_row.flutterwave_plan_id is not null and subscription_row.status = 'active'
+    ) end,
+    'prices', coalesce((
+      select pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object(
+        'plan', price.plan, 'currency_code', price.currency_code, 'monthly_amount', price.monthly_amount
+      ) order by price.plan)
+      from public.subscription_plan_prices price
+      where price.currency_code = school_row.currency_code
+    ), '[]'::jsonb),
+    'attempts', coalesce((
+      select pg_catalog.jsonb_agg(recent.attempt order by recent.created_at desc)
+      from (
+        select pg_catalog.jsonb_build_object(
+          'tx_ref', attempt.tx_ref, 'plan', attempt.plan, 'currency_code', attempt.currency_code,
+          'amount', attempt.amount, 'status', attempt.status, 'created_at', attempt.created_at
+        ) as attempt, attempt.created_at
+        from public.subscription_billing_attempts attempt
+        where attempt.school_id = actor.school_id
+        order by attempt.created_at desc limit 5
+      ) recent
+    ), '[]'::jsonb)
+  ) into result;
+  return result;
+end $$;
+revoke all on function public.get_my_school_billing_overview() from public, anon;
+grant execute on function public.get_my_school_billing_overview() to authenticated;
+
+-- END supabase/103_billing_suspended_account_scope.sql

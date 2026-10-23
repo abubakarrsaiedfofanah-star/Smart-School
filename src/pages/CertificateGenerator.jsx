@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 
 export default function CertificateGenerator() {
   const { courseId } = useParams();
-  const { profile, demo } = useAuth();
+  const { profile, school: currentSchool, demo } = useAuth();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
@@ -18,7 +18,7 @@ export default function CertificateGenerator() {
   useEffect(() => {
     if (!courseId || !profile) return;
     fetchData();
-  }, [courseId, profile]);
+  }, [courseId, profile, currentSchool]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -44,13 +44,13 @@ export default function CertificateGenerator() {
       // 2. Fetch Student (Current User)
       const { data: studentData, error: studentErr } = await supabase
         .from('students')
-        .select('*, profiles:profile_id(full_name, avatar_url), schools:school_id(*)')
+        .select('*, profiles:profile_id(full_name, avatar_url)')
         .eq('profile_id', profile.id)
         .single();
 
       if (studentErr) throw studentErr;
       setStudent(studentData);
-      setSchool(studentData.schools);
+      setSchool(currentSchool);
 
       // 3. Check for existing credential
       const { data: credData, error: credErr } = await supabase

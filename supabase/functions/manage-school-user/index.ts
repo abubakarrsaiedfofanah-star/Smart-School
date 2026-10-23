@@ -27,12 +27,64 @@ Deno.serve(async request => {
   const { data: authData, error: authError } = await caller.auth.getUser()
   if (authError || !authData.user) return respond({ error: 'Your session is no longer valid. Sign in again.' }, 401)
 
-  let body: { email?: string; full_name?: string; role?: string; student_id?: string; job_title?: string; department?: string }
+  let body: { action?: string; user_id?: string; is_active?: boolean; email?: string; full_name?: string; role?: string; student_id?: string; job_title?: string; department?: string }
   try {
     const rawBody = await request.text()
     if (new TextEncoder().encode(rawBody).byteLength > 16_384) return respond({ error: 'Invitation request is too large.' }, 413)
     body = JSON.parse(rawBody)
   } catch { return respond({ error: 'Send a valid invitation form.' }, 400) }
+
+  // Account access changes are handled here so school admins never receive a
+  // service key and cannot edit profiles directly from the browser.
+  if (body.action === 'set-account-active') {
+    if (!body.user_id || typeof body.is_active !== 'boolean') return respond({ error: 'Choose an account and a valid access state.' }, 400)
+    const admin = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } })
+    const { data: actor, error: actorError } = await admin.from('profiles').select('id,role,school_id,is_active').eq('id', authData.user.id).maybeSingle()
+    if (actorError || actor?.role !== 'school_admin' || actor.is_active !== true || !actor.school_id) return respond({ error: 'Only an active school administrator can manage portal accounts.' }, 403)
+    const { data: school, error: schoolError } = await admin.from('schools').select('id,status').eq('id', actor.school_id).maybeSingle()
+    if (schoolError || !school || school.status !== 'active') return respond({ error: 'This school workspace is not active.' }, 403)
+    const { data: target, error: targetError } = await admin.from('profiles')
+      .select('id,school_id,role,is_active,email,full_name').eq('id', body.user_id).maybeSingle()
+    if (targetError || !target || target.school_id !== actor.school_id
+      || !['teacher', 'staff', 'student', 'parent'].includes(target.role)) {
+      return respond({ error: 'Choose an eligible account from your own school.' }, 404)
+    }
+    if (target.is_active === body.is_active) return respond({ message: 'The account already has that access state.' })
+
+    const { data: targetAuth, error: targetAuthError } = await admin.auth.admin.getUserById(target.id)
+    if (targetAuthError || !targetAuth.user) return respond({ error: 'Could not verify this account.' }, 404)
+    if (body.is_active) {
+      const { data: request, error: requestError } = await admin.from('school_portal_signup_requests')
+        .select('status').eq('user_id', target.id).eq('school_id', actor.school_id).maybeSingle()
+      if (requestError) return respond({ error: 'Could not verify the account approval record.' }, 503)
+      const { data: invite, error: inviteError } = await admin.from('school_portal_invites')
+        .select('id').eq('user_id', target.id).eq('school_id', actor.school_id).limit(1).maybeSingle()
+      if (inviteError) return respond({ error: 'Could not verify the account invitation record.' }, 503)
+      if (!targetAuth.user.email_confirmed_at || (request ? request.status !== 'approved' : !invite)) {
+        return respond({ error: 'This account has not completed verification and school approval, so it cannot be reactivated.' }, 403)
+      }
+      const { error: unbanError } = await admin.auth.admin.updateUserById(target.id, { ban_duration: 'none' })
+      if (unbanError) return respond({ error: 'Could not restore sign-in access. Try again or contact support.' }, 503)
+      const { data: activated, error: activateError } = await admin.from('profiles').update({ is_active: true }).eq('id', target.id).eq('school_id', actor.school_id).eq('is_active', false).select('id').maybeSingle()
+      if (activateError || !activated) {
+        await admin.auth.admin.updateUserById(target.id, { ban_duration: '876000h' })
+        return respond({ error: 'Could not restore the school account. Sign-in remains blocked; try again.' }, 503)
+      }
+      return respond({ message: `${target.full_name || target.email || 'Account'} access restored.` })
+    }
+
+    // Block new sign-ins first, then disable profile based access checks. RLS
+    // checks profiles.is_active, which also cuts off existing sessions.
+    const { error: banError } = await admin.auth.admin.updateUserById(target.id, { ban_duration: '876000h' })
+    if (banError) return respond({ error: 'Could not block new sign-ins. The account was not changed.' }, 503)
+    const { data: deactivated, error: deactivateError } = await admin.from('profiles').update({ is_active: false }).eq('id', target.id).eq('school_id', actor.school_id).eq('is_active', true).select('id').maybeSingle()
+    if (deactivateError || !deactivated) {
+      await admin.auth.admin.updateUserById(target.id, { ban_duration: 'none' })
+      return respond({ error: 'Could not deactivate the school account. Sign-in was restored; try again.' }, 503)
+    }
+    return respond({ message: `${target.full_name || target.email || 'Account'} deactivated. School data and family links are preserved.` })
+  }
+
   const email = body.email?.trim().toLowerCase() || ''
   const fullName = body.full_name?.trim() || ''
   const role = body.role

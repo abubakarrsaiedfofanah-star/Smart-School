@@ -189,6 +189,7 @@ export default function SchoolSettings() {
 
       <form onSubmit={saveSettings} className="settings-grid">
         <div className="glass-card">
+          {school.school_code && <div style={{ display: 'grid', gap: 5, marginBottom: 18, padding: 12, border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg)' }}><small style={{ color: 'var(--muted)', fontWeight: 700 }}>PERMANENT SCHOOL ID</small><b>{school.school_code}</b><small>Use this school code to identify student registration IDs issued by this school.</small></div>}
           <label>School Name</label>
           <input value={school.name} onChange={e => setSchool({...school, name: e.target.value})} required />
 

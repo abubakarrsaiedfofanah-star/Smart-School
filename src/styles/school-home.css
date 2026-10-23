@@ -616,6 +616,69 @@
 .school-cta-band .school-contact-methods a { color: #174e89; }
 .school-contact-methods a:focus-visible { outline: 3px solid #78b7ff; outline-offset: 3px; }
 .school-public-contact-methods { margin: 0 0 52px; padding: 22px; border: 1px solid #dce7f0; border-radius: 14px; background: #fff; }
+.school-home-learning-banner { display: flex; align-items: center; min-height: 340px; margin: 18px auto; padding: clamp(30px, 6vw, 72px) max(24px, calc((100vw - 1160px)/2)); background: linear-gradient(90deg, #071a2bea 0%, #0b2338cf 48%, #0b233855 100%), url('/images/school-day/ghana-classroom.jpg') center 42% / cover no-repeat; color: #fff; }
+.school-home-learning-banner > div { max-width: 610px; }
+.school-home-learning-banner .eyebrow { margin: 0 0 12px; color: #9bd4ff; font-size: .68rem; font-weight: 800; letter-spacing: .14em; }
+.school-home-learning-banner h2 { margin: 0; font-size: clamp(2rem, 4.3vw, 3.6rem); letter-spacing: -.035em; line-height: 1.08; text-wrap: balance; }
+.school-home-learning-banner > div > p:last-child { max-width: 500px; margin: 16px 0 0; color: #e1edf7; font-size: 1rem; line-height: 1.7; }
+.school-home-photo-section { background: #fff; }
+.school-home-photo-section .school-home-photo-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 960px; margin: 26px auto 0; }
+.school-home-photo-credit { margin: 12px auto 0; color: #71869a; font-size: .72rem; text-align: center; }
+.school-home-photo-credit a { color: #355e82; text-decoration: underline; text-underline-offset: 2px; }
+@media (max-width: 680px) {
+  .school-home-learning-banner { min-height: 330px; margin: 10px 0; padding: 44px 22px; background-position: 58% center; }
+  .school-home-learning-banner h2 { font-size: clamp(2rem, 9vw, 2.8rem); }
+  .school-home-photo-section .school-home-photo-strip { grid-template-columns: 1fr; }
+}
+
+/* Photo-led landing sections: each section gets its own locally bundled photo. */
+.school-hero { display: flex; align-items: center; min-height: 640px; background: #071522 url('/images/school-day/classroom-learning.jpg') center 42% / cover no-repeat; color: #fff; }
+.school-hero::before { z-index: 0; background: linear-gradient(90deg, #071522ed 0%, #0b2037c9 48%, #0b203765 100%); }
+.school-hero .hero-copy { position: relative; z-index: 1; max-width: 610px; }
+.school-hero .hero-copy h1, .school-hero .hero-copy > p:not(.eyebrow) { color: #fff; }
+.school-hero .hero-copy h1 span { color: #9bd4ff; }
+.school-hero .hero-copy .eyebrow { color: #b8dfff; }
+.school-hero .button.outline-hero { border-color: #ffffffa8; color: #fff; }
+.school-start-section { background: linear-gradient(90deg, #071522e8 0%, #102a43cc 55%, #102a4378 100%), url('/images/school-day/classroom-group.jpg') center 44% / cover no-repeat; }
+.school-start-section .section-heading h2, .school-start-section .section-heading .eyebrow { color: #fff; }
+.school-start-section > .school-home-section-link { color: #d7ecff; }
+.school-tools-section { background: linear-gradient(90deg, #071522de 0%, #0b2338bc 55%, #0b233866 100%), url('/images/school-day/computer-lab.jpg') center 48% / cover no-repeat; }
+.school-tools-section .section-heading h2, .school-tools-section .section-heading .eyebrow, .school-tools-section .section-note { color: #fff; }
+.school-home-story { grid-template-columns: minmax(0, 1fr); min-height: 520px; align-content: center; padding: clamp(38px, 7vw, 78px); border-radius: 22px; background: linear-gradient(90deg, #071522e8 0%, #102a43c9 58%, #102a4355 100%), url('/images/school-day/school-community.jpg') center 46% / cover no-repeat; }
+.school-home-story > div:not(.school-public-grid) { max-width: 640px; }
+.school-home-story > div:not(.school-public-grid) .eyebrow, .school-home-story > div:not(.school-public-grid) h2, .school-home-story > div:not(.school-public-grid) p:not(.eyebrow) { color: #fff; }
+.school-home-portals { background: linear-gradient(90deg, #071522e8 0%, #102a43c7 58%, #102a435d 100%), url('/images/school-day/school-campus.jpg') center 48% / cover no-repeat; }
+.school-home-portals .section-heading h2, .school-home-portals .section-heading .eyebrow, .school-home-portals .section-heading .section-note { color: #fff; }
+.school-home-pricing { grid-template-columns: minmax(0, 1fr); min-height: 520px; align-content: center; padding: clamp(38px, 7vw, 76px); border-radius: 22px; background: linear-gradient(90deg, #071522e8 0%, #102a43c8 58%, #102a4355 100%), url('/images/school-day/school-library.jpg') center 48% / cover no-repeat; }
+.school-home-pricing > div:not(.school-public-grid) { max-width: 640px; }
+.school-home-pricing > div:not(.school-public-grid) .eyebrow, .school-home-pricing > div:not(.school-public-grid) h2, .school-home-pricing > div:not(.school-public-grid) p:not(.eyebrow) { color: #fff; }
+.school-home-contact { background: linear-gradient(90deg, #071522e8 0%, #102a43c8 58%, #102a4355 100%), url('/images/school-day/teacher-connection.jpg') center 42% / cover no-repeat; }
+.school-home-contact > .section-heading h2, .school-home-contact > .section-heading .eyebrow, .school-home-contact > .section-heading .section-note { color: #fff; }
+.school-home-story, .school-home-pricing { column-gap: 0; }
+@media (max-width: 760px) {
+  .school-hero { min-height: 620px; align-items: flex-start; padding-top: 82px; }
+  .school-home-story, .school-home-pricing { width: calc(100% - 36px); min-height: 0; padding: 30px 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .school-home-photo-strip img { transition: none; }
+}
+.school-start-steps article, .school-directory-card, .school-pricing-grid .school-public-card, .school-contact-grid .school-public-card { transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease; }
+.school-home-story, .school-home-pricing, .school-home-learning-banner { background-blend-mode: normal; }
+.school-home-photo-section .section-heading { margin-bottom: 8px; }
+.school-home-photo-section .section-heading h2 { color: #173a56; font-size: clamp(1.8rem, 3vw, 2.6rem); letter-spacing: -.035em; }
+.school-home-photo-section .school-home-photo-strip figure { border: 1px solid #ffffff; box-shadow: 0 18px 42px #0b213826; }
+.school-home-photo-section .school-home-photo-strip figcaption { font-size: .98rem; letter-spacing: .01em; }
+.school-home-learning-banner, .school-home-story, .school-home-pricing { isolation: isolate; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .school-start-steps article:hover, .school-directory-card:hover, .school-pricing-grid .school-public-card:hover, .school-contact-grid .school-public-card:hover { transform: translateY(-4px); border-color: #afc9de; box-shadow: 0 16px 34px #102a4324; }
+  .school-home-photo-section .school-home-photo-strip figure:hover { transform: translateY(-4px); }
+}
+@media (max-width: 600px) {
+  .school-home-learning-banner { border-radius: 14px; }
+  .school-home-contact .section-heading { margin-bottom: 22px; }
+  .school-home-photo-section .section-heading { display: block; }
+  .school-home-photo-section .section-note { margin-top: 9px; }
+}
 @media (max-width: 760px) {
   .school-home-about-grid,
   .school-home-pricing > .school-public-grid { grid-column: auto; }

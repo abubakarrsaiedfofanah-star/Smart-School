@@ -43,8 +43,8 @@ export default function ProtectedRoute({ roles, permission, children, shell = tr
   useEffect(() => {
     if (!profile?.id || profile.is_active !== false || !supabase) { setSignupRequestStatus(''); return undefined }
     let active = true
-    supabase.from('school_portal_signup_requests').select('status').eq('user_id', profile.id).maybeSingle()
-      .then(({ data }) => { if (active) setSignupRequestStatus(data?.status || '') })
+    supabase.rpc('get_my_school_portal_signup_status')
+      .then(({ data }) => { if (active) setSignupRequestStatus(data || '') })
     return () => { active = false }
   }, [profile?.id, profile?.is_active])
 
