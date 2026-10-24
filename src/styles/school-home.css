@@ -1,5 +1,5 @@
 /* School operations layout layered on the original blue public site. */
-.school-home { background: #f5f8fb; color: #102a43; }
+.school-home { overflow-x: clip; background: #f5f8fb; color: #102a43; }
 .school-announcement { min-height: 38px; padding: 8px 5%; background: #102a43; font-size: .74rem; }
 .school-announcement a { color: #cfeaff; font-weight: 800; white-space: nowrap; }
 .school-nav { position: sticky; top: 0; z-index: 30; min-height: 70px; height: auto; overflow: visible; justify-content: space-between; padding: 0 max(24px, calc((100vw - 1220px)/2)); background: #07111df2 !important; }
