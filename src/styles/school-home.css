@@ -704,7 +704,7 @@
 .school-photo-hero { position: relative; display: flex; min-height: clamp(430px, 46vw, 580px); align-items: center; overflow: hidden; isolation: isolate; background: #0b2035; }
 .school-photo-hero::before { position: absolute; z-index: 0; inset: -24px; background: var(--school-photo-background) center / cover no-repeat; content: ''; filter: blur(20px); opacity: .72; transform: scale(1.06); }
 .school-photo-hero-image { position: absolute; z-index: 1; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; }
-.school-photo-hero::after { position: absolute; z-index: 2; inset: 0; background: linear-gradient(90deg, #071522f2 0%, #0b2037df 38%, #0b2037a6 67%, #0b203747 100%), linear-gradient(0deg, #0715226b, transparent 56%); content: ''; pointer-events: none; }
+.school-photo-hero::after { position: absolute; z-index: 2; inset: 0; background: linear-gradient(90deg, #071522f2 0%, #0b2037df 38%, #0b2037bf 67%, #0b203780 100%), linear-gradient(0deg, #0715226b, transparent 56%); content: ''; pointer-events: none; }
 .school-photo-hero-inner { position: relative; z-index: 3; width: min(1160px, calc(100% - 48px)); margin: 0 auto; }
 .school-photo-hero-copy { max-width: 700px; }
 .school-photo-hero-copy .eyebrow { margin: 0 0 18px; color: #a9d8ff; font-size: .72rem; font-weight: 850; letter-spacing: .16em; }
@@ -716,6 +716,9 @@
 .school-photo-hero-copy .blue-button b { color: #123d68; }
 .school-photo-hero-copy .outline-hero { border-color: #ffffff9c; background: #ffffff14; color: #fff; backdrop-filter: blur(8px); }
 .school-photo-hero-copy .outline-hero:hover { background: #ffffff2b; }
+@media (min-width: 761px) {
+  .school-photo-hero-image { -webkit-mask-image: linear-gradient(90deg, transparent 14%, #000 24%, #000 76%, transparent 86%); mask-image: linear-gradient(90deg, transparent 14%, #000 24%, #000 76%, transparent 86%); }
+}
 .school-public-page .school-service-grid { padding: 4px 0 16px; }
 .school-public-page .school-service-card { min-height: 286px; }
 .school-public-page .school-pricing-grid .school-public-card { min-height: 230px; }
