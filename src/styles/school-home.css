@@ -167,7 +167,7 @@
   .school-nav nav a.header-register,
   .school-nav nav a.header-register b { color: #123d68 !important; }
 }
-.school-public-page { min-height: 100vh; }
+.school-public-page { display: flex; min-height: 100vh; flex-direction: column; }
 .school-public-content { box-sizing: border-box; width: min(1160px, calc(100vw - 48px)); max-width: 100%; min-width: 0; min-height: 66vh; margin: 0 auto; padding: clamp(56px, 9vw, 110px) 0 90px; }
 .school-public-intro { max-width: 780px; margin-bottom: 48px; }
 .school-public-intro > .eyebrow { color: #65798c; }
@@ -697,8 +697,9 @@
 }
 
 /* Dedicated photo-led pages for each header destination. */
-.school-public-page-main { min-height: 66vh; background: #f3f7fb; }
+.school-public-page-main { flex: 1 0 auto; min-height: 0; background: #f3f7fb; }
 .school-public-page-main .school-public-content { width: min(1160px, calc(100% - 48px)); padding: clamp(44px, 6vw, 72px) 0 88px; }
+.school-public-page-main .school-public-content { min-height: 0; }
 .school-photo-hero { position: relative; display: flex; min-height: clamp(430px, 46vw, 580px); align-items: center; overflow: hidden; isolation: isolate; background: #0b2035; }
 .school-photo-hero-image { position: absolute; z-index: 1; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 .school-photo-hero::after { position: absolute; z-index: 2; inset: 0; background: linear-gradient(90deg, #071522f2 0%, #0b2037df 38%, #0b2037bf 67%, #0b203780 100%), linear-gradient(0deg, #0715226b, transparent 56%); content: ''; pointer-events: none; }
