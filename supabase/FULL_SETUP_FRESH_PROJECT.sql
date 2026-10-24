@@ -1,5 +1,5 @@
 -- SmartSchool complete Supabase setup
--- Includes schema.sql and numbered migrations 002-090 in order.
+-- Includes schema.sql and numbered migrations 002-103 in order.
 -- Run once in the SQL Editor of a NEW Supabase project.
 -- Do not run over a database that already has any of these migrations applied.
 -- Review README.md for required Edge Functions, Auth configuration, and secret setup.

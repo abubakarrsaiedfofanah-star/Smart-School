@@ -12,7 +12,6 @@ const pages = {
     title: 'Everything your school needs, working together.',
     intro: 'Explore the teaching, student records, daily operations, finance, and communication tools available in SmartSchool.',
     image: '/images/school-day/services-computer-lab.jpg',
-    focus: '65% 12%',
     action: ['Explore school portals', '/portals'],
   },
   portals: {
@@ -20,7 +19,6 @@ const pages = {
     title: 'Your school, one secure sign in.',
     intro: 'Find your school to sign in or request an account. Your access stays with the school you choose.',
     image: '/images/school-day/portals-school-community.jpg',
-    focus: '50% 64%',
     action: ['Register a new school', '/register'],
   },
   pricing: {
@@ -28,7 +26,6 @@ const pages = {
     title: 'Choose the right plan for your school.',
     intro: 'Start with a 14-day free trial. We will help your school choose a plan that fits its size and needs.',
     image: '/images/school-day/pricing-library.jpg',
-    focus: '50% 48%',
     action: ['Start a school trial', '/register?trial=1'],
   },
   about: {
@@ -36,7 +33,6 @@ const pages = {
     title: 'Built around the people who make school work.',
     intro: 'SmartSchool brings school leaders, teachers, students, families, and staff into one shared workspace, with access shaped around each role.',
     image: '/images/school-day/about-classroom-community.jpg',
-    focus: '67% 0%',
     action: ['Explore our services', '/services'],
   },
   contact: {
@@ -44,14 +40,13 @@ const pages = {
     title: 'We are here to help your school get started.',
     intro: 'Register a new school, find your existing school portal, or contact the SmartSchool team.',
     image: '/images/school-day/contact-school-community.jpg',
-    focus: '50% 50%',
     action: ['Register your school', '/register'],
   },
 }
 
 export default function PublicPage({ page }) {
   const config = pages[page] || pages.features
-  const { title, intro, eyebrow, image, focus, action } = config
+  const { title, intro, eyebrow, image, action } = config
   const items = page === 'pricing' ? pricingPlans : page === 'about' ? aboutHighlights : contactOptions
   const [schools, setSchools] = useState([])
   const [schoolsLoading, setSchoolsLoading] = useState(page === 'portals')
@@ -91,7 +86,7 @@ export default function PublicPage({ page }) {
   return <div className="public-site school-home school-public-page page-transition">
     <PublicHeader />
     <main className={`school-public-page-main school-public-page-${page}`}>
-      <section className="school-photo-hero" style={{ '--school-photo-focus': focus }} aria-labelledby="school-public-title">
+      <section className="school-photo-hero" style={{ '--school-photo-background': `url("${image}")` }} aria-labelledby="school-public-title">
         <img className="school-photo-hero-image" src={image} alt="" fetchPriority="high" />
         <div className="school-photo-hero-inner">
           <div className="school-photo-hero-copy">

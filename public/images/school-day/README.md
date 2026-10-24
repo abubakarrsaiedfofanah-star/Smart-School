@@ -3,7 +3,10 @@
 
 These locally bundled JPEGs are illustrative stock photos, not photos of
 SmartSchool customer schools. Their local copies avoid third-party image
-requests at runtime. The browser crops each photo to fit its display area.
+requests at runtime. Hero sections and feature cards keep each source photo
+fully visible, with a softly blurred fill behind it when its aspect ratio does
+not match the display area. Some decorative background panels crop photos to
+fill their shapes.
 
 - classroom-learning.jpg — Unsplash photo-1509062522246-3755977927d7
   https://images.unsplash.com/photo-1509062522246-3755977927d7

@@ -540,11 +540,11 @@
 .school-home-story > div:not(.school-public-grid) p:not(.eyebrow), .school-home-pricing > div:not(.school-public-grid) p:not(.eyebrow) { color: #62788d; font-size: 1rem; line-height: 1.75; }
 .school-home-portals { scroll-margin-top: 96px; }
 .school-home-photo-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 24px 0 28px; }
-.school-home-photo-strip figure { position: relative; min-width: 0; aspect-ratio: 1.55; margin: 0; overflow: hidden; border-radius: 14px; background: #dce8f1; }
-.school-home-photo-strip figure::after { position: absolute; inset: 35% 0 0; background: linear-gradient(transparent, #0b2138b8); content: ''; }
-.school-home-photo-strip img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .35s ease; }
-.school-home-photo-strip figure:hover img { transform: scale(1.04); }
-.school-home-photo-strip figcaption { position: absolute; z-index: 1; right: 13px; bottom: 13px; left: 13px; color: #fff; font-size: .9rem; font-weight: 750; text-shadow: 0 1px 4px #07152288; }
+.school-home-photo-strip figure { position: relative; min-width: 0; aspect-ratio: 1.55; margin: 0; overflow: hidden; border-radius: 14px; background: #dce8f1; isolation: isolate; }
+.school-home-photo-strip figure::before { position: absolute; z-index: 0; inset: -18px; background: var(--school-photo-background) center / cover no-repeat; content: ''; filter: blur(16px); opacity: .72; transform: scale(1.06); }
+.school-home-photo-strip figure::after { position: absolute; z-index: 2; inset: 35% 0 0; background: linear-gradient(transparent, #0b2138b8); content: ''; }
+.school-home-photo-strip img { position: relative; z-index: 1; display: block; width: 100%; height: 100%; object-fit: contain; transition: none; }
+.school-home-photo-strip figure:hover img { transform: none; }
 .school-home-portal-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .school-home-portal-grid article { display: flex; min-width: 0; align-items: center; gap: 13px; padding: 17px; border: 1px solid #e0e9f1; border-radius: 13px; background: #fff; box-shadow: 0 7px 22px #1b425b0d; }
 .school-home-portal-grid article > span { display: grid; width: 40px; height: 40px; flex: 0 0 40px; place-items: center; border-radius: 12px; background: #eaf3fb; color: #2375c7; font-weight: 850; }
@@ -677,7 +677,11 @@
 .school-home-photo-section .school-home-photo-strip figcaption { font-size: .98rem; letter-spacing: .01em; }
 .school-home-learning-banner, .school-home-story, .school-home-pricing { isolation: isolate; }
 .school-home-learning-banner { background-position: center, center 8%; }
-.school-home main > .school-hero { background: #071522 url('/images/school-day/classroom-learning.jpg') center 8% / cover no-repeat; }
+.school-home main > .school-hero { position: relative; isolation: isolate; background: #071522; }
+.school-home-hero-backdrop { position: absolute; z-index: 0; inset: -24px; background: url('/images/school-day/classroom-learning.jpg') center / cover no-repeat; filter: blur(20px); opacity: .72; transform: scale(1.06); pointer-events: none; }
+.school-home-hero-image { position: absolute; z-index: 1; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; pointer-events: none; }
+.school-home main > .school-hero::before { z-index: 2; background: linear-gradient(90deg, #071522ed 0%, #0b2037d9 48%, #0b2037a6 100%), linear-gradient(0deg, #07152260, transparent 58%); }
+.school-home .school-hero .hero-copy { z-index: 3; }
 .school-home main .section { padding-top: clamp(58px, 6vw, 78px); padding-bottom: clamp(58px, 6vw, 78px); }
 .school-home main .school-home-learning-banner { margin-top: 14px; margin-bottom: 14px; }
 .school-home-jump-nav { margin-top: 22px; margin-bottom: 0; }
@@ -697,9 +701,10 @@
 .school-public-page-main { min-height: 66vh; background: #f3f7fb; }
 .school-public-page-main .school-public-content { width: min(1160px, calc(100% - 48px)); padding: clamp(44px, 6vw, 72px) 0 88px; }
 .school-photo-hero { position: relative; display: flex; min-height: clamp(430px, 46vw, 580px); align-items: center; overflow: hidden; isolation: isolate; background: #0b2035; }
-.school-photo-hero-image { position: absolute; z-index: 0; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: var(--school-photo-focus, center); animation: school-hero-image-drift 30s ease-in-out infinite alternate; }
-.school-photo-hero::after { position: absolute; z-index: 1; inset: 0; background: linear-gradient(90deg, #071522f2 0%, #0b2037df 38%, #0b2037a6 67%, #0b203747 100%), linear-gradient(0deg, #0715226b, transparent 56%); content: ''; pointer-events: none; }
-.school-photo-hero-inner { position: relative; z-index: 2; width: min(1160px, calc(100% - 48px)); margin: 0 auto; }
+.school-photo-hero::before { position: absolute; z-index: 0; inset: -24px; background: var(--school-photo-background) center / cover no-repeat; content: ''; filter: blur(20px); opacity: .72; transform: scale(1.06); }
+.school-photo-hero-image { position: absolute; z-index: 1; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; }
+.school-photo-hero::after { position: absolute; z-index: 2; inset: 0; background: linear-gradient(90deg, #071522f2 0%, #0b2037df 38%, #0b2037a6 67%, #0b203747 100%), linear-gradient(0deg, #0715226b, transparent 56%); content: ''; pointer-events: none; }
+.school-photo-hero-inner { position: relative; z-index: 3; width: min(1160px, calc(100% - 48px)); margin: 0 auto; }
 .school-photo-hero-copy { max-width: 700px; }
 .school-photo-hero-copy .eyebrow { margin: 0 0 18px; color: #a9d8ff; font-size: .72rem; font-weight: 850; letter-spacing: .16em; }
 .school-photo-hero-copy h1 { max-width: 720px; margin: 0 0 18px; color: #fff; font: 700 clamp(2.8rem, 5.6vw, 4.7rem)/1.04 'Playfair Display', Georgia, serif; letter-spacing: -.035em; text-wrap: balance; }
@@ -710,7 +715,6 @@
 .school-photo-hero-copy .blue-button b { color: #123d68; }
 .school-photo-hero-copy .outline-hero { border-color: #ffffff9c; background: #ffffff14; color: #fff; backdrop-filter: blur(8px); }
 .school-photo-hero-copy .outline-hero:hover { background: #ffffff2b; }
-@keyframes school-hero-image-drift { from { transform: scale(1.015); } to { transform: scale(1.055); } }
 .school-public-page .school-service-grid { padding: 4px 0 16px; }
 .school-public-page .school-service-card { min-height: 286px; }
 .school-public-page .school-pricing-grid .school-public-card { min-height: 230px; }
@@ -721,7 +725,6 @@
   .school-photo-hero-inner { width: calc(100% - 40px); }
   .school-public-page-main .school-public-content { width: calc(100% - 36px); padding: 38px 0 64px; }
 }
-@media (prefers-reduced-motion: reduce) { .school-photo-hero-image { animation: none; } }
 @media (max-width: 760px) {
   .school-home-about-grid,
   .school-home-pricing > .school-public-grid { grid-column: auto; }
@@ -745,6 +748,5 @@
 @media (max-width: 760px) {
   .school-home main .section { padding-top: 48px; padding-bottom: 48px; }
   .school-public-page-main .school-public-content { padding-top: 32px; padding-bottom: 48px; }
-  .school-photo-hero-image { object-position: var(--school-photo-focus, center); }
   .school-home .school-hero .hero-copy h1 { font-size: clamp(2.85rem, 11vw, 4rem); letter-spacing: -.045em; }
 }

@@ -20,6 +20,10 @@ export default function PublicHeader() {
   }
 
   useEffect(() => {
+    if (!hash) window.scrollTo({ top: 0, behavior: 'auto' })
+  }, [pathname, hash])
+
+  useEffect(() => {
     const closeOnEscape = event => { if (event.key === 'Escape') closeMenu() }
     const closeOnDesktop = () => { if (window.innerWidth > 1080) closeMenu() }
     window.addEventListener('keydown', closeOnEscape)
@@ -51,7 +55,7 @@ export default function PublicHeader() {
           const [targetPath, targetHash] = to.split('#')
           const target = targetPath || '/'
           const active = pathname === target && (targetHash ? hash === `#${targetHash}` : (target !== '/' || (!hash && label === 'Home')))
-          return <Link key={label} className={active ? 'active' : ''} to={to} onClick={() => { closeMenu(); if (target === '/' && !targetHash && pathname === '/') window.scrollTo({ top: 0, behavior: 'smooth' }) }}>{label}</Link>
+          return <Link key={label} className={active ? 'active' : ''} to={to} onClick={() => { closeMenu(); if (!targetHash && pathname === target) window.scrollTo({ top: 0, behavior: 'smooth' }) }}>{label}</Link>
         })}
         <Link className="header-login" to="/portals" onClick={closeMenu}>Login</Link>
         <Link className="button small blue-button header-register" to="/register" onClick={closeMenu}>Register school <b aria-hidden="true">→</b></Link>

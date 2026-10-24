@@ -41,8 +41,12 @@ for migration in "$@"; do
   fi
 
   printf 'Applying %s\n' "$filename"
-  psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 --file "$migration"
-  psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 \
-    --set migration_file="$filename" --set checksum="$checksum" \
-    --command "insert into private.smartschool_migration_history(migration_file, checksum) values (:'migration_file', :'checksum');"
+  transaction_file="$(mktemp)"
+  trap 'rm -f "$transaction_file"' EXIT
+  cat "$migration" > "$transaction_file"
+  printf "\ninsert into private.smartschool_migration_history(migration_file, checksum) values ('%s', '%s');\n" \
+    "$filename" "$checksum" >> "$transaction_file"
+  psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 --single-transaction --file "$transaction_file"
+  rm -f "$transaction_file"
+  trap - EXIT
 done
