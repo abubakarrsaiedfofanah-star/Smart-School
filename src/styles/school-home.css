@@ -703,7 +703,7 @@
 .school-public-page-main .school-public-content { width: min(1160px, calc(100% - 48px)); padding: clamp(44px, 6vw, 72px) 0 88px; }
 .school-photo-hero { position: relative; display: flex; min-height: clamp(430px, 46vw, 580px); align-items: center; overflow: hidden; isolation: isolate; background: #0b2035; }
 .school-photo-hero::before { position: absolute; z-index: 0; inset: -24px; background: var(--school-photo-background) center / cover no-repeat; content: ''; filter: blur(20px); opacity: .72; transform: scale(1.06); }
-.school-photo-hero-image { position: absolute; z-index: 1; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; }
+.school-photo-hero-image { position: absolute; z-index: 1; inset: 0 0 0 50%; display: block; width: 50%; height: 100%; object-fit: contain; object-position: center; }
 .school-photo-hero::after { position: absolute; z-index: 2; inset: 0; background: linear-gradient(90deg, #071522f2 0%, #0b2037df 38%, #0b2037bf 67%, #0b203780 100%), linear-gradient(0deg, #0715226b, transparent 56%); content: ''; pointer-events: none; }
 .school-photo-hero-inner { position: relative; z-index: 3; width: min(1160px, calc(100% - 48px)); margin: 0 auto; }
 .school-photo-hero-copy { max-width: 700px; }
@@ -716,15 +716,13 @@
 .school-photo-hero-copy .blue-button b { color: #123d68; }
 .school-photo-hero-copy .outline-hero { border-color: #ffffff9c; background: #ffffff14; color: #fff; backdrop-filter: blur(8px); }
 .school-photo-hero-copy .outline-hero:hover { background: #ffffff2b; }
-@media (min-width: 761px) {
-  .school-photo-hero-image { -webkit-mask-image: linear-gradient(90deg, transparent 14%, #000 24%, #000 76%, transparent 86%); mask-image: linear-gradient(90deg, transparent 14%, #000 24%, #000 76%, transparent 86%); }
-}
 .school-public-page .school-service-grid { padding: 4px 0 16px; }
 .school-public-page .school-service-card { min-height: 286px; }
 .school-public-page .school-pricing-grid .school-public-card { min-height: 230px; }
 .school-public-page .school-contact-grid .school-public-card { min-height: 205px; }
 @media (max-width: 760px) {
   .school-photo-hero { min-height: 520px; align-items: flex-end; padding: 64px 0 58px; }
+  .school-photo-hero-image { inset: 0; width: 100%; }
   .school-photo-hero::after { background: linear-gradient(90deg, #071522ed 0%, #0b2037c9 70%, #0b203795 100%), linear-gradient(0deg, #071522a8 0%, #07152238 100%); }
   .school-photo-hero-inner { width: calc(100% - 40px); }
   .school-public-page-main .school-public-content { width: calc(100% - 36px); padding: 38px 0 64px; }
