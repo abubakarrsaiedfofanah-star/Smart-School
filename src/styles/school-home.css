@@ -683,6 +683,7 @@
 .school-home main > .school-hero::before { z-index: 2; background: linear-gradient(90deg, #071522ed 0%, #0b2037d9 48%, #0b2037a6 100%), linear-gradient(0deg, #07152260, transparent 58%); }
 .school-home .school-hero .hero-copy { z-index: 3; }
 .school-home main .section { padding-top: clamp(58px, 6vw, 78px); padding-bottom: clamp(58px, 6vw, 78px); }
+.school-home main .school-home-photo-section { padding-top: clamp(32px, 3.5vw, 44px); padding-bottom: clamp(32px, 3.5vw, 44px); }
 .school-home main .school-home-learning-banner { margin-top: 14px; margin-bottom: 14px; }
 .school-home-jump-nav { margin-top: 22px; margin-bottom: 0; }
 .school-public-page-main .school-public-content { padding-top: clamp(36px, 4vw, 56px); padding-bottom: 64px; }
