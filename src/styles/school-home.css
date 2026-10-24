@@ -541,9 +541,8 @@
 .school-home-portals { scroll-margin-top: 96px; }
 .school-home-photo-strip { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 24px 0 28px; }
 .school-home-photo-strip figure { position: relative; min-width: 0; aspect-ratio: 16 / 9; margin: 0; overflow: hidden; border-radius: 14px; background: #dce8f1; isolation: isolate; }
-.school-home-photo-strip figure::before { position: absolute; z-index: 0; inset: -18px; background: var(--school-photo-background) center / cover no-repeat; content: ''; filter: blur(16px); opacity: .72; transform: scale(1.06); }
 .school-home-photo-strip figure::after { position: absolute; z-index: 2; inset: 35% 0 0; background: linear-gradient(transparent, #0b2138b8); content: ''; }
-.school-home-photo-strip img { position: relative; z-index: 1; display: block; width: 100%; height: 100%; object-fit: contain; transition: none; }
+.school-home-photo-strip img { position: absolute; z-index: 1; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; transition: none; }
 .school-home-photo-strip figure:hover img { transform: none; }
 .school-home-portal-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .school-home-portal-grid article { display: flex; min-width: 0; align-items: center; gap: 13px; padding: 17px; border: 1px solid #e0e9f1; border-radius: 13px; background: #fff; box-shadow: 0 7px 22px #1b425b0d; }
@@ -678,8 +677,7 @@
 .school-home-learning-banner, .school-home-story, .school-home-pricing { isolation: isolate; }
 .school-home-learning-banner { background-position: center, center 8%; }
 .school-home main > .school-hero { position: relative; isolation: isolate; background: #071522; }
-.school-home-hero-backdrop { position: absolute; z-index: 0; inset: -24px; background: url('/images/school-day/classroom-learning.jpg') center / cover no-repeat; filter: blur(20px); opacity: .72; transform: scale(1.06); pointer-events: none; }
-.school-home-hero-image { position: absolute; z-index: 1; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; pointer-events: none; }
+.school-home-hero-image { position: absolute; z-index: 1; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; pointer-events: none; }
 .school-home main > .school-hero::before { z-index: 2; background: linear-gradient(90deg, #071522ed 0%, #0b2037d9 48%, #0b2037a6 100%), linear-gradient(0deg, #07152260, transparent 58%); }
 .school-home .school-hero .hero-copy { z-index: 3; }
 .school-home main .section { padding-top: clamp(44px, 4.5vw, 60px); padding-bottom: clamp(44px, 4.5vw, 60px); }
@@ -702,8 +700,7 @@
 .school-public-page-main { min-height: 66vh; background: #f3f7fb; }
 .school-public-page-main .school-public-content { width: min(1160px, calc(100% - 48px)); padding: clamp(44px, 6vw, 72px) 0 88px; }
 .school-photo-hero { position: relative; display: flex; min-height: clamp(430px, 46vw, 580px); align-items: center; overflow: hidden; isolation: isolate; background: #0b2035; }
-.school-photo-hero::before { position: absolute; z-index: 0; inset: -24px; background: var(--school-photo-background) center / cover no-repeat; content: ''; filter: blur(20px); opacity: .72; transform: scale(1.06); }
-.school-photo-hero-image { position: absolute; z-index: 1; inset: 0 0 0 50%; display: block; width: 50%; height: 100%; object-fit: contain; object-position: center; }
+.school-photo-hero-image { position: absolute; z-index: 1; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 .school-photo-hero::after { position: absolute; z-index: 2; inset: 0; background: linear-gradient(90deg, #071522f2 0%, #0b2037df 38%, #0b2037bf 67%, #0b203780 100%), linear-gradient(0deg, #0715226b, transparent 56%); content: ''; pointer-events: none; }
 .school-photo-hero-inner { position: relative; z-index: 3; width: min(1160px, calc(100% - 48px)); margin: 0 auto; }
 .school-photo-hero-copy { max-width: 700px; }
@@ -722,7 +719,6 @@
 .school-public-page .school-contact-grid .school-public-card { min-height: 205px; }
 @media (max-width: 760px) {
   .school-photo-hero { min-height: 520px; align-items: flex-end; padding: 64px 0 58px; }
-  .school-photo-hero-image { inset: 0; width: 100%; }
   .school-photo-hero::after { background: linear-gradient(90deg, #071522ed 0%, #0b2037c9 70%, #0b203795 100%), linear-gradient(0deg, #071522a8 0%, #07152238 100%); }
   .school-photo-hero-inner { width: calc(100% - 40px); }
   .school-public-page-main .school-public-content { width: calc(100% - 36px); padding: 38px 0 64px; }

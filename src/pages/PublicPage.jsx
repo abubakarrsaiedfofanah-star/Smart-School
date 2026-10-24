@@ -86,7 +86,7 @@ export default function PublicPage({ page }) {
   return <div className="public-site school-home school-public-page page-transition">
     <PublicHeader />
     <main className={`school-public-page-main school-public-page-${page}`}>
-      <section className="school-photo-hero" style={{ '--school-photo-background': `url("${image}")` }} aria-labelledby="school-public-title">
+      <section className="school-photo-hero" aria-labelledby="school-public-title">
         <img className="school-photo-hero-image" src={image} alt="" fetchPriority="high" />
         <div className="school-photo-hero-inner">
           <div className="school-photo-hero-copy">
