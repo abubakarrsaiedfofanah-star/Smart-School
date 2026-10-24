@@ -743,9 +743,148 @@
 .school-public-page .school-pricing-grid .school-public-card h2,
 .school-public-page .school-contact-grid .school-public-card h2 { letter-spacing: -.025em; }
 .school-directory-card { border-radius: 16px; box-shadow: 0 12px 32px #123d680d; }
+
+/* Keep public photos whole: use a real image panel for hero photography and
+   let dark section colors fill the remaining space instead of stretching or
+   cropping a photo to fit a banner. */
+.school-home main > .school-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-height: 0;
+  align-items: stretch;
+  padding: 0;
+  overflow: hidden;
+  background: #0b2035;
+}
+.school-home main > .school-hero::before { display: none; }
+.school-home-hero-image {
+  position: relative;
+  z-index: 1;
+  grid-column: 2;
+  grid-row: 1;
+  width: 100%;
+  height: auto;
+  min-width: 0;
+  object-fit: contain;
+  object-position: center;
+}
+.school-home .school-hero .hero-copy {
+  position: relative;
+  z-index: 2;
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+  width: auto;
+  max-width: none;
+  padding: clamp(42px, 6vw, 88px) clamp(24px, 5vw, 76px) clamp(42px, 6vw, 88px) max(24px, calc((100vw - 1160px) / 2));
+  box-sizing: border-box;
+  background: linear-gradient(110deg, #071522 0%, #102a43 100%);
+}
+.school-home .school-hero .hero-product-backdrop,
+.school-home .school-hero .video-wash,
+.school-home .school-hero .ambient-grid,
+.school-home .school-hero .ambient-ring { display: none; }
+.school-photo-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-height: 0;
+  align-items: stretch;
+  background: #0b2035;
+}
+.school-photo-hero-image {
+  position: relative;
+  z-index: 1;
+  grid-column: 2;
+  grid-row: 1;
+  width: 100%;
+  height: auto;
+  min-width: 0;
+  object-fit: contain;
+  object-position: center;
+}
+.school-photo-hero::after { display: none; }
+.school-photo-hero-inner {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+  width: auto;
+  max-width: none;
+  margin: 0;
+  padding: clamp(42px, 6vw, 88px) clamp(24px, 5vw, 76px) clamp(42px, 6vw, 88px) max(24px, calc((100vw - 1160px) / 2));
+  box-sizing: border-box;
+  background: linear-gradient(110deg, #071522 0%, #102a43 100%);
+}
+.school-photo-hero-copy { max-width: 620px; }
+
+/* Atmospheric section photos remain uncropped, aligned to the right; the
+   section's navy base color fills the space around each photo. */
+.school-home-learning-banner {
+  background-position: center, right center;
+  background-size: cover, contain;
+}
+.school-home-story {
+  background-position: center, right center;
+  background-size: cover, contain;
+}
+.school-home-portals {
+  background-position: center, right center;
+  background-size: cover, contain;
+}
+.school-home-pricing {
+  background-position: center, right center;
+  background-size: cover, contain;
+}
+.school-home-contact {
+  background-position: center, right center;
+  background-size: cover, contain;
+}
+.school-start-section::before {
+  inset: 0;
+  background-position: center, right center;
+  background-size: cover, contain;
+  animation: none;
+}
+.school-tools-section,
+.school-home .school-tools-section {
+  background-position: center, right center;
+  background-size: cover, contain;
+}
+@media (max-width: 760px) {
+  .school-home main > .school-hero,
+  .school-photo-hero { grid-template-columns: minmax(0, 1fr); }
+  .school-home-hero-image,
+  .school-photo-hero-image {
+    grid-column: 1;
+    grid-row: 1;
+    width: 100%;
+    height: auto;
+    align-self: start;
+  }
+  .school-home .school-hero .hero-copy,
+  .school-photo-hero-inner {
+    grid-column: 1;
+    grid-row: 2;
+    width: 100%;
+    padding: 36px 22px 42px;
+  }
+  .school-home .school-hero .hero-copy { align-self: auto; }
+  .school-home .school-hero .hero-copy h1 { font-size: clamp(2.5rem, 10vw, 4rem); }
+  .school-photo-hero-copy h1 { font-size: clamp(2.4rem, 9vw, 3.5rem); }
+  .school-photo-hero-inner { align-self: auto; }
+  .school-home-learning-banner,
+  .school-home-story,
+  .school-home-portals,
+  .school-home-pricing,
+  .school-home-contact,
+  .school-start-section::before,
+  .school-tools-section,
+  .school-home .school-tools-section { background-size: cover, contain; }
+}
 .school-directory-search input:focus-visible { border-color: #347db8; outline: 3px solid #347db833; outline-offset: 2px; }
 @media (max-width: 760px) {
   .school-home main .section { padding-top: 40px; padding-bottom: 40px; }
   .school-public-page-main .school-public-content { padding-top: 32px; padding-bottom: 48px; }
   .school-home .school-hero .hero-copy h1 { font-size: clamp(2.85rem, 11vw, 4rem); letter-spacing: -.045em; }
 }
+
+
