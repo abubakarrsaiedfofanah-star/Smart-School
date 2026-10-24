@@ -540,7 +540,7 @@
 .school-home-story > div:not(.school-public-grid) p:not(.eyebrow), .school-home-pricing > div:not(.school-public-grid) p:not(.eyebrow) { color: #62788d; font-size: 1rem; line-height: 1.75; }
 .school-home-portals { scroll-margin-top: 96px; }
 .school-home-photo-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 24px 0 28px; }
-.school-home-photo-strip figure { position: relative; min-width: 0; aspect-ratio: 1.55; margin: 0; overflow: hidden; border-radius: 14px; background: #dce8f1; isolation: isolate; }
+.school-home-photo-strip figure { position: relative; min-width: 0; aspect-ratio: 16 / 9; margin: 0; overflow: hidden; border-radius: 14px; background: #dce8f1; isolation: isolate; }
 .school-home-photo-strip figure::before { position: absolute; z-index: 0; inset: -18px; background: var(--school-photo-background) center / cover no-repeat; content: ''; filter: blur(16px); opacity: .72; transform: scale(1.06); }
 .school-home-photo-strip figure::after { position: absolute; z-index: 2; inset: 35% 0 0; background: linear-gradient(transparent, #0b2138b8); content: ''; }
 .school-home-photo-strip img { position: relative; z-index: 1; display: block; width: 100%; height: 100%; object-fit: contain; transition: none; }
@@ -562,7 +562,6 @@
   .school-home-story, .school-home-pricing { grid-template-columns: 1fr; gap: 22px; padding: 46px 0; }
   .school-home-pricing > img { grid-row: 1; }
   .school-home-photo-strip { gap: 9px; }
-  .school-home-photo-strip figure { aspect-ratio: 1.05; }
   .school-home-photo-strip figcaption { right: 9px; bottom: 9px; left: 9px; font-size: .75rem; }
 }
 @media (max-width: 560px) {
@@ -570,7 +569,7 @@
   .school-home-jump-nav > div { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .school-home-story, .school-home-pricing { width: calc(100% - 36px); }
   .school-home-photo-strip { grid-template-columns: 1fr; }
-  .school-home-photo-strip figure { aspect-ratio: 1.7; }
+  .school-home-photo-strip figure { aspect-ratio: 16 / 9; }
   .school-home-portal-grid { grid-template-columns: 1fr; }
 }
 
@@ -609,7 +608,7 @@
 .school-home-story { row-gap: 12px; }
 .school-home-contact { padding-bottom: 0; }
 .school-contact-grid { margin: 22px 0 42px; }
-.school-home-contact .school-cta-band { width: 100vw; margin-left: calc(50% - 50vw); box-sizing: border-box; }
+.school-home-contact .school-cta-band { width: auto; margin: 32px 0 0; padding: 24px clamp(20px, 3vw, 36px); border: 1px solid #ffffffa3; border-radius: 16px; background: #fffffff0; box-shadow: 0 14px 38px #06172a2b; box-sizing: border-box; }
 .school-home-contact .school-cta-band > div { min-width: 0; }
 .school-contact-methods { display: grid; justify-items: start; gap: 9px; margin-top: 20px; }
 .school-contact-methods a { color: #174e89; font-size: .95rem; font-weight: 700; overflow-wrap: anywhere; text-underline-offset: 3px; }
@@ -732,7 +731,7 @@
 @media (max-width: 760px) {
   .school-home-about-grid,
   .school-home-pricing > .school-public-grid { grid-column: auto; }
-  .school-home-contact .school-cta-band { margin-left: calc(50% - 50vw); }
+  .school-home-contact .school-cta-band { margin: 26px 0 0; padding: 20px; }
 }
 
 /* Keep the image, contrast wash, and copy in a predictable stack on every route. */
