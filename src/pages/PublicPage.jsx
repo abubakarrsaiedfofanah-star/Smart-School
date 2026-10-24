@@ -12,7 +12,7 @@ const pages = {
     title: 'Everything your school needs, working together.',
     intro: 'Explore the teaching, student records, daily operations, finance, and communication tools available in SmartSchool.',
     image: '/images/school-day/services-computer-lab.jpg',
-    focus: '65% 45%',
+    focus: '65% 12%',
     action: ['Explore school portals', '/portals'],
   },
   portals: {
@@ -36,7 +36,7 @@ const pages = {
     title: 'Built around the people who make school work.',
     intro: 'SmartSchool brings school leaders, teachers, students, families, and staff into one shared workspace, with access shaped around each role.',
     image: '/images/school-day/about-classroom-community.jpg',
-    focus: '67% 55%',
+    focus: '67% 0%',
     action: ['Explore our services', '/services'],
   },
   contact: {
