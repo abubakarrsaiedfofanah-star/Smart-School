@@ -639,7 +639,8 @@
 .school-home .school-hero .hero-copy h1 { background: none; -webkit-text-fill-color: #fff; }
 .school-home .school-hero .hero-copy h1 span { color: #9bd4ff; -webkit-text-fill-color: #9bd4ff; }
 .school-hero .hero-copy .eyebrow { color: #b8dfff; }
-.school-hero .button.outline-hero { border-color: #ffffffa8; color: #fff; }
+.school-hero .button.outline-hero { border-color: #ffffffa8; background: #ffffff14; color: #fff; }
+.school-hero .button.outline-hero:hover { background: #fff; color: #18324b; }
 .school-start-section { position: relative; isolation: isolate; overflow: hidden; background: #0c1e2e; }
 .school-start-section::before { position: absolute; z-index: 0; inset: -2%; background: linear-gradient(90deg, #071522e8 0%, #102a43cc 55%, #102a4378 100%), url('/images/school-day/getting-started-classroom.jpg') center 44% / cover no-repeat; content: ''; animation: school-image-pan 28s ease-in-out infinite alternate; }
 .school-start-section > * { position: relative; z-index: 1; }
